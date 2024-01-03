@@ -1,4 +1,4 @@
-const NBITS_TABLE: [u8; 8192] = [
+pub const NBITS_TABLE: [u8; 8192] = [
     0x00 ,
     0x01 ,
     0x01 ,

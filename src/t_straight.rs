@@ -1,4 +1,4 @@
-const STRAIGHT_TABLE: [u8; 8192] = [
+pub const STRAIGHT_TABLE: [u8; 8192] = [
     0x00 ,
     0x00 ,
     0x00 ,

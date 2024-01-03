@@ -1,4 +1,4 @@
-const TOP_FIVE_CARDS_TABLE: [u32; 8192] = [
+pub const TOP_FIVE_CARDS_TABLE: [u32; 8192] = [
     0x00000000 ,
     0x00000000 ,
     0x00010000 ,

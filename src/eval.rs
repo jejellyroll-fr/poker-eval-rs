@@ -2,6 +2,9 @@ use crate::handval::HandVal;
 use crate::deck_std::StdDeckCardMask;
 use crate::rules_std::HandType;
 use crate::t_nbits::NBITS_TABLE;
+use crate::t_straight::STRAIGHT_TABLE;
+use crate::t_topfivecards::TOP_FIVE_CARDS_TABLE;
+use crate::t_topcard::TOP_CARD_TABLE;
 
 impl Eval {
     pub fn eval_n(cards: &StdDeckCardMask, n_cards: usize) -> HandVal {
@@ -9,71 +12,124 @@ impl Eval {
         let sc = cards.clubs();
         let sd = cards.diamonds();
         let sh = cards.hearts();
-
+    
         let ranks = ss | sc | sd | sh;
-        let n_ranks = NBITS_TABLE[ranks as usize]; // Utiliser la table nbits importée
-        let n_dups = n_cards - n_ranks as usize;
-
+        let n_ranks = NBITS_TABLE[ranks as usize];
+        let n_dups = n_cards - n_ranks;
+    
         if n_ranks >= 5 {
-            if Self::is_flush(ss) {
-                if let Some(top_card) = Self::is_straight(ss) {
-                    return HandVal::new(HandType::StFlush as u8, top_card, 0, 0, 0, 0);
-                } else {
-                    return HandVal::new(HandType::Flush as u8, Self::top_card(ss), 0, 0, 0, 0);
+            // Vérifier les flushes et les straight flushes
+            for suit in [ss, sc, sd, sh].iter() {
+                if NBITS_TABLE[*suit as usize] >= 5 {
+                    if let Some(top_card) = STRAIGHT_TABLE.get(*suit as usize) {
+                        return HandVal::new(HandType::StFlush as u8, *top_card, 0, 0, 0, 0);
+                    } else {
+                        return HandVal::new(HandType::Flush as u8, TOP_FIVE_CARDS_TABLE[*suit as usize], 0, 0, 0, 0);
+                    }
                 }
             }
-            // Répéter pour les autres couleurs
-            if Self::is_flush(sc) {
-                if let Some(top_card) = Self::is_straight(sc) {
-                    return HandVal::new(HandType::StFlush as u8, top_card, 0, 0, 0, 0);
-                } else {
-                    return HandVal::new(HandType::Flush as u8, Self::top_card(sc), 0, 0, 0, 0);
-                }
-            }
-            // Répéter pour sd
-            if Self::is_flush(sd) {
-                if let Some(top_card) = Self::is_straight(sd) {
-                    return HandVal::new(HandType::StFlush as u8, top_card, 0, 0, 0, 0);
-                } else {
-                    return HandVal::new(HandType::Flush as u8, Self::top_card(sd), 0, 0, 0, 0);
-                }
-            }
-            // Répéter pour sh
-            if Self::is_flush(sh) {
-                if let Some(top_card) = Self::is_straight(sh) {
-                    return HandVal::new(HandType::StFlush as u8, top_card, 0, 0, 0, 0);
-                } else {
-                    return HandVal::new(HandType::Flush as u8, Self::top_card(sh), 0, 0, 0, 0);
-                }
-            }
-
-
-
-            if let Some(top_card) = Self::is_straight(ranks) {
-                return HandVal::new(HandType::Straight as u8, top_card, 0, 0, 0, 0);
+    
+            if let Some(top_card) = STRAIGHT_TABLE.get(ranks as usize) {
+                return HandVal::new(HandType::Straight as u8, *top_card, 0, 0, 0, 0);
             }
         }
+    
+        if n_dups < 3 {
+            // Si on a déjà une main formée et pas assez de duplicatas pour un full house ou un carré
+            return HandVal::new(0, 0, 0, 0, 0, 0); // ou toute autre valeur par défaut
+        }
+    
+        // Ici, implémenter la logique pour les autres types de mains
+        // comme les paires, les brelans, les fulls, les carrés, etc.
+    
+        // ...
+    
+        // Retour par défaut si aucune main n'est formée
+        HandVal::new(0, 0, 0, 0, 0, 0);
 
 
-        // Autre logique pour les mains de poker...
+    match n_dups {
+        0 => {
+            // C'est une main sans paire
+            HandVal::new(
+                HandType::NoPair as u8,
+                TOP_FIVE_CARDS_TABLE[ranks as usize],
+                0, 0, 0, 0
+            )
+        },
+        1 => {
+            // C'est une main avec une paire
+            let two_mask = ranks ^ (sc ^ sd ^ sh ^ ss);
+            let t = ranks ^ two_mask;
+            let kickers = (TOP_FIVE_CARDS_TABLE[t as usize] >> HandVal_CARD_WIDTH) & !HandVal_FIFTH_CARD_MASK;
+            HandVal::new(
+                HandType::OnePair as u8,
+                TOP_CARD_TABLE[two_mask as usize],
+                kickers, 0, 0, 0
+            )
+        },
+        2 => {
+            // Soit deux paires, soit un brelan
+            let two_mask = ranks ^ (sc ^ sd ^ sh ^ ss);
+            if two_mask != 0 {
+                // Deux paires
+                let t = ranks ^ two_mask;
+                HandVal::new(
+                    HandType::TwoPair as u8,
+                    TOP_FIVE_CARDS_TABLE[two_mask as usize],
+                    TOP_CARD_TABLE[t as usize], 0, 0, 0
+                )
+            } else {
+                // Un brelan
+                let three_mask = ((sc & sd) | (sh & ss)) & ((sc & sh) | (sd & ss));
+                let t = ranks ^ three_mask;
+                let second = TOP_CARD_TABLE[t as usize];
+                HandVal::new(
+                    HandType::Trips as u8,
+                    TOP_CARD_TABLE[three_mask as usize],
+                    second, TOP_CARD_TABLE[t ^ (1 << second) as usize], 0, 0
+                )
+            }
+        },
+        _ => {
+            // Carré (Quads)
+            let four_mask = sh & sd & sc & ss;
+            if four_mask != 0 {
+                let tc = TOP_CARD_TABLE[four_mask as usize];
+                return HandVal::new(
+                    HandType::Quads as u8,
+                    tc,
+                    TOP_CARD_TABLE[(ranks ^ (1 << tc)) as usize],
+                    0, 0, 0
+                );
+            }
+        
+            // Full House ou Quads
+            let two_mask = ranks ^ (sc ^ sd ^ sh ^ ss);
+            if NBITS_TABLE[two_mask as usize] != n_dups {
+                let three_mask = ((sc & sd) | (sh & ss)) & ((sc & sh) | (sd & ss));
+                let tc = TOP_CARD_TABLE[three_mask as usize];
+                let t = (two_mask | three_mask) ^ (1 << tc);
+                return HandVal::new(
+                    HandType::FullHouse as u8,
+                    tc,
+                    TOP_CARD_TABLE[t as usize],
+                    0, 0, 0
+                );
+            }
+        
+            // Deux Paires
+            let top = TOP_CARD_TABLE[two_mask as usize];
+            let second = TOP_CARD_TABLE[(two_mask ^ (1 << top)) as usize];
+            return HandVal::new(
+                HandType::TwoPair as u8,
+                top,
+                second,
+                TOP_CARD_TABLE[(ranks ^ (1 << top) ^ (1 << second)) as usize],
+                0, 0
+            );
+        }
+        },
     }
 
-    fn count_bits(bits: u64) -> u32 {
-        bits.count_ones()
-    }
-
-    fn is_flush(ranks: u64) -> bool {
-        // Implémentez la logique pour déterminer si c'est un flush
-    }
-
-    fn is_straight(ranks: u64) -> Option<u8> {
-        // Implémentez la logique pour déterminer si c'est un straight
-        // Renvoie Some(top_card) si c'est un straight, sinon None
-    }
-
-    fn top_card(ranks: u64) -> u8 {
-        // Implémentez la logique pour trouver la carte supérieure
-    }
-
-    // Autres fonctions auxiliaires...
 }
