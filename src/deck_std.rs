@@ -1,3 +1,5 @@
+use crate::t_cardmasks::{StdDeckCardMask, STD_DECK_CARD_MASKS_TABLE};
+
 // Constantes
 pub const STD_DECK_N_CARDS: usize = 52;
 pub const STD_DECK_RANK_CHARS: &str = "23456789TJQKA";
@@ -34,10 +36,8 @@ pub const STD_DECK_SUIT_LAST: usize = STD_DECK_SUIT_SPADES;
 // N_RANKMASKS utilisé pour les calculs de masque de bit
 pub const STD_DECK_N_RANKMASKS: usize = 1 << STD_DECK_RANK_COUNT;
 
-// Structure StdDeckCardMask
-pub struct StdDeckCardMask {
-    pub mask: u64,
-}
+
+
 
 impl StdDeckCardMask {
     // Constructeur
@@ -82,35 +82,45 @@ impl StdDeckCardMask {
         self.mask = !self.mask;
     }
 
-    // Réinitialiser le masque
+
+    // Autres méthodes si nécessaires...
+    pub fn get_mask(index: usize) -> &'static Self {
+        &STD_DECK_CARD_MASKS_TABLE[index]
+    }
+
+    // Méthode pour vérifier si une carte est présente dans le masque
+    pub fn card_is_set(&self, index: usize) -> bool {
+        let result = (self.mask & (1 << index)) != 0;
+        // println!("Vérification de la carte à l'indice {}: {}", index, result); //debug
+        result
+    }
+
+    // Méthode pour réinitialiser le masque
     pub fn reset(&mut self) {
         self.mask = 0;
     }
 
-    // Vérifier si le masque est vide
+    // Méthode pour vérifier si le masque est vide
     pub fn is_empty(&self) -> bool {
         self.mask == 0
     }
 
-    // Vérifier si deux masques sont égaux
-    pub fn equals(&self, other: &StdDeckCardMask) -> bool {
+    // Méthode pour vérifier si deux masques sont égaux
+    pub fn equals(&self, other: &Self) -> bool {
         self.mask == other.mask
     }
 
-    //  compte le nombre de cartes dans un masque de cartes
-    pub fn card_is_set(&self, index: usize) -> bool {
-        (self.mask & (1 << index)) != 0
-    }
-
+    // Méthode pour compter le nombre de cartes dans un masque
     pub fn num_cards(&self) -> usize {
         (0..STD_DECK_N_CARDS).filter(|&i| self.card_is_set(i)).count()
     }
 
     // Méthode pour ajouter une carte au masque
     pub fn set(&mut self, card_index: usize) {
+        // println!("Masque avant ajout: {:b}", self.mask); //debug
         self.mask |= 1 << card_index;
+        // println!("Masque après ajout: {:b}", self.mask); //debug
     }
-    // Autres méthodes si nécessaires...
 }
 
 // Structure StdDeck
@@ -153,7 +163,7 @@ impl StdDeck {
 
         Some(Self::make_card(rank, suit))
     }
-    // convertion une chaîne de caractères représentant des cartes en un masque de cartes
+    // Conversion d'une chaîne de caractères représentant des cartes en un masque de cartes
     pub fn string_to_mask(in_string: &str) -> (StdDeckCardMask, usize) {
         let mut out_mask = StdDeckCardMask::new();
         let mut n = 0;
@@ -168,9 +178,12 @@ impl StdDeck {
             if let (Some(rank), Some(suit)) = (rank, suit) {
                 let card = Self::make_card(rank, suit);
                 out_mask.set(card);
+                // println!("Carte ajoutée: Rang = {}, Couleur = {}, Index = {}", rank_char, suit_char, card); //debug
                 n += 1;
             }
         }
+
+        // println!("Masque de cartes généré : {:b}", out_mask.mask); //debug
 
         (out_mask, n)
     }
