@@ -1,8 +1,11 @@
 mod deck;
 mod deck_std;
+mod rule_std;
+mod handval;
 
 use deck_std::*;
-
+use crate::rule_std::*;
+use crate::handval::*;
 
 fn main() {
     // Test de la conversion de carte en chaîne et vice-versa
@@ -58,4 +61,28 @@ fn main() {
 
     let count = mask.num_cards();
     println!("Count from mask: {}", count);
+
+    // Créer un exemple de HandVal
+    // Remplacez les valeurs par celles qui conviennent à votre logique
+    let hand_type = HandType::Straight as u8; // Par exemple, pour un "Straight"
+    let top = 10; // Valeur de la carte supérieure (adaptez selon votre représentation des cartes)
+    let second = 9;
+    let third = 8;
+    let fourth = 7;
+    let fifth = 6;
+
+    let hand_val = HandVal::new(hand_type, top, second, third, fourth, fifth);
+
+    // Afficher le type de main et la valeur de main
+    println!("Hand Type: {:?}", hand_val.get_hand_type());
+    println!("Hand Value: {}", hand_val.to_string());
+
+    // Testez d'autres méthodes si nécessaire
+    // Par exemple, afficher les valeurs des cartes individuelles
+    println!("Top Card: {}", hand_val.top_card());
+    println!("Second Card: {}", hand_val.second_card());
+    println!("Third Card: {}", hand_val.third_card());
+    println!("Fourth Card: {}", hand_val.fourth_card());
+    println!("Fifth Card: {}", hand_val.fifth_card());
+    // ... et ainsi de suite pour les autres cartes ...
 }
