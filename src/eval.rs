@@ -1,6 +1,7 @@
 use crate::handval::HandVal;
 use crate::deck_std::StdDeckCardMask;
 use crate::rules_std::HandType;
+use crate::t_nbits::NBITS_TABLE;
 
 impl Eval {
     pub fn eval_n(cards: &StdDeckCardMask, n_cards: usize) -> HandVal {
@@ -10,7 +11,7 @@ impl Eval {
         let sh = cards.hearts();
 
         let ranks = ss | sc | sd | sh;
-        let n_ranks = Self::count_bits(ranks);
+        let n_ranks = NBITS_TABLE[ranks as usize]; // Utiliser la table nbits importée
         let n_dups = n_cards - n_ranks as usize;
 
         if n_ranks >= 5 {
@@ -53,10 +54,6 @@ impl Eval {
             }
         }
 
-        if n_dups < 3 {
-            // Renvoie immédiatement si aucun full house ou quads n'est possible
-            return HandVal::new(HandType::NoPair as u8, 0, 0, 0, 0, 0);
-        }
 
         // Autre logique pour les mains de poker...
     }

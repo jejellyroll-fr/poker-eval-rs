@@ -3,6 +3,9 @@ mod deck_std;
 mod rules_std;
 mod handval;
 mod t_cardmasks;
+mod t_nbits;
+mod t_straight;
+mod t_topfivecards;
 
 use deck_std::*;
 use crate::rules_std::*;
