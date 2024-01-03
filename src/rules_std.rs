@@ -1,4 +1,7 @@
 use crate::handval::HandVal;
+// Dans rules_std.rs
+use crate::deck_std::STD_DECK_RANK_CHARS;
+
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum HandType {
@@ -16,6 +19,12 @@ pub enum HandType {
 
 pub static HAND_TYPE_NAMES: [&str; 9] = [
     "NoPair", "OnePair", "TwoPair", "Trips", "Straight", "Flush", "FlHouse", "Quads", "StFlush",
+];
+
+// Ajout des noms de type de main rembourrés
+pub static HAND_TYPE_NAMES_PADDED: [&str; 9] = [
+    "NoPair  ", "OnePair ", "TwoPair ", "Trips   ", "Straight", 
+    "Flush   ", "FlHouse ", "Quads   ", "StFlush "
 ];
 
 pub static N_SIG_CARDS: [usize; 9] = [5, 4, 3, 3, 1, 5, 2, 2, 1];
@@ -53,7 +62,11 @@ impl HandVal {
         HandType::from_usize(self.hand_type() as usize)
     }
 
-    pub fn to_string(&self) -> String {
+
+
+
+
+    pub fn StdRules_HandVal_toString(&self) -> String {
         let hand_type = self.get_hand_type();
         let mut result = format!("{} (", HAND_TYPE_NAMES[hand_type.as_usize()]);
 
@@ -65,28 +78,18 @@ impl HandVal {
                 3 => self.fourth_card(),
                 4 => self.fifth_card(),
                 _ => unreachable!(),
-            };
+            } as usize; // Convertissez card_value en usize ici
 
-            let card_char = match card_value {
-                0 => '2', 1 => '3', 2 => '4', 3 => '5', 4 => '6',
-                5 => '7', 6 => '8', 7 => '9', 8 => 'T', 9 => 'J',
-                10 => 'Q', 11 => 'K', 12 => 'A',
-                _ => '?' // pour les valeurs non reconnues
-            };
-
-            result.push(' ');
-            result.push(card_char);
+            let card_char = STD_DECK_RANK_CHARS.chars().nth(card_value).unwrap_or('?');
+            result.push_str(&format!(" {}", card_char));
         }
 
         result.push(')');
         result
     }
 
-
-
-
-    pub fn print(&self) {
-        println!("{}", self.to_string());
+    pub fn StdRules_HandVal_print(&self) {
+        println!("{}", self.StdRules_HandVal_toString());
     }
 
     // Autres méthodes nécessaires pour HandVal...

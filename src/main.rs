@@ -8,81 +8,45 @@ use crate::rules_std::*;
 use crate::handval::*;
 
 fn main() {
-    // Test de la conversion de carte en chaîne et vice-versa
-    let card_index = StdDeck::make_card(STD_DECK_RANK_3, STD_DECK_SUIT_HEARTS);
-    let card_str = StdDeck::card_to_string(card_index);
-    println!("Card String: {}", card_str);
+    let input = "3h4d5s6h7d";
+    println!("Cartes en entrée: {}", input);
 
-    if let Some(index) = StdDeck::string_to_card(&card_str) {
-        println!("Card Index: {}", index);
-        println!("Rank: {}", StdDeck::rank(index));
-        println!("Suit: {}", StdDeck::suit(index));
-    }
-    // Test de la fonction card_to_string
-    let card_str = StdDeck::card_to_string(StdDeck::make_card(STD_DECK_RANK_3, STD_DECK_SUIT_HEARTS));
-    println!("Card String: {}", card_str);
-
-    // Création et test des méthodes de StdDeckCardMask
-    let mut card_mask = StdDeckCardMask::new();
-    
-    // Test de set_spades, set_clubs, set_diamonds, set_hearts
-    card_mask.set_spades(0b101); // Exemple : définit certains masques de pique
-    card_mask.set_clubs(0b110);  // Exemple : définit certains masques de trèfle
-    card_mask.set_diamonds(0b100); // Exemple : définit certains masques de carreau
-    card_mask.set_hearts(0b111); // Exemple : définit certains masques de cœur
-
-    // Test des opérations bitwise
-    let mut other_mask = StdDeckCardMask::new();
-    other_mask.set_spades(0b010);
-    
-    card_mask.or(&other_mask); // Test de l'opération OR
-    println!("OR Operation Result: {}", card_mask.mask);
-    
-    card_mask.and(&other_mask); // Test de l'opération AND
-    println!("AND Operation Result: {}", card_mask.mask);
-    
-    card_mask.xor(&other_mask); // Test de l'opération XOR
-    println!("XOR Operation Result: {}", card_mask.mask);
-
-    card_mask.not(); // Test de l'opération NOT
-    println!("NOT Operation Result: {}", card_mask.mask);
-
-    // Test des méthodes reset, is_empty et equals
-    card_mask.reset();
-    println!("Is Empty after reset: {}", card_mask.is_empty());
-
-    let is_equal = card_mask.equals(&other_mask);
-    println!("Is Equal to other mask: {}", is_equal);
-
-    // Autres tests...
-    let input = "3h4d";
+    // Étape 1: Convertir la chaîne en un masque de cartes
     let (mask, num_cards) = StdDeck::string_to_mask(input);
-    println!("Number of cards: {}", num_cards);
+    println!("Masque de cartes : {:b}, Nombre de cartes : {}", mask.mask, num_cards);
 
-    let count = mask.num_cards();
-    println!("Count from mask: {}", count);
+    // Étape 2: Extraire les rangs des cartes du masque
+    let mut card_ranks = Vec::new();
+    for i in 0..STD_DECK_N_CARDS {
+        if mask.card_is_set(i) {
+            let rank = StdDeck::rank(i);
+            card_ranks.push(rank);
+            println!("Carte trouvée - Index: {}, Rang: {}", i, rank);
+        }
+    }
 
-    // Créer un exemple de HandVal
-    // Par exemple, pour un "Straight"
-    let hand_type = HandType::Straight as u8; 
-    let top = 10; 
-    let second = 9;
-    let third = 8;
-    let fourth = 7;
-    let fifth = 6;
+    // Tri et préparation des rangs
+    card_ranks.sort();
+    card_ranks.reverse(); // Pour un ordre décroissant (si nécessaire)
 
-    let hand_val = HandVal::new(hand_type, top, second, third, fourth, fifth);
+    // Étape 3: Créer un HandVal à partir des rangs extraits
+    let hand_val = HandVal::new(4, // Exemple : type de main, ici Straight
+                                card_ranks[0] as u8,
+                                card_ranks[1] as u8,
+                                card_ranks[2] as u8,
+                                card_ranks[3] as u8,
+                                card_ranks[4] as u8);
 
-    // Afficher le type de main et la valeur de main
-    println!("Hand Type: {:?}", hand_val.get_hand_type());
-    println!("Hand Value: {}", hand_val.to_string());
+    // Étape 4: Afficher les informations de HandVal
+    println!("Type de main : {:?}", hand_val.get_hand_type());
+    println!("Représentation de la main : {}", hand_val.StdRules_HandVal_toString());
 
-    // Testez d'autres méthodes si nécessaire
-    // Par exemple, afficher les valeurs des cartes individuelles
-    println!("Top Card: {}", hand_val.top_card());
-    println!("Second Card: {}", hand_val.second_card());
-    println!("Third Card: {}", hand_val.third_card());
-    println!("Fourth Card: {}", hand_val.fourth_card());
-    println!("Fifth Card: {}", hand_val.fifth_card());
-    // ... et ainsi de suite pour les autres cartes ...
+    // Affichage des valeurs individuelles des cartes
+    println!("Carte supérieure : {}", hand_val.top_card());
+    println!("Deuxième carte : {}", hand_val.second_card());
+    println!("Troisième carte : {}", hand_val.third_card());
+    println!("Quatrième carte : {}", hand_val.fourth_card());
+    println!("Cinquième carte : {}", hand_val.fifth_card());
 }
+
+
