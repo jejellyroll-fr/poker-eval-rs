@@ -1,10 +1,10 @@
 mod deck;
 mod deck_std;
-mod rule_std;
+mod rules_std;
 mod handval;
 
 use deck_std::*;
-use crate::rule_std::*;
+use crate::rules_std::*;
 use crate::handval::*;
 
 fn main() {
@@ -63,9 +63,9 @@ fn main() {
     println!("Count from mask: {}", count);
 
     // Créer un exemple de HandVal
-    // Remplacez les valeurs par celles qui conviennent à votre logique
-    let hand_type = HandType::Straight as u8; // Par exemple, pour un "Straight"
-    let top = 10; // Valeur de la carte supérieure (adaptez selon votre représentation des cartes)
+    // Par exemple, pour un "Straight"
+    let hand_type = HandType::Straight as u8; 
+    let top = 10; 
     let second = 9;
     let third = 8;
     let fourth = 7;

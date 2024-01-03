@@ -20,6 +20,9 @@ pub static HAND_TYPE_NAMES: [&str; 9] = [
 
 pub static N_SIG_CARDS: [usize; 9] = [5, 4, 3, 3, 1, 5, 2, 2, 1];
 
+// Représentation du "Five Straight" pour les straights de basse valeur.
+pub const FIVE_STRAIGHT: u64 = (1 << 14) | (1 << 2) | (1 << 3) | (1 << 4) | (1 << 5);
+
 
 impl HandType {
     // Cette méthode doit retourner un HandType
@@ -54,23 +57,26 @@ impl HandVal {
         let hand_type = self.get_hand_type();
         let mut result = format!("{} (", HAND_TYPE_NAMES[hand_type.as_usize()]);
 
-        // Exemple de logique pour obtenir les cartes significatives
-        if N_SIG_CARDS[hand_type.as_usize()] >= 1 {
-            result.push_str(&format!(" {}", self.top_card())); // Utilisez votre propre logique pour obtenir le caractère de la carte
+        for i in 0..N_SIG_CARDS[hand_type.as_usize()] {
+            let card_value = match i {
+                0 => self.top_card(),
+                1 => self.second_card(),
+                2 => self.third_card(),
+                3 => self.fourth_card(),
+                4 => self.fifth_card(),
+                _ => unreachable!(),
+            };
+
+            let card_char = match card_value {
+                0 => '2', 1 => '3', 2 => '4', 3 => '5', 4 => '6',
+                5 => '7', 6 => '8', 7 => '9', 8 => 'T', 9 => 'J',
+                10 => 'Q', 11 => 'K', 12 => 'A',
+                _ => '?' // pour les valeurs non reconnues
+            };
+
+            result.push(' ');
+            result.push(card_char);
         }
-        if N_SIG_CARDS[hand_type.as_usize()] >= 2 {
-            result.push_str(&format!(" {}", self.second_card()));
-        }
-        if N_SIG_CARDS[hand_type.as_usize()] >= 3 {
-            result.push_str(&format!(" {}", self.third_card()));
-        }
-        if N_SIG_CARDS[hand_type.as_usize()] >= 4 {
-            result.push_str(&format!(" {}", self.fourth_card()));
-        }
-        if N_SIG_CARDS[hand_type.as_usize()] >= 5 {
-            result.push_str(&format!(" {}", self.fifth_card()));
-        }
-        // ... et ainsi de suite pour third_card, fourth_card, fifth_card ...
 
         result.push(')');
         result
