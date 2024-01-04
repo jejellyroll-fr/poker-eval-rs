@@ -1,21 +1,27 @@
-use crate::handval::HandVal;
-use crate::deck_std::StdDeckCardMask;
+use crate::handval::{HandVal, CARD_WIDTH, FIFTH_CARD_MASK} ;
+use crate::t_cardmasks::StdDeckCardMask;
+use crate::deck_std::*;
 use crate::rules_std::HandType;
 use crate::t_nbits::NBITS_TABLE;
 use crate::t_straight::STRAIGHT_TABLE;
 use crate::t_topfivecards::TOP_FIVE_CARDS_TABLE;
 use crate::t_topcard::TOP_CARD_TABLE;
 
+
+pub struct Eval;
+
+
 impl Eval {
     pub fn eval_n(cards: &StdDeckCardMask, n_cards: usize) -> HandVal {
-        let ss = cards.spades();
-        let sc = cards.clubs();
-        let sd = cards.diamonds();
-        let sh = cards.hearts();
+        let ss = 0x1FFF;
+        let sc = 0x1FFF << 13;
+        let sd = 0x1FFF << 26;
+        let sh = 0x1FFF << 39;
     
         let ranks = ss | sc | sd | sh;
         let n_ranks = NBITS_TABLE[ranks as usize];
-        let n_dups = n_cards - n_ranks;
+        let n_dups = n_cards - n_ranks as usize;
+
     
         if n_ranks >= 5 {
             // Vérifier les flushes et les straight flushes
@@ -24,8 +30,11 @@ impl Eval {
                     if let Some(top_card) = STRAIGHT_TABLE.get(*suit as usize) {
                         return HandVal::new(HandType::StFlush as u8, *top_card, 0, 0, 0, 0);
                     } else {
-                        return HandVal::new(HandType::Flush as u8, TOP_FIVE_CARDS_TABLE[*suit as usize], 0, 0, 0, 0);
-                    }
+                        return HandVal::new(
+                            HandType::Flush as u8,
+                            TOP_FIVE_CARDS_TABLE[*suit as usize].try_into().unwrap(),
+                            0, 0, 0, 0
+                        );                    }
                 }
             }
     
@@ -53,20 +62,22 @@ impl Eval {
             // C'est une main sans paire
             HandVal::new(
                 HandType::NoPair as u8,
-                TOP_FIVE_CARDS_TABLE[ranks as usize],
+                TOP_FIVE_CARDS_TABLE[ranks as usize].try_into().unwrap(),
                 0, 0, 0, 0
             )
+            
         },
         1 => {
             // C'est une main avec une paire
             let two_mask = ranks ^ (sc ^ sd ^ sh ^ ss);
             let t = ranks ^ two_mask;
-            let kickers = (TOP_FIVE_CARDS_TABLE[t as usize] >> HandVal_CARD_WIDTH) & !HandVal_FIFTH_CARD_MASK;
+            let kickers = (TOP_FIVE_CARDS_TABLE[t as usize] >> CARD_WIDTH) & !FIFTH_CARD_MASK;
             HandVal::new(
                 HandType::OnePair as u8,
                 TOP_CARD_TABLE[two_mask as usize],
-                kickers, 0, 0, 0
+                kickers.try_into().unwrap(), 0, 0, 0
             )
+            
         },
         2 => {
             // Soit deux paires, soit un brelan
@@ -76,9 +87,10 @@ impl Eval {
                 let t = ranks ^ two_mask;
                 HandVal::new(
                     HandType::TwoPair as u8,
-                    TOP_FIVE_CARDS_TABLE[two_mask as usize],
+                    TOP_FIVE_CARDS_TABLE[two_mask as usize].try_into().unwrap(),
                     TOP_CARD_TABLE[t as usize], 0, 0, 0
                 )
+                
             } else {
                 // Un brelan
                 let three_mask = ((sc & sd) | (sh & ss)) & ((sc & sh) | (sd & ss));
@@ -106,7 +118,7 @@ impl Eval {
         
             // Full House ou Quads
             let two_mask = ranks ^ (sc ^ sd ^ sh ^ ss);
-            if NBITS_TABLE[two_mask as usize] != n_dups {
+            if usize::from(NBITS_TABLE[two_mask as usize]) != n_dups {
                 let three_mask = ((sc & sd) | (sh & ss)) & ((sc & sh) | (sd & ss));
                 let tc = TOP_CARD_TABLE[three_mask as usize];
                 let t = (two_mask | three_mask) ^ (1 << tc);
@@ -129,7 +141,7 @@ impl Eval {
                 0, 0
             );
         }
-        },
+        }
     }
 
 }

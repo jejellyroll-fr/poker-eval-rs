@@ -13,7 +13,7 @@ mod eval;
 use deck_std::*;
 use crate::rules_std::*;
 use crate::handval::*;
-use crate::eval::*; // Assurez-vous d'importer eval pour accéder à eval_n
+use crate::eval::Eval; // Assurez-vous d'importer eval pour accéder à eval_n
 
 fn main() {
     let input = "3h4d5s6h7d";
@@ -30,7 +30,7 @@ fn main() {
 
     // Étape 2: Évaluer la main à partir du masque de cartes
     if num_cards >= 5 {
-        let hand_val = eval_n(&mask, num_cards);
+        let hand_val = Eval::eval_n(&mask, num_cards);
 
         // Étape 3: Afficher les informations de HandVal
         println!("Type de main : {:?}", hand_val.get_hand_type());

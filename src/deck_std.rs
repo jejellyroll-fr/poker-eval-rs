@@ -36,6 +36,10 @@ pub const STD_DECK_SUIT_LAST: usize = STD_DECK_SUIT_SPADES;
 // N_RANKMASKS utilisé pour les calculs de masque de bit
 pub const STD_DECK_N_RANKMASKS: usize = 1 << STD_DECK_RANK_COUNT;
 
+pub const STD_DECK_CARDMASK_SPADES: u64 = 0x1fff; // 13 bits pour les piques
+pub const STD_DECK_CARDMASK_CLUBS: u64 = 0x1fff << 16; // 13 bits pour les trèfles
+pub const STD_DECK_CARDMASK_DIAMONDS: u64 = 0x1fff << 32; // 13 bits pour les carreaux
+pub const STD_DECK_CARDMASK_HEARTS: u64 = 0x1fff << 48; // 13 bits pour les cœurs
 
 
 
@@ -64,6 +68,7 @@ impl StdDeckCardMask {
     pub fn set_hearts(&mut self, ranks: u64) {
         self.mask = (self.mask & !(0x1FFF << 39)) | ((ranks & 0x1FFF) << 39);
     }
+
 
     // Autres opérations sur les masques (exemple: OR, AND, etc.)
     pub fn or(&mut self, other: &StdDeckCardMask) {
@@ -121,6 +126,9 @@ impl StdDeckCardMask {
         self.mask |= 1 << card_index;
         // println!("Masque après ajout: {:b}", self.mask); //debug
     }
+
+
+
 }
 
 // Structure StdDeck
