@@ -52,30 +52,46 @@ impl StdDeckCardMask {
     pub fn spades(&self) -> u16 {
         // Conversion de mask en u16
         // 0x1fff = 0b0001 1111 1111
-        println!("mask: {:b}", self.mask);
-        println!("mask SPADES: {:b}", (STD_DECK_CARDMASK_SPADES));
-        println!("mask & SPADES: {:b}", (self.mask ));
-        println!("mask& SPADES dec: {:b}", ((self.mask))>> 39);
-        let spades_mask = ((self.mask & STD_DECK_CARDMASK_SPADES)) as u16;
-        println!("spades: {:b} (mask: {:b})", spades_mask, self.mask);
+        //println!("mask: {:b}", self.mask);
+        //println!("mask SPADES: {:b}", (STD_DECK_CARDMASK_SPADES));
+        //println!("mask& SPADES dec: {:b}", ((self.mask))>> 39);
+        let spades_mask = ((self.mask )>> 39) as u16;
+        println!("spades: {:b} ", spades_mask);
         spades_mask
     }
 
     pub fn clubs(&self) -> u16 {
-        let clubs_mask = ((self.mask & STD_DECK_CARDMASK_DIAMONDS) >> 25) as u16;
-        println!("clubs: {:b} (mask: {:b})", clubs_mask, self.mask);
+        // Conversion de mask en u16
+        // 0x1fff = 0b0001 1111 1111
+        //println!("mask: {:b}", self.mask);
+        //println!("mask CLUBS: {:b}", (STD_DECK_CARDMASK_CLUBS));  
+        //println!("mask& CLUBS dec: {:b}", ((self.mask))>> 26);
+        let clubs_mask = ((self.mask) >> 26) as u16;
+        println!("clubs: {:b} ", clubs_mask);
         clubs_mask
     }
 
     pub fn diamonds(&self) -> u16 {
-        let diamonds_mask = ((self.mask & STD_DECK_CARDMASK_CLUBS) >> 13) as u16;
-        println!("diamonds: {:b} (mask: {:b})", diamonds_mask, self.mask);
+        // Conversion de mask en u16
+        // 0x1fff = 0b0001 1111 1111
+        //println!("mask: {:b}", self.mask);
+        //println!("mask DIAMONDS: {:b}", (STD_DECK_CARDMASK_DIAMONDS));
+        //println!("mask& DIAMONDS dec: {:b}", ((self.mask))>> 13);
+        let diamonds_mask = ((self.mask) >> 13) as u16;
+        println!("diamonds: {:b}", diamonds_mask);
         diamonds_mask
     }
 
     pub fn hearts(&self) -> u16 {
-        let hearts_mask = (self.mask & STD_DECK_CARDMASK_SPADES) as u16;
-        println!("hearts: {:b} (mask: {:b})", hearts_mask, self.mask);
+        // Conversion de mask en u16
+        // 0x1fff = 0b0001 1111 1111
+        //println!("mask: {:b}", self.mask);
+        //println!("mask HEARTS: {:b}", (STD_DECK_CARDMASK_HEARTS));
+        //println!("mask& HEARTS dec: {:b}", ((self.mask)));
+        let mask_13_bits = 0x1FFF; // 0b0001 1111 1111 1111
+        let hearts_mask = (self.mask & mask_13_bits) as u16;
+        //let hearts_mask = (self.mask) as u16;
+        println!("hearts: {:b}", hearts_mask);
         hearts_mask
     }
 

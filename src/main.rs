@@ -17,44 +17,58 @@ use crate::eval::Eval; // Assurez-vous d'importer eval pour accéder à eval_n
 use t_nbits::NBITS_TABLE;
 
 fn main() {
-    let input = "3h4d5s6h7d";
-    println!("Cartes en entrée: {}", input);
+    let hands = vec![
+        "3h4d5s6h7d",
+        "3h4h5h6h7h",
+        "2h4h5h6h7h",
+        "3h3d5s6h7d",
+        "3h3d5s5h7d",
+        "3h3d3s6h7d",
+        "3h3d3s6h6d",
+        "3h3d3s6h3c",
+    ];
 
-    // Étape 1: Convertir la chaîne en un masque de cartes
-    let (mask, num_cards) = StdDeck::string_to_mask(input);
-    println!("Masque de cartes : {:b}, Nombre de cartes : {}", mask.mask, num_cards);
+    for input in hands {
+        println!("Cartes en entrée: {}", input);
 
-    // Assurez-vous que le nombre de cartes est correct
-    let actual_num_cards = mask.num_cards();
-    println!("Nombre de cartes dans le masque : {}", actual_num_cards);
-    assert_eq!(num_cards, actual_num_cards, "Le nombre de cartes ne correspond pas");
+        // Étape 1: Convertir la chaîne en un masque de cartes
+        let (mask, num_cards) = StdDeck::string_to_mask(input);
+        println!("Masque de cartes : {:b}, Nombre de cartes : {}", mask.mask, num_cards);
 
-    // Afficher le masque de cartes
-    println!("Masque de cartes : {:b}", mask.mask); 
+        // Assurez-vous que le nombre de cartes est correct
+        let actual_num_cards = mask.num_cards();
+        println!("Nombre de cartes dans le masque : {}", actual_num_cards);
+        assert_eq!(num_cards, actual_num_cards, "Le nombre de cartes ne correspond pas");
 
-    // Étape 2: Évaluer la main à partir du masque de cartes
-    if num_cards >= 5 {
-        println!("dans main.rs: nombre de cartes : {:?}", num_cards);
-        println!("dans main.rs: masque de cartes : {:b}", mask.mask);
+        // Afficher le masque de cartes
+        println!("Masque de cartes : {:b}", mask.mask); 
 
+        // Étape 2: Évaluer la main à partir du masque de cartes
+        if num_cards >= 5 {
+            println!("dans main.rs: nombre de cartes : {:?}", num_cards);
+            println!("dans main.rs: masque de cartes : {:b}", mask.mask);
 
+            let hand_val = Eval::eval_n(&mask, num_cards);
+            println!("HandVal : {:?}", hand_val);
 
-        let hand_val = Eval::eval_n(&mask, num_cards);
-        println!("HandVal : {:?}", hand_val);
-        // Étape 3: Afficher les informations de HandVal
-        println!("Type de main : {:?}", hand_val.get_hand_type());
-        println!("Représentation de la main : {}", hand_val.StdRules_HandVal_toString());
+            // Étape 3: Afficher les informations de HandVal
+            println!("Type de main : {:?}", hand_val.get_hand_type());
+            println!("Représentation de la main : {}", hand_val.StdRules_HandVal_toString());
 
-        // Affichage des valeurs individuelles des cartes
-        println!("Carte supérieure : {}", hand_val.top_card());
-        println!("Deuxième carte : {}", hand_val.second_card());
-        println!("Troisième carte : {}", hand_val.third_card());
-        println!("Quatrième carte : {}", hand_val.fourth_card());
-        println!("Cinquième carte : {}", hand_val.fifth_card());
-    } else {
-        println!("Nombre de cartes insuffisant pour évaluer une main.");
+            // Affichage des valeurs individuelles des cartes
+            println!("Carte supérieure : {}", hand_val.top_card());
+            println!("Deuxième carte : {}", hand_val.second_card());
+            println!("Troisième carte : {}", hand_val.third_card());
+            println!("Quatrième carte : {}", hand_val.fourth_card());
+            println!("Cinquième carte : {}", hand_val.fifth_card());
+        } else {
+            println!("Nombre de cartes insuffisant pour évaluer une main.");
+        }
+
+        println!("----------------------");
     }
 }
+
 
 
 // test unitaires
