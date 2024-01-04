@@ -14,6 +14,7 @@ use deck_std::*;
 use crate::rules_std::*;
 use crate::handval::*;
 use crate::eval::Eval; // Assurez-vous d'importer eval pour accéder à eval_n
+use t_nbits::NBITS_TABLE;
 
 fn main() {
     let input = "3h4d5s6h7d";
@@ -28,10 +29,18 @@ fn main() {
     println!("Nombre de cartes dans le masque : {}", actual_num_cards);
     assert_eq!(num_cards, actual_num_cards, "Le nombre de cartes ne correspond pas");
 
+    // Afficher le masque de cartes
+    println!("Masque de cartes : {:b}", mask.mask); 
+
     // Étape 2: Évaluer la main à partir du masque de cartes
     if num_cards >= 5 {
-        let hand_val = Eval::eval_n(&mask, num_cards);
+        println!("dans main.rs: nombre de cartes : {:?}", num_cards);
+        println!("dans main.rs: masque de cartes : {:b}", mask.mask);
 
+
+
+        let hand_val = Eval::eval_n(&mask, num_cards);
+        println!("HandVal : {:?}", hand_val);
         // Étape 3: Afficher les informations de HandVal
         println!("Type de main : {:?}", hand_val.get_hand_type());
         println!("Représentation de la main : {}", hand_val.StdRules_HandVal_toString());
@@ -47,3 +56,18 @@ fn main() {
     }
 }
 
+
+// test unitaires
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_nbits_table() {
+        for (index, &value) in NBITS_TABLE.iter().enumerate() {
+            let expected_nbits = format!("{:b}", index).matches('1').count();
+            assert_eq!(usize::from(value), expected_nbits, "Échec au niveau de l'index {}: attendu {}, obtenu {}", index, expected_nbits, value);
+
+        }
+    }
+}

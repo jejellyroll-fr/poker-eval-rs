@@ -10,20 +10,36 @@ use crate::t_topcard::TOP_CARD_TABLE;
 
 pub struct Eval;
 
+fn count_bits(mut n: u32) -> u32 {
+    let mut count = 0;
+    while n != 0 {
+        count += (n & 1) as u32;
+        n >>= 1;
+    }
+    count
+}
+
 
 impl Eval {
     pub fn eval_n(cards: &StdDeckCardMask, n_cards: usize) -> HandVal {
         let ss = cards.spades();
+        println!("Spades: {:b}", ss);
         let sc = cards.clubs();
+        println!("Clubs: {:b}", sc);
         let sd = cards.diamonds();
+        println!("Diamonds: {:b}", sd);
         let sh = cards.hearts();
-    
+        println!("Hearts: {:b}", sh);
         let ranks = ss | sc | sd | sh;
+        println!("Combined ranks: {:b}", ranks);
         let n_ranks = NBITS_TABLE[ranks as usize];
+        // Utiliser la fonction count_bits
+        //let n_ranks = count_bits(ranks);
         let n_dups = n_cards - n_ranks as usize;
 
-        println!("Rangs combinés: {:b}, Nombre de rangs: {}", ranks, n_ranks);
-        println!("Nombre de duplicatas: {}", n_dups);
+        println!("main: Rangs combinés: {:b}, Nombre de rangs: {}", ranks, n_ranks);
+        println!("main: Nombre de duplicatas: {}", n_dups);
+        println!("main: Spades: {:b}, Clubs: {:b}, Diamonds: {:b}, Hearts: {:b}", ss, sc, sd, sh);
         if n_ranks >= 5 {
             // Vérifier les flushes et les straight flushes
             for suit in [ss, sc, sd, sh].iter() {

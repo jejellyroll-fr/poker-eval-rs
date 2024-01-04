@@ -50,48 +50,35 @@ impl StdDeckCardMask {
     }
 
     pub fn spades(&self) -> u16 {
-        let spades_mask = ((self.mask >> 48) & 0x1FFF) as u16; // 13 bits pour les piques
+        // Conversion de mask en u16
+        // 0x1fff = 0b0001 1111 1111
+        println!("mask: {:b}", self.mask);
+        println!("mask SPADES: {:b}", (STD_DECK_CARDMASK_SPADES));
+        println!("mask & SPADES: {:b}", (self.mask ));
+        println!("mask& SPADES dec: {:b}", ((self.mask))>> 39);
+        let spades_mask = ((self.mask & STD_DECK_CARDMASK_SPADES)) as u16;
         println!("spades: {:b} (mask: {:b})", spades_mask, self.mask);
         spades_mask
-        
     }
 
     pub fn clubs(&self) -> u16 {
-        let clubs_mask = ((self.mask >> 32) & 0x1FFF) as u16; // 13 bits pour les trèfles
+        let clubs_mask = ((self.mask & STD_DECK_CARDMASK_DIAMONDS) >> 25) as u16;
         println!("clubs: {:b} (mask: {:b})", clubs_mask, self.mask);
         clubs_mask
-        
     }
 
     pub fn diamonds(&self) -> u16 {
-        let diamonds_mask = ((self.mask >> 16) & 0x1FFF) as u16; // 13 bits pour les carreaux
+        let diamonds_mask = ((self.mask & STD_DECK_CARDMASK_CLUBS) >> 13) as u16;
         println!("diamonds: {:b} (mask: {:b})", diamonds_mask, self.mask);
         diamonds_mask
-        
     }
 
     pub fn hearts(&self) -> u16 {
-        let hearts_mask = (self.mask & 0x1FFF) as u16; // 13 bits pour les cœurs
+        let hearts_mask = (self.mask & STD_DECK_CARDMASK_SPADES) as u16;
         println!("hearts: {:b} (mask: {:b})", hearts_mask, self.mask);
         hearts_mask
-        
     }
 
-    pub fn set_spades(&mut self, ranks: u16) {
-        self.mask = (self.mask & !(0x1FFF << 48)) | ((ranks as u64) << 48);
-    }
-
-    pub fn set_clubs(&mut self, ranks: u16) {
-        self.mask = (self.mask & !(0x1FFF << 32)) | ((ranks as u64) << 32);
-    }
-
-    pub fn set_diamonds(&mut self, ranks: u16) {
-        self.mask = (self.mask & !(0x1FFF << 16)) | ((ranks as u64) << 16);
-    }
-
-    pub fn set_hearts(&mut self, ranks: u16) {
-        self.mask = (self.mask & !0x1FFF) | ranks as u64;
-    }
 
 
     // Autres opérations sur les masques (exemple: OR, AND, etc.)
@@ -120,7 +107,7 @@ impl StdDeckCardMask {
     // Méthode pour vérifier si une carte est présente dans le masque
     pub fn card_is_set(&self, index: usize) -> bool {
         let result = (self.mask & (1 << index)) != 0;
-        println!("Vérification de la carte à l'indice {}: {}", index, result); //debug
+        //println!("Vérification de la carte à l'indice {}: {}", index, result); //debug
         result
     }
 
