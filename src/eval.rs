@@ -13,10 +13,10 @@ pub struct Eval;
 
 impl Eval {
     pub fn eval_n(cards: &StdDeckCardMask, n_cards: usize) -> HandVal {
-        let ss = 0x1FFF;
-        let sc = 0x1FFF << 13;
-        let sd = 0x1FFF << 26;
-        let sh = 0x1FFF << 39;
+        let ss = cards.spades();
+        let sc = cards.clubs();
+        let sd = cards.diamonds();
+        let sh = cards.hearts();
     
         let ranks = ss | sc | sd | sh;
         let n_ranks = NBITS_TABLE[ranks as usize];
@@ -99,8 +99,11 @@ impl Eval {
                 HandVal::new(
                     HandType::Trips as u8,
                     TOP_CARD_TABLE[three_mask as usize],
-                    second, TOP_CARD_TABLE[t ^ (1 << second) as usize], 0, 0
+                    second,
+                    TOP_CARD_TABLE[(t ^ (1 << second)) as u16 as usize], // Convertir en u16 avant de convertir en usize
+                    0, 0
                 )
+                
             }
         },
         _ => {

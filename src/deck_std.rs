@@ -1,4 +1,4 @@
-use crate::t_cardmasks::{StdDeckCardMask, STD_DECK_CARD_MASKS_TABLE};
+use crate::t_cardmasks::{ StdDeckCardMask, STD_DECK_CARD_MASKS_TABLE};
 
 // Constantes
 pub const STD_DECK_N_CARDS: usize = 52;
@@ -43,30 +43,42 @@ pub const STD_DECK_CARDMASK_HEARTS: u64 = 0x1fff << 48; // 13 bits pour les cœu
 
 
 
+
 impl StdDeckCardMask {
-    // Constructeur
     pub fn new() -> Self {
         StdDeckCardMask { mask: 0 }
     }
 
-    // Méthodes pour définir les masques des couleurs, spades
-    pub fn set_spades(&mut self, ranks: u64) {
-        self.mask = (self.mask & !0x1FFF) | (ranks & 0x1FFF);
+    pub fn spades(&self) -> u16 {
+        ((self.mask >> 48) & 0x1FFF) as u16 // 13 bits pour les piques
     }
 
-    // Méthode pour définir les masques de clubs
-    pub fn set_clubs(&mut self, ranks: u64) {
-        self.mask = (self.mask & !(0x1FFF << 13)) | ((ranks & 0x1FFF) << 13);
+    pub fn clubs(&self) -> u16 {
+        ((self.mask >> 32) & 0x1FFF) as u16 // 13 bits pour les trèfles
     }
 
-    // Méthode pour définir les masques de diamonds
-    pub fn set_diamonds(&mut self, ranks: u64) {
-        self.mask = (self.mask & !(0x1FFF << 26)) | ((ranks & 0x1FFF) << 26);
+    pub fn diamonds(&self) -> u16 {
+        ((self.mask >> 16) & 0x1FFF) as u16 // 13 bits pour les carreaux
     }
 
-    // Méthode pour définir les masques de hearts
-    pub fn set_hearts(&mut self, ranks: u64) {
-        self.mask = (self.mask & !(0x1FFF << 39)) | ((ranks & 0x1FFF) << 39);
+    pub fn hearts(&self) -> u16 {
+        (self.mask & 0x1FFF) as u16 // 13 bits pour les cœurs
+    }
+
+    pub fn set_spades(&mut self, ranks: u16) {
+        self.mask = (self.mask & !(0x1FFF << 48)) | ((ranks as u64) << 48);
+    }
+
+    pub fn set_clubs(&mut self, ranks: u16) {
+        self.mask = (self.mask & !(0x1FFF << 32)) | ((ranks as u64) << 32);
+    }
+
+    pub fn set_diamonds(&mut self, ranks: u16) {
+        self.mask = (self.mask & !(0x1FFF << 16)) | ((ranks as u64) << 16);
+    }
+
+    pub fn set_hearts(&mut self, ranks: u16) {
+        self.mask = (self.mask & !0x1FFF) | ranks as u64;
     }
 
 

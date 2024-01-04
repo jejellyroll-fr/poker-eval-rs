@@ -1,8 +1,6 @@
-// Table StdDeck_cardMasksTable
 pub struct StdDeckCardMask {
     pub mask: u64,
 }
-
 // Implémentation de la table StdDeck_cardMasksTable en Rust
 pub const STD_DECK_CARD_MASKS_TABLE: [StdDeckCardMask; 52] = [
     StdDeckCardMask { mask: 0x0001000000000000 },
