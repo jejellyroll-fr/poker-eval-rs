@@ -50,19 +50,31 @@ impl StdDeckCardMask {
     }
 
     pub fn spades(&self) -> u16 {
-        ((self.mask >> 48) & 0x1FFF) as u16 // 13 bits pour les piques
+        let spades_mask = ((self.mask >> 48) & 0x1FFF) as u16; // 13 bits pour les piques
+        println!("spades: {:b} (mask: {:b})", spades_mask, self.mask);
+        spades_mask
+        
     }
 
     pub fn clubs(&self) -> u16 {
-        ((self.mask >> 32) & 0x1FFF) as u16 // 13 bits pour les trèfles
+        let clubs_mask = ((self.mask >> 32) & 0x1FFF) as u16; // 13 bits pour les trèfles
+        println!("clubs: {:b} (mask: {:b})", clubs_mask, self.mask);
+        clubs_mask
+        
     }
 
     pub fn diamonds(&self) -> u16 {
-        ((self.mask >> 16) & 0x1FFF) as u16 // 13 bits pour les carreaux
+        let diamonds_mask = ((self.mask >> 16) & 0x1FFF) as u16; // 13 bits pour les carreaux
+        println!("diamonds: {:b} (mask: {:b})", diamonds_mask, self.mask);
+        diamonds_mask
+        
     }
 
     pub fn hearts(&self) -> u16 {
-        (self.mask & 0x1FFF) as u16 // 13 bits pour les cœurs
+        let hearts_mask = (self.mask & 0x1FFF) as u16; // 13 bits pour les cœurs
+        println!("hearts: {:b} (mask: {:b})", hearts_mask, self.mask);
+        hearts_mask
+        
     }
 
     pub fn set_spades(&mut self, ranks: u16) {
@@ -108,7 +120,7 @@ impl StdDeckCardMask {
     // Méthode pour vérifier si une carte est présente dans le masque
     pub fn card_is_set(&self, index: usize) -> bool {
         let result = (self.mask & (1 << index)) != 0;
-        // println!("Vérification de la carte à l'indice {}: {}", index, result); //debug
+        println!("Vérification de la carte à l'indice {}: {}", index, result); //debug
         result
     }
 
@@ -134,9 +146,9 @@ impl StdDeckCardMask {
 
     // Méthode pour ajouter une carte au masque
     pub fn set(&mut self, card_index: usize) {
-        // println!("Masque avant ajout: {:b}", self.mask); //debug
+        println!("Masque avant ajout: {:b}", self.mask); //debug
         self.mask |= 1 << card_index;
-        // println!("Masque après ajout: {:b}", self.mask); //debug
+        println!("Masque après ajout: {:b}", self.mask); //debug
     }
 
 
@@ -177,9 +189,11 @@ impl StdDeck {
 
         let rank_char = in_string.chars().next()?;
         let suit_char = in_string.chars().nth(1)?;
+        println!("Carte convertie en chaîne de caractères: {}{}", rank_char, suit_char);
 
         let rank = STD_DECK_RANK_CHARS.find(rank_char.to_ascii_uppercase())?;
         let suit = STD_DECK_SUIT_CHARS.find(suit_char.to_ascii_lowercase())?;
+        println!("Conversion de chaîne en carte: Rang = {}, Couleur = {}", rank_char, suit_char);
 
         Some(Self::make_card(rank, suit))
     }
@@ -198,12 +212,12 @@ impl StdDeck {
             if let (Some(rank), Some(suit)) = (rank, suit) {
                 let card = Self::make_card(rank, suit);
                 out_mask.set(card);
-                // println!("Carte ajoutée: Rang = {}, Couleur = {}, Index = {}", rank_char, suit_char, card); //debug
+                println!("Carte ajoutée: Rang = {}, Couleur = {}, Index = {}", rank_char, suit_char, card); //debug
                 n += 1;
             }
         }
 
-        // println!("Masque de cartes généré : {:b}", out_mask.mask); //debug
+        println!("Masque de cartes généré : {:b}", out_mask.mask); //debug
 
         (out_mask, n)
     }
