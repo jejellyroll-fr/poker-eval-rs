@@ -46,8 +46,15 @@ impl Eval {
                 println!("Évaluation pour le suit: {:b}, flush: {}", *suit, NBITS_TABLE[*suit as usize] >= 5);
                 if NBITS_TABLE[*suit as usize] >= 5 {
                     if let Some(top_card) = STRAIGHT_TABLE.get(*suit as usize) {
-                        let hand_val = HandVal::new(HandType::Straight as u8, *top_card, 0, 0, 0, 0);
-                        println!("Retourne HandVal pour Straight: {:?}", hand_val);
+                        // Les cartes d'une suite sont consécutives, donc pour obtenir les autres cartes, 
+                        // on soustrait simplement 1, 2, 3, et 4 de la carte la plus haute.
+                        let second_card = if *top_card > 0 { *top_card - 1 } else { 0 };
+                        let third_card = if *top_card > 1 { *top_card - 2 } else { 0 };
+                        let fourth_card = if *top_card > 2 { *top_card - 3 } else { 0 };
+                        let fifth_card = if *top_card > 3 { *top_card - 4 } else { 0 };
+                    
+                        let hand_val = HandVal::new(HandType::StFlush as u8, *top_card, second_card, third_card, fourth_card, fifth_card);
+                        println!("Retourne HandVal pour Straight Flush: {:?}", hand_val);
                         return hand_val;
                     } else {
                         let hand_val = HandVal::new(
@@ -63,11 +70,18 @@ impl Eval {
             }
     
             if let Some(top_card) = STRAIGHT_TABLE.get(ranks as usize) {
-                let hand_val = HandVal::new(HandType::Straight as u8, *top_card, 0, 0, 0, 0);
-                println!("Retourne HandVal pour Straight avec top_card {}", *top_card);
+                // Les cartes d'une suite sont consécutives, donc pour obtenir les autres cartes, 
+                // on soustrait simplement 1, 2, 3, et 4 de la carte la plus haute.
+                let second_card = if *top_card > 0 { *top_card - 1 } else { 0 };
+                let third_card = if *top_card > 1 { *top_card - 2 } else { 0 };
+                let fourth_card = if *top_card > 2 { *top_card - 3 } else { 0 };
+                let fifth_card = if *top_card > 3 { *top_card - 4 } else { 0 };
+            
+                let hand_val = HandVal::new(HandType::Straight as u8, *top_card, second_card, third_card, fourth_card, fifth_card);
+                println!("Retourne HandVal pour Straight: {:?}", hand_val);
                 return hand_val;
-                
             }
+            
         }
     
         if n_dups < 3 {
