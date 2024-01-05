@@ -9,12 +9,13 @@ mod t_straight;
 mod t_topfivecards;
 mod t_topcard;
 mod eval;
+mod handval_low;
 
 use deck_std::*;
 use crate::rules_std::*;
 use crate::handval::*;
 use crate::eval::Eval; // Assurez-vous d'importer eval pour accéder à eval_n
-use t_nbits::NBITS_TABLE;
+
 
 fn main() {
     let hands = vec![
@@ -26,6 +27,8 @@ fn main() {
         "3h3d3s6h7d",
         "3h3d3s6h6d",
         "3h3d3s6h3c",
+        "3h3d3s6h2c2d",
+        "3h3d3s6h2c2d3c"
     ];
 
     for input in hands {

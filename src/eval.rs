@@ -1,4 +1,4 @@
-use crate::handval::{HandVal, CARD_WIDTH, FIFTH_CARD_MASK} ;
+use crate::handval::{HandVal} ;
 use crate::t_cardmasks::StdDeckCardMask;
 use crate::deck_std::*;
 use crate::rules_std::HandType;
@@ -23,7 +23,7 @@ fn count_bits(mut n: u32) -> u32 {
 impl Eval {
     fn extract_top_five_cards(suit_mask: u16) -> (u8, u8, u8, u8, u8) {
         let mut cards = Vec::new();
-        let mut mask = suit_mask;
+        let mask = suit_mask;
     
         // Parcourir les bits du masque pour trouver les cartes
         for i in (0..13).rev() {
