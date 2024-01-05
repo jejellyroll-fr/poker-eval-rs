@@ -21,6 +21,30 @@ fn count_bits(mut n: u32) -> u32 {
 
 
 impl Eval {
+    fn extract_top_five_cards(suit_mask: u16) -> (u8, u8, u8, u8, u8) {
+        let mut cards = Vec::new();
+        let mut mask = suit_mask;
+    
+        // Parcourir les bits du masque pour trouver les cartes
+        for i in (0..13).rev() {
+            if mask & (1 << i) != 0 {
+                cards.push(i as u8);
+                if cards.len() == 5 {
+                    break;
+                }
+            }
+        }
+    
+        // Assurez-vous que la liste contient exactement 5 éléments
+        while cards.len() < 5 {
+            cards.push(0);
+        }
+    
+        // Renvoie les valeurs des cinq cartes les plus hautes
+        (cards[0], cards[1], cards[2], cards[3], cards[4])
+    }
+    
+
     pub fn eval_n(cards: &StdDeckCardMask, n_cards: usize) -> HandVal {
         let ss = cards.spades();
         println!("Spades: {:b}", ss);
@@ -43,29 +67,20 @@ impl Eval {
         if n_ranks >= 5 {
             // Vérifier les flushes et les straight flushes
             for suit in [ss, sc, sd, sh].iter() {
-                println!("Évaluation pour le suit: {:b}, flush: {}", *suit, NBITS_TABLE[*suit as usize] >= 5);
                 if NBITS_TABLE[*suit as usize] >= 5 {
-                    if let Some(top_card) = STRAIGHT_TABLE.get(*suit as usize) {
-                        // Les cartes d'une suite sont consécutives, donc pour obtenir les autres cartes, 
-                        // on soustrait simplement 1, 2, 3, et 4 de la carte la plus haute.
-                        let second_card = if *top_card > 0 { *top_card - 1 } else { 0 };
-                        let third_card = if *top_card > 1 { *top_card - 2 } else { 0 };
-                        let fourth_card = if *top_card > 2 { *top_card - 3 } else { 0 };
-                        let fifth_card = if *top_card > 3 { *top_card - 4 } else { 0 };
-                    
-                        let hand_val = HandVal::new(HandType::StFlush as u8, *top_card, second_card, third_card, fourth_card, fifth_card);
+                    // Extraire les cinq cartes les plus hautes
+                    let (top, second, third, fourth, fifth) = Self::extract_top_five_cards(*suit);
+
+                    // Vérifier si les cartes forment une suite
+                    if STRAIGHT_TABLE[(*suit) as usize] != 0 {
+                        let hand_val = HandVal::new(HandType::StFlush as u8, top, second, third, fourth, fifth);
                         println!("Retourne HandVal pour Straight Flush: {:?}", hand_val);
                         return hand_val;
                     } else {
-                        let hand_val = HandVal::new(
-                            HandType::Flush as u8,
-                            TOP_FIVE_CARDS_TABLE[*suit as usize].try_into().unwrap(),
-                            0, 0, 0, 0
-                        );    
+                        let hand_val = HandVal::new(HandType::Flush as u8, top, second, third, fourth, fifth);
                         println!("Retourne HandVal pour Flush: {:?}", hand_val);
                         return hand_val;
                     }
-
                 }
             }
     
