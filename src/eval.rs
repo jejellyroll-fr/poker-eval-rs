@@ -152,13 +152,15 @@ impl Eval {
                 } else {
                     // Un brelan
                     let three_mask = ((sc & sd) | (sh & ss)) & ((sc & sh) | (sd & ss));
-                    let t = ranks ^ three_mask;
-                    let second = TOP_CARD_TABLE[t as usize];
+                    let brelan_card = TOP_CARD_TABLE[three_mask as usize];
+                    let kickers_mask = ranks ^ three_mask; // Supprime les cartes du brelan
+                    let (kicker1, kicker2, _, _, _) = Self::extract_top_five_cards(kickers_mask);
+
                     let hand_val = HandVal::new(
                         HandType::Trips as u8,
-                        TOP_CARD_TABLE[three_mask as usize],
-                        second,
-                        TOP_CARD_TABLE[(t ^ (1 << second)) as u16 as usize], // Convertir en u16 avant de convertir en usize
+                        brelan_card,
+                        kicker1,
+                        kicker2,
                         0, 0
                     );
                     println!("Retourne HandVal pour Trips: {:?}", hand_val);
