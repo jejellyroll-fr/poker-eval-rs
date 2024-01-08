@@ -10,6 +10,8 @@ mod t_topfivecards;
 mod t_topcard;
 mod eval;
 mod handval_low;
+mod eval_low;
+mod t_botcard;
 
 use deck_std::*;
 use crate::rules_std::*;
