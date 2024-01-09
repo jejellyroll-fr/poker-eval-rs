@@ -5,6 +5,20 @@ use crate::t_cardmasks::StdDeckCardMask;
 use crate::t_nbits::NBITS_TABLE;
 
 
+pub fn get_two_pairs(dups: u32) -> (u8, u8) {
+    let pair1 = BOTTOM_CARD_TABLE[dups as usize];
+    let pair2 = BOTTOM_CARD_TABLE[(dups ^ (1 << pair1)) as usize];
+    (pair1, pair2)
+}
+
+pub fn get_full_house(dups: u32) -> (u8, u8) {
+    let three_mask = (dups & (dups - 1)) & dups; // Masque pour trois cartes identiques
+    let three_card = BOTTOM_CARD_TABLE[three_mask as usize];
+    let pair_mask = dups ^ three_mask;
+    let pair_card = BOTTOM_CARD_TABLE[pair_mask as usize];
+    (three_card, pair_card)
+}
+
 pub fn bottom_n_cards(mut cards: u32, how_many: usize) -> u32 {
     let mut retval = 0;
     for i in 0..how_many {
@@ -27,36 +41,44 @@ pub fn std_deck_lowball_eval(cards: &StdDeckCardMask, n_cards: usize) -> LowHand
     let dups = (sc & sd) | (sh & (sc | sd)) | (ss & (sh | sc | sd));
 
     if n_ranks >= 5 {
-        LowHandVal::new(HandType::NoPair as u8, bottom_five_cards_table(ranks), 0, 0, 0, 0)
+        return LowHandVal::new(
+            HandType::NoPair as u8,
+            BOTTOM_CARD_TABLE[ranks as usize],
+            0, 0, 0, 0
+        );
     } else {
         // Suite du code pour gérer les cas avec des paires, brelans, etc.
         // ...
     }
     match n_ranks {
         4 => {
-            let pair_card = bottom_card_table(dups);
+            let pair_card = BOTTOM_CARD_TABLE[dups as usize];
             let kickers = bottom_n_cards(ranks ^ (1 << pair_card), 3);
-            LowHandVal::new(HandType::OnePair as u8, pair_card, kickers, 0, 0, 0)
+            LowHandVal::new(HandType::OnePair as u8, pair_card, kickers.try_into().unwrap(), 0, 0, 0)
         },
         3 => {
-            if n_bits_table(dups) == 2 {
+            // Utilisez NBITS_TABLE pour obtenir le nombre de bits
+            if NBITS_TABLE[dups as usize] == 2 {
                 // Deux paires
-                // ...
+                let (pair1, pair2) = get_two_pairs(dups);
+                let kicker = BOTTOM_CARD_TABLE[(ranks ^ (1 << pair1) ^ (1 << pair2)) as usize];
+                LowHandVal::new(HandType::TwoPair as u8, pair1, pair2, kicker, 0, 0)
             } else {
                 // Un brelan
-                let trips_card = bottom_card_table(dups);
+                let trips_card = BOTTOM_CARD_TABLE[dups as usize];
                 let kickers = bottom_n_cards(ranks ^ (1 << trips_card), 2);
-                LowHandVal::new(HandType::Trips as u8, trips_card, kickers, 0, 0, 0)
+                LowHandVal::new(HandType::Trips as u8, trips_card, kickers.try_into().unwrap(), 0, 0, 0)
             }
         },
         2 => {
-            if n_bits_table(dups) == 2 {
+            if NBITS_TABLE[dups as usize] == 2 {
                 // Full house
-                // ...
+                let (three_of_a_kind, pair) = get_full_house(dups);
+                LowHandVal::new(HandType::FullHouse as u8, three_of_a_kind, pair, 0, 0, 0)
             } else {
                 // Quads
-                let quads_card = bottom_card_table(dups);
-                let kicker = bottom_card_table(ranks ^ (1 << quads_card));
+                let quads_card = BOTTOM_CARD_TABLE[dups as usize];
+                let kicker = BOTTOM_CARD_TABLE[(ranks ^ (1 << quads_card)) as usize];
                 LowHandVal::new(HandType::Quads as u8, quads_card, kicker, 0, 0, 0)
             }
         },
