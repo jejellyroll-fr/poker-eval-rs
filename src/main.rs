@@ -51,7 +51,7 @@ fn main() {
         assert_eq!(num_cards, actual_num_cards, "Le nombre de cartes ne correspond pas");
 
         // Afficher le masque de cartes
-        println!("Masque de cartes : {:b}", mask.mask); 
+        //println!("Masque de cartes : {:b}", mask.mask); 
 
         // Étape 2: Évaluer la main à partir du masque de cartes
         if num_cards >= 5 {
@@ -67,7 +67,7 @@ fn main() {
 
            // Évaluer la main pour low
             let low_hand_val = std_deck_lowball_eval(&mask, num_cards);
-            println!("Low HandVal : {:?}", low_hand_val);
+            //println!("Low HandVal : {:?}", low_hand_val);
             println!("Représentation de la main low : {}", low_hand_val.to_string());
      
 

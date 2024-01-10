@@ -62,7 +62,7 @@ impl Eval {
         let n_dups = n_cards - n_ranks as usize;
         let mut hand_val: Option<HandVal> = None;
         //println!("main: Rangs combinés: {:b}, Nombre de rangs: {}", ranks, n_ranks);
-        println!("main: Nombre de duplicatas 1: {}", n_dups);
+        //println!("main: Nombre de duplicatas 1: {}", n_dups);
         //println!("main: Spades: {:b}, Clubs: {:b}, Diamonds: {:b}, Hearts: {:b}", ss, sc, sd, sh);
         if n_ranks >= 5 {
             // Vérifier les flushes et les straight flushes
@@ -74,11 +74,11 @@ impl Eval {
                     // Vérifier si les cartes forment une suite
                     if STRAIGHT_TABLE[(*suit) as usize] != 0 {
                         let hand_val = HandVal::new(HandType::StFlush as u8, top, second, third, fourth, fifth);
-                        println!("Retourne HandVal pour Straight Flush: {:?}", hand_val);
+                        //println!("Retourne HandVal pour Straight Flush: {:?}", hand_val);
                         return hand_val;
                     } else {
                         let hand_val = HandVal::new(HandType::Flush as u8, top, second, third, fourth, fifth);
-                        println!("Retourne HandVal pour Flush: {:?}", hand_val);
+                        //println!("Retourne HandVal pour Flush: {:?}", hand_val);
                         return hand_val;
                     }
 
@@ -95,7 +95,7 @@ impl Eval {
                 let fifth_card = if top_card > 3 { top_card - 4 } else { 0 };
                 
                 let hand_val = HandVal::new(HandType::Straight as u8, top_card, second_card, third_card, fourth_card, fifth_card);
-                println!("Retourne HandVal pour Straight: {:?}", hand_val);
+                //println!("Retourne HandVal pour Straight: {:?}", hand_val);
                 return hand_val;
             }
             // Vérifier si hand_val est défini et si n_dups < 3
@@ -110,7 +110,7 @@ impl Eval {
 
     
 
-        println!("main: Nombre de duplicatas 1: {}", n_dups);
+        //println!("main: Nombre de duplicatas 1: {}", n_dups);
         match n_dups {
             0 => {
                 // C'est une main sans paire
@@ -120,7 +120,7 @@ impl Eval {
                     HandType::NoPair as u8,
                     top, second, third, fourth, fifth
                 );
-                println!("Retourne HandVal pour NoPair: {:?}", hand_val);
+                //println!("Retourne HandVal pour NoPair: {:?}", hand_val);
                 return hand_val;
             },
             1 => {
@@ -135,7 +135,7 @@ impl Eval {
                     pair_card,
                     kicker1, kicker2, kicker3, 0
                 );
-                println!("Retourne HandVal pour OnePair: {:?}", hand_val);
+                //println!("Retourne HandVal pour OnePair: {:?}", hand_val);
                 return hand_val;
             },
             
@@ -157,7 +157,7 @@ impl Eval {
                         pair1_top_card.min(pair2_top_card), // Plus basse paire
                         kicker, 0, 0
                     );
-                    println!("Retourne HandVal pour TwoPair: {:?}", hand_val);
+                    //println!("Retourne HandVal pour TwoPair: {:?}", hand_val);
                     return hand_val;
                 } else {
                     // Un brelan
@@ -173,7 +173,7 @@ impl Eval {
                         kicker2,
                         0, 0
                     );
-                    println!("Retourne HandVal pour Trips: {:?}", hand_val);
+                    //println!("Retourne HandVal pour Trips: {:?}", hand_val);
                     return hand_val;
                 }
             },
@@ -188,7 +188,7 @@ impl Eval {
                         TOP_CARD_TABLE[(ranks ^ (1 << tc)) as usize],
                         0, 0, 0
                     );
-                    println!("Retourne HandVal pour Quads : {:?}", hand_val);
+                    //println!("Retourne HandVal pour Quads : {:?}", hand_val);
                     return hand_val;
                 }
             
@@ -204,7 +204,7 @@ impl Eval {
                         TOP_CARD_TABLE[t as usize],
                         0, 0, 0
                     );
-                    println!("Retourne HandVal pourFullHouse: {:?}", hand_val);
+                    //println!("Retourne HandVal pourFullHouse: {:?}", hand_val);
                     return hand_val;
                 }
             
@@ -218,7 +218,7 @@ impl Eval {
                     TOP_CARD_TABLE[(ranks ^ (1 << top) ^ (1 << second)) as usize],
                     0, 0
                 );
-                println!("Retourne HandVal pour TwoPair: {:?}", hand_val);
+                //println!("Retourne HandVal pour TwoPair: {:?}", hand_val);
                 return hand_val;
             }
         }

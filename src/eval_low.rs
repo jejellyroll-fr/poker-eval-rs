@@ -36,14 +36,14 @@ pub fn get_full_house(dups: u32) -> (u8, u8) {
     (three_card+1, pair_card+1)
 }
 
-pub fn bottom_n_cards(mut cards: u32, how_many: usize) -> u32 {
-    let mut retval = 0;
-    for i in 0..how_many {
-        let t = BOTTOM_CARD_TABLE[cards as usize] as u32;  // Convertir t en u32
-        retval |= t << (i * CARD_WIDTH as usize);
+pub fn bottom_n_cards(mut cards: u32, how_many: usize) -> Vec<u8> {
+    let mut retval = Vec::new();
+    for _ in 0..how_many {
+        let t = BOTTOM_CARD_TABLE[cards as usize];
+        retval.push(t + 1); // Ajoutez 2 car les cartes commencent à 2, pas à 0
         cards ^= 1 << t;
     }
-    retval+1
+    retval
 }
 
 pub fn std_deck_lowball_eval(cards: &StdDeckCardMask, n_cards: usize) -> LowHandVal {
@@ -64,8 +64,8 @@ pub fn std_deck_lowball_eval(cards: &StdDeckCardMask, n_cards: usize) -> LowHand
     match n_ranks {
         4 => {
             let pair_card = BOTTOM_CARD_TABLE[dups as usize];
-            let (kicker1, kicker2, kicker3, _, _) = extract_top_five_cards_lowball(ranks ^ (1 << pair_card));
-            LowHandVal::new(HandType::OnePair as u8, pair_card+1, kicker1, kicker2, kicker3, 0)
+            let kickers = bottom_n_cards(ranks ^ (1 << pair_card), 3);
+            LowHandVal::new(HandType::OnePair as u8, pair_card + 1, kickers[0], kickers[1], kickers[2], 0)
         },
         3 => {
             if NBITS_TABLE[dups as usize] == 2 {
@@ -89,7 +89,7 @@ pub fn std_deck_lowball_eval(cards: &StdDeckCardMask, n_cards: usize) -> LowHand
                 // Quads
                 let quads_card = BOTTOM_CARD_TABLE[dups as usize];
                 let kicker = BOTTOM_CARD_TABLE[(ranks ^ (1 << quads_card)) as usize];
-                LowHandVal::new(HandType::Quads as u8, quads_card+1, kicker, 0, 0, 0)
+                LowHandVal::new(HandType::Quads as u8, quads_card+1, kicker+1, 0, 0, 0)
             }
         },
         _ => {
