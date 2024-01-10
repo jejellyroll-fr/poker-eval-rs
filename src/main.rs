@@ -12,15 +12,19 @@ mod eval;
 mod handval_low;
 mod eval_low;
 mod t_botcard;
+mod lowball;
 
 use deck_std::*;
 use crate::rules_std::*;
 use crate::handval::*;
-use crate::eval::Eval; // Assurez-vous d'importer eval pour accéder à eval_n
+use crate::eval::Eval; 
+use crate::handval_low::LowHandVal;
+use crate::eval_low::std_deck_lowball_eval;
 
 
 fn main() {
     let hands = vec![
+        "2h4d5s6h7d",
         "3h4d5s6h7d",
         "3h4h5h6h7h",
         "2h4h5h6h7h",
@@ -38,11 +42,11 @@ fn main() {
 
         // Étape 1: Convertir la chaîne en un masque de cartes
         let (mask, num_cards) = StdDeck::string_to_mask(input);
-        println!("Masque de cartes : {:b}, Nombre de cartes : {}", mask.mask, num_cards);
+        //println!("Masque de cartes : {:b}, Nombre de cartes : {}", mask.mask, num_cards);
 
         // Assurez-vous que le nombre de cartes est correct
         let actual_num_cards = mask.num_cards();
-        println!("Nombre de cartes dans le masque : {}", actual_num_cards);
+        //println!("Nombre de cartes dans le masque : {}", actual_num_cards);
         assert_eq!(num_cards, actual_num_cards, "Le nombre de cartes ne correspond pas");
 
         // Afficher le masque de cartes
@@ -50,14 +54,14 @@ fn main() {
 
         // Étape 2: Évaluer la main à partir du masque de cartes
         if num_cards >= 5 {
-            println!("dans main.rs: nombre de cartes : {:?}", num_cards);
-            println!("dans main.rs: masque de cartes : {:b}", mask.mask);
+            //println!("dans main.rs: nombre de cartes : {:?}", num_cards);
+            //println!("dans main.rs: masque de cartes : {:b}", mask.mask);
 
             let hand_val = Eval::eval_n(&mask, num_cards);
-            println!("HandVal : {:?}", hand_val);
+            //println!("HandVal : {:?}", hand_val);
 
             // Étape 3: Afficher les informations de HandVal
-            println!("Type de main : {:?}", hand_val.get_hand_type());
+            //println!("Type de main : {:?}", hand_val.get_hand_type());
             println!("Représentation de la main : {}", hand_val.StdRules_HandVal_toString());
 
             // Affichage des valeurs individuelles des cartes
@@ -66,6 +70,14 @@ fn main() {
             println!("Troisième carte : {}", hand_val.third_card());
             println!("Quatrième carte : {}", hand_val.fourth_card());
             println!("Cinquième carte : {}", hand_val.fifth_card());
+
+            // Évaluer la main pour low
+            let low_hand_val = std_deck_lowball_eval(&mask, num_cards);
+            println!("Low HandVal : {:?}", low_hand_val);
+            println!("Représentation de la main low : {}", low_hand_val.to_lowball_string());
+     
+
+
         } else {
             println!("Nombre de cartes insuffisant pour évaluer une main.");
         }

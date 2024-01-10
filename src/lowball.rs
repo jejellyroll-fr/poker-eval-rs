@@ -1,42 +1,31 @@
-use crate::handval_low::{LOW_HAND_VAL_NOTHING}
-use crate::deck_std::{StdDeck, STD_DECK_RANK_ACE, STD_DECK_RANK_COUNT, STD_DECK_RANK_8, STD_DECK_RANK_7, STD_DECK_RANK_6, STD_DECK_RANK_5, STD_DECK_RANK_4, STD_DECK_RANK_2};
-
+use crate::handval_low::{LowHandVal, LOW_HAND_VAL_NOTHING};
+use crate::deck_std::{StdDeck, STD_DECK_RANK_ACE, STD_DECK_RANK_COUNT, STD_DECK_RANK_8, STD_DECK_RANK_7, STD_DECK_RANK_6, STD_DECK_RANK_5, STD_DECK_RANK_4, STD_DECK_RANK_2, STD_DECK_RANK_CHARS};
+use crate::rules_std::{HandType, HAND_TYPE_NAMES, N_SIG_CARDS};
 
 impl LowHandVal {
-    // ...
-
-    // Méthode pour convertir une carte en son rang en lowball
-    pub fn card_to_lowball_rank(card: u8) -> u8 {
-        if card == STD_DECK_RANK_2 as u8 {
-            STD_DECK_RANK_ACE as u8
-        } else {
-            card - 1
-        }
-    }
-
     pub fn to_lowball_string(&self) -> String {
         let mut result = String::new();
 
         if self.value == LOW_HAND_VAL_NOTHING {
             result.push_str("NoLow");
         } else {
-            let hand_type = self.hand_type();
-            result.push_str(format!("{} (", HandType::from_u8(hand_type).to_string()).as_str());
+            let hand_type = HandType::from_usize(self.hand_type() as usize);
+            let hand_type_str = HAND_TYPE_NAMES[hand_type.as_usize()];
 
-            let sig_cards = HandType::get_num_significant_cards(hand_type);
-            for i in 0..sig_cards {
+            result.push_str(format!("(low) {} (", hand_type_str).as_str());
+
+            for i in 0..N_SIG_CARDS[hand_type.as_usize()] {
                 let card_rank = match i {
-                    0 => Self::card_to_lowball_rank(self.top_card()),
-                    1 => Self::card_to_lowball_rank(self.second_card()),
-                    2 => Self::card_to_lowball_rank(self.third_card()),
-                    3 => Self::card_to_lowball_rank(self.fourth_card()),
-                    4 => Self::card_to_lowball_rank(self.fifth_card()),
+                    0 => self.top_card(),
+                    1 => self.second_card(),
+                    2 => self.third_card(),
+                    3 => self.fourth_card(),
+                    4 => self.fifth_card(),
                     _ => continue,
                 };
-                if i > 0 {
-                    result.push(' ');
-                }
-                result.push(StdDeck::Rank::from_u8(card_rank).to_char());
+                if i > 0 { result.push(' '); }
+                let card_char = STD_DECK_RANK_CHARS.chars().nth(card_rank as usize).unwrap_or('?');
+                result.push(card_char);
             }
             result.push(')');
         }
@@ -44,11 +33,9 @@ impl LowHandVal {
         result
     }
 
-    // Imprimer la représentation lowball de LowHandVal
-    pub fn print_lowball(&self) {
-        println!("{}", self.to_lowball_string());
+    // Cette méthode imprime la représentation de HandVal
+    pub fn low_handval_print(&self) {
+        let hand_string = self.to_lowball_string();
+        println!("{}", hand_string);
     }
 }
-
-// Les implémentations de HandType et StdDeck::Rank doivent être complétées pour gérer les conversions.
-

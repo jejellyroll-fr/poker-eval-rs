@@ -31,7 +31,7 @@ pub const LOW_HAND_VAL_WORST_EIGHT: u32 =
 
 #[derive(Debug)]
 pub struct LowHandVal {
-    value: u32,
+    pub value: u32,
 }
 
 

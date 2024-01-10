@@ -47,23 +47,23 @@ impl Eval {
 
     pub fn eval_n(cards: &StdDeckCardMask, n_cards: usize) -> HandVal {
         let ss = cards.spades();
-        println!("Spades: {:b}", ss);
+        //println!("Spades: {:b}", ss);
         let sc = cards.clubs();
-        println!("Clubs: {:b}", sc);
+        //println!("Clubs: {:b}", sc);
         let sd = cards.diamonds();
-        println!("Diamonds: {:b}", sd);
+        //println!("Diamonds: {:b}", sd);
         let sh = cards.hearts();
-        println!("Hearts: {:b}", sh);
+        //println!("Hearts: {:b}", sh);
         let ranks = ss | sc | sd | sh;
-        println!("Combined ranks: {:b}", ranks);
+        //println!("Combined ranks: {:b}", ranks);
         let n_ranks = NBITS_TABLE[ranks as usize];
         // Utiliser la fonction count_bits
         //let n_ranks = count_bits(ranks);
         let n_dups = n_cards - n_ranks as usize;
-
-        println!("main: Rangs combinés: {:b}, Nombre de rangs: {}", ranks, n_ranks);
-        println!("main: Nombre de duplicatas: {}", n_dups);
-        println!("main: Spades: {:b}, Clubs: {:b}, Diamonds: {:b}, Hearts: {:b}", ss, sc, sd, sh);
+        let mut hand_val: Option<HandVal> = None;
+        //println!("main: Rangs combinés: {:b}, Nombre de rangs: {}", ranks, n_ranks);
+        println!("main: Nombre de duplicatas 1: {}", n_dups);
+        //println!("main: Spades: {:b}, Clubs: {:b}, Diamonds: {:b}, Hearts: {:b}", ss, sc, sd, sh);
         if n_ranks >= 5 {
             // Vérifier les flushes et les straight flushes
             for suit in [ss, sc, sd, sh].iter() {
@@ -81,37 +81,47 @@ impl Eval {
                         println!("Retourne HandVal pour Flush: {:?}", hand_val);
                         return hand_val;
                     }
+
                 }
+
             }
-    
-            if let Some(top_card) = STRAIGHT_TABLE.get(ranks as usize) {
-                // Les cartes d'une suite sont consécutives, donc pour obtenir les autres cartes, 
-                // on soustrait simplement 1, 2, 3, et 4 de la carte la plus haute.
-                let second_card = if *top_card > 0 { *top_card - 1 } else { 0 };
-                let third_card = if *top_card > 1 { *top_card - 2 } else { 0 };
-                let fourth_card = if *top_card > 2 { *top_card - 3 } else { 0 };
-                let fifth_card = if *top_card > 3 { *top_card - 4 } else { 0 };
-            
-                let hand_val = HandVal::new(HandType::Straight as u8, *top_card, second_card, third_card, fourth_card, fifth_card);
+            let st = STRAIGHT_TABLE[ranks as usize];
+            if st != 0 {
+                // Suite trouvée
+                let top_card = st;
+                let second_card = if top_card > 0 { top_card - 1 } else { 0 };
+                let third_card = if top_card > 1 { top_card - 2 } else { 0 };
+                let fourth_card = if top_card > 2 { top_card - 3 } else { 0 };
+                let fifth_card = if top_card > 3 { top_card - 4 } else { 0 };
+                
+                let hand_val = HandVal::new(HandType::Straight as u8, top_card, second_card, third_card, fourth_card, fifth_card);
                 println!("Retourne HandVal pour Straight: {:?}", hand_val);
                 return hand_val;
             }
-            
+            // Vérifier si hand_val est défini et si n_dups < 3
+            if let Some(val) = hand_val {
+                if n_dups < 3 {
+                    return val;
+                }
+            }
         }
+
+            
+
     
 
-
+        println!("main: Nombre de duplicatas 1: {}", n_dups);
         match n_dups {
             0 => {
                 // C'est une main sans paire
+                let (top, second, third, fourth, fifth) = Self::extract_top_five_cards(ranks);
+                
                 let hand_val = HandVal::new(
                     HandType::NoPair as u8,
-                    TOP_FIVE_CARDS_TABLE[ranks as usize].try_into().unwrap(),
-                    0, 0, 0, 0
+                    top, second, third, fourth, fifth
                 );
                 println!("Retourne HandVal pour NoPair: {:?}", hand_val);
                 return hand_val;
-                
             },
             1 => {
                 // C'est une main avec une paire
@@ -211,7 +221,7 @@ impl Eval {
                 println!("Retourne HandVal pour TwoPair: {:?}", hand_val);
                 return hand_val;
             }
-            }
         }
+    }
 
 }
