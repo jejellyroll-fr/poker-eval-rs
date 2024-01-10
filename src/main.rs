@@ -34,7 +34,8 @@ fn main() {
         "3h3d3s6h6d",
         "3h3d3s6h3c",
         "3h3d3s6h2c2d",
-        "3h3d3s6h2c2d3c"
+        "3h3d3s6h2c2d3c",
+        "3h3d5s5h7d2c4d"
     ];
 
     for input in hands {
@@ -64,17 +65,10 @@ fn main() {
             //println!("Type de main : {:?}", hand_val.get_hand_type());
             println!("Représentation de la main : {}", hand_val.StdRules_HandVal_toString());
 
-            // Affichage des valeurs individuelles des cartes
-            println!("Carte supérieure : {}", hand_val.top_card());
-            println!("Deuxième carte : {}", hand_val.second_card());
-            println!("Troisième carte : {}", hand_val.third_card());
-            println!("Quatrième carte : {}", hand_val.fourth_card());
-            println!("Cinquième carte : {}", hand_val.fifth_card());
-
-            // Évaluer la main pour low
+           // Évaluer la main pour low
             let low_hand_val = std_deck_lowball_eval(&mask, num_cards);
             println!("Low HandVal : {:?}", low_hand_val);
-            println!("Représentation de la main low : {}", low_hand_val.to_lowball_string());
+            println!("Représentation de la main low : {}", low_hand_val.to_string());
      
 
 

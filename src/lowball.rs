@@ -7,12 +7,12 @@ impl LowHandVal {
         let mut result = String::new();
 
         if self.value == LOW_HAND_VAL_NOTHING {
-            result.push_str("NoLow");
+            result.push_str("No Low");
         } else {
             let hand_type = HandType::from_usize(self.hand_type() as usize);
             let hand_type_str = HAND_TYPE_NAMES[hand_type.as_usize()];
 
-            result.push_str(format!("(low) {} (", hand_type_str).as_str());
+            result.push_str(format!(" {} (", hand_type_str).as_str());
 
             for i in 0..N_SIG_CARDS[hand_type.as_usize()] {
                 let card_rank = match i {

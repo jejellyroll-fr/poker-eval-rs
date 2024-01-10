@@ -36,7 +36,7 @@ pub struct LowHandVal {
 
 
 impl LowHandVal {
-    // Constructeur
+
     pub fn new(hand_type: u8, top: u8, second: u8, third: u8, fourth: u8, fifth: u8) -> Self {
         let mut value = ((hand_type as u32) << HANDTYPE_SHIFT) & HANDTYPE_MASK;
         value |= ((top as u32) << TOP_CARD_SHIFT) & TOP_CARD_MASK;
@@ -74,9 +74,24 @@ impl LowHandVal {
 
     // Convertir en chaîne de caractères (représentation lisible)
     pub fn to_string(&self) -> String {
+        let hand_type_str = match self.hand_type() {
+            0 => "Low NoPair",
+            1 => "No Low OnePair",
+            2 => "No Low TwoPair",
+            3 => "No Low Trips",
+            4 => "No Low Straight",
+            5 => "No Low Flush",
+            6 => "No Low FullHouse",
+            7 => "No Low Quads",
+            8 => "No Low StFlush",
+            _ => "Unknown",
+        };
+        // Ajouter des println! pour déboguer les valeurs extraites
+        //println!("LowHandVal to_string: HandType: {}, TopCard: {}, SecondCard: {}, ThirdCard: {}, FourthCard: {}, FifthCard: {}", hand_type_str, self.top_card(), self.second_card(), self.third_card(), self.fourth_card(), self.fifth_card());
+
         format!(
-            "HandType: {}, TopCard: {}, SecondCard: {}, ThirdCard: {}, FourthCard: {}, FifthCard: {}",
-            self.hand_type(),
+            "{} ( {} {} {} {} {})",
+            hand_type_str,
             self.top_card(),
             self.second_card(),
             self.third_card(),
@@ -93,14 +108,17 @@ impl LowHandVal {
 
     // Méthode pour faire la rotation des rangs (pour la gestion des As en Omaha Hi/Lo)
     pub fn rotate_ranks(ranks: u32) -> u32 {
-        ((ranks & !(1 << STD_DECK_RANK_ACE as u32)) << 1) | ((ranks >> STD_DECK_RANK_ACE as u32) & 0x01)
+        let ace_bit = ranks & (1 << STD_DECK_RANK_ACE);
+        let without_ace = ranks & !ace_bit; 
+        let shifted = without_ace << 1;
+        shifted | ace_bit
     }
 
     // Méthode pour ajouter un joker fictif dans les rangs (si nécessaire)
-    pub fn jokerfy_ranks(ranks: &mut u32) {
-        for j in 0..STD_DECK_RANK_COUNT as u32 {
-            if (*ranks & (1 << j)) == 0 {
-                *ranks |= 1 << j;
+    pub fn jokerfy_ranks(mut ranks: u32) {
+        for j in 0..STD_DECK_RANK_COUNT {
+            if ranks & (1 << j) == 0 {
+                ranks |= 1 << j;
             }
         }
     }
