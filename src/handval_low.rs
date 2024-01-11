@@ -54,22 +54,22 @@ impl LowHandVal {
     }
 
     pub fn top_card(&self) -> u8 {
-        ((self.value & TOP_CARD_MASK) >> TOP_CARD_SHIFT) as u8
+        ((self.value & TOP_CARD_MASK) >> TOP_CARD_SHIFT) as u8 
     }
     pub fn second_card(&self) -> u8 {
-        ((self.value & SECOND_CARD_MASK) >> SECOND_CARD_SHIFT) as u8
+        ((self.value & SECOND_CARD_MASK) >> SECOND_CARD_SHIFT) as u8 
     }
 
     pub fn third_card(&self) -> u8 {
-        ((self.value & THIRD_CARD_MASK) >> THIRD_CARD_SHIFT) as u8
+        ((self.value & THIRD_CARD_MASK) >> THIRD_CARD_SHIFT) as u8 
     }
 
     pub fn fourth_card(&self) -> u8 {
-        ((self.value & FOURTH_CARD_MASK) >> FOURTH_CARD_SHIFT) as u8
+        ((self.value & FOURTH_CARD_MASK) >> FOURTH_CARD_SHIFT) as u8 
     }
 
     pub fn fifth_card(&self) -> u8 {
-        ((self.value & FIFTH_CARD_MASK) >> FIFTH_CARD_SHIFT) as u8
+        ((self.value & FIFTH_CARD_MASK) >> FIFTH_CARD_SHIFT) as u8 
     }
 
     // Convertir en chaîne de caractères (représentation lisible)
