@@ -1,41 +1,62 @@
 use crate::handval_low::{LowHandVal, LOW_HAND_VAL_NOTHING};
 use crate::deck_std::{StdDeck, STD_DECK_RANK_ACE, STD_DECK_RANK_COUNT, STD_DECK_RANK_8, STD_DECK_RANK_7, STD_DECK_RANK_6, STD_DECK_RANK_5, STD_DECK_RANK_4, STD_DECK_RANK_2, STD_DECK_RANK_CHARS};
 use crate::rules_std::{HandType, HAND_TYPE_NAMES, N_SIG_CARDS};
+use crate::t_cardmasks::StdDeckCardMask; // Importez StdDeckCardMask
+use crate::t_straight::STRAIGHT_TABLE; // Importez STRAIGHT_TABLE
+use crate::eval_low::extract_top_five_cards_lowball;
+
+pub fn ace_to_five_lowball_eval(cards: &StdDeckCardMask) -> LowHandVal {
+    // Convertissez les valeurs retournées par les méthodes spades, clubs, diamonds et hearts en u32
+    let ss = cards.spades() as u32;
+    let sc = cards.clubs() as u32;
+    let sd = cards.diamonds() as u32;
+    let sh = cards.hearts() as u32;
+
+    let ranks = ss | sc | sd | sh;
+
+    // Évaluez la main en ignorant les suites et les flushes
+    let (top, second, third, fourth, fifth) = extract_top_five_cards_lowball(ranks as u32);
+    LowHandVal::new(HandType::NoPair as u8, top+1, second+1, third+1, fourth+1, fifth+1)
+}
+
+pub fn deuce_to_seven_lowball_eval(cards: &StdDeckCardMask) -> LowHandVal {
+    // Convertissez les valeurs retournées par les méthodes spades, clubs, diamonds et hearts en u32
+    let ss = cards.spades() as u32;
+    let sc = cards.clubs() as u32;
+    let sd = cards.diamonds() as u32;
+    let sh = cards.hearts() as u32;
+
+    let ranks = ss | sc | sd | sh;
+
+    // Vérifiez les suites et les flushes
+    if ss == ranks || sc == ranks || sd == ranks || sh == ranks {
+        // C'est une flush
+        return LowHandVal::new(HandType::Flush as u8, 0, 0, 0, 0, 0);
+    }
+
+    if let Some(top_card) = STRAIGHT_TABLE.get(ranks as usize) {
+        // C'est une suite
+        return LowHandVal::new(HandType::Straight as u8, *top_card, 0, 0, 0, 0);
+    }
+
+    // Évaluez la main avec les As étant haut
+    let (top, second, third, fourth, fifth) = extract_top_five_cards_lowball(ranks as u32);
+    LowHandVal::new(HandType::NoPair as u8, top+1, second, third, fourth, fifth)
+}    
+
 
 impl LowHandVal {
-    pub fn to_lowball_string(&self) -> String {
-        let mut result = String::new();
 
-        if self.value == LOW_HAND_VAL_NOTHING {
-            result.push_str("No Low");
-        } else {
-            let hand_type = HandType::from_usize(self.hand_type() as usize);
-            let hand_type_str = HAND_TYPE_NAMES[hand_type.as_usize()];
 
-            result.push_str(format!(" {} (", hand_type_str).as_str());
 
-            for i in 0..N_SIG_CARDS[hand_type.as_usize()] {
-                let card_rank = match i {
-                    0 => self.top_card(),
-                    1 => self.second_card(),
-                    2 => self.third_card(),
-                    3 => self.fourth_card(),
-                    4 => self.fifth_card(),
-                    _ => continue,
-                };
-                if i > 0 { result.push(' '); }
-                let card_char = STD_DECK_RANK_CHARS.chars().nth(card_rank as usize).unwrap_or('?');
-                result.push(card_char);
-            }
-            result.push(')');
-        }
-
-        result
+    // Cette méthode imprime la représentation de HandVal pour Ace-to-Five Lowball
+    pub fn print_ace_to_five_lowball(&self) {
+        println!("{}", self.to_string());
     }
 
-    // Cette méthode imprime la représentation de HandVal
-    pub fn low_handval_print(&self) {
-        let hand_string = self.to_lowball_string();
-        println!("{}", hand_string);
+    // Cette méthode imprime la représentation de HandVal pour Deuce-to-Seven Lowball
+    pub fn print_deuce_to_seven_lowball(&self) {
+        println!("{}", self.to_string());
     }
 }
+

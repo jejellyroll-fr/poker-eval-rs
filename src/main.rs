@@ -20,6 +20,7 @@ use crate::handval::*;
 use crate::eval::Eval; 
 use crate::handval_low::LowHandVal;
 use crate::eval_low::std_deck_lowball_eval;
+use crate::lowball::*;
 
 
 fn main() {
@@ -69,7 +70,9 @@ fn main() {
             let low_hand_val = std_deck_lowball_eval(&mask, num_cards);
             //println!("Low HandVal : {:?}", low_hand_val);
             println!("Représentation de la main low : {}", low_hand_val.to_string());
-     
+
+            //let low_hand_val = ace_to_five_lowball_eval(&mask); // Utilisez 'mask' ici
+            //low_hand_val.print_ace_to_five_lowball();  
 
 
         } else {

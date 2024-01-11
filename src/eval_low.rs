@@ -5,7 +5,7 @@ use crate::t_cardmasks::StdDeckCardMask;
 use crate::t_nbits::NBITS_TABLE;
 
 
-fn extract_top_five_cards_lowball(cards: u32) -> (u8, u8, u8, u8, u8) {
+pub fn extract_top_five_cards_lowball(cards: u32) -> (u8, u8, u8, u8, u8) {
     let mut extracted_cards = [0u8; 5];
     let mut count = 0;
 
@@ -22,7 +22,7 @@ fn extract_top_five_cards_lowball(cards: u32) -> (u8, u8, u8, u8, u8) {
     (extracted_cards[0], extracted_cards[1], extracted_cards[2], extracted_cards[3], extracted_cards[4])
 }
 
-fn get_trips(dups: u32, ranks: u32) -> (u8, u8, u8) {
+pub fn get_trips(dups: u32, ranks: u32) -> (u8, u8, u8) {
     let trips_card = BOTTOM_CARD_TABLE[dups as usize];
     let mut kickers = Vec::new();
 
@@ -98,9 +98,9 @@ pub fn std_deck_lowball_eval(cards: &StdDeckCardMask, n_cards: usize) -> LowHand
     let n_ranks = NBITS_TABLE[ranks as usize];
     let dups = (sc & sd) | (sh & (sc | sd)) | (ss & (sh | sc | sd));
 
-    println!("Rangs combinés: {:b}, Nombre de rangs: {}", ranks, n_ranks);
-    println!("Nombre de duplicatas 1: {}", dups);
-    println!("Spades: {:b}, Clubs: {:b}, Diamonds: {:b}, Hearts: {:b}", ss, sc, sd, sh);
+    //println!("Rangs combinés: {:b}, Nombre de rangs: {}", ranks, n_ranks);
+    //println!("Nombre de duplicatas 1: {}", dups);
+    //println!("Spades: {:b}, Clubs: {:b}, Diamonds: {:b}, Hearts: {:b}", ss, sc, sd, sh);
 
     if n_ranks >= 5 {
         let (top, second, third, fourth, fifth) = extract_top_five_cards_lowball(ranks);
