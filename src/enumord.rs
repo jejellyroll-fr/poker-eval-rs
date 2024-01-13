@@ -54,6 +54,57 @@ impl EnumOrdering {
         }
     }
 
+    // Méthode pour calculer le nombre d'entrées dans le tableau hist[] pour les jeux high/low
+    fn enum_ordering_nentries_hilo(nplayers: usize) -> Option<usize> {
+        match Self::enum_ordering_nbits(nplayers) {
+            Some(nbits) if nplayers <= Self::ENUM_ORDERING_MAXPLAYERS_HILO => {
+                Some(1 << (2 * nplayers * nbits as usize))
+            }
+            _ => None // Retourne None si le nombre de joueurs dépasse la limite ou si nbits est invalide
+        }
+    }
+
+
+    // Méthode pour calculer le nombre de bits jusqu'au début du champ de bits pour le joueur k
+    fn enum_ordering_shift_k(nplayers: usize, k: usize) -> Option<usize> {
+        if let Some(nbits) = Self::enum_ordering_nbits(nplayers) {
+            if k < nplayers {
+                Some((nplayers - k - 1) * nbits as usize)
+            } else {
+                None // Retourne None si k est hors des limites
+            }
+        } else {
+            None // Retourne None si enum_ordering_nbits retourne une valeur invalide
+        }
+    }
+
+    // Méthode pour calculer le nombre de bits jusqu'au début du champ de bits pour la main haute du joueur k
+    fn enum_ordering_shift_hilo_k_hi(nplayers: usize, k: usize) -> Option<usize> {
+        if let Some(nbits) = Self::enum_ordering_nbits(nplayers) {
+            if k < nplayers {
+                Some((2 * nplayers - k - 1) * nbits as usize)
+            } else {
+                None // Retourne None si k est hors des limites
+            }
+        } else {
+            None // Retourne None si enum_ordering_nbits retourne une valeur invalide
+        }
+    }
+
+
+    // Méthode pour calculer le nombre de bits jusqu'au début du champ de bits pour la main basse du joueur k
+    fn enum_ordering_shift_hilo_k_lo(nplayers: usize, k: usize) -> Option<usize> {
+        if let Some(nbits) = Self::enum_ordering_nbits(nplayers) {
+            if k < nplayers {
+                Some((nplayers - k - 1) * nbits as usize)
+            } else {
+                None // Retourne None si k est hors des limites
+            }
+        } else {
+            None // Retourne None si enum_ordering_nbits retourne une valeur invalide
+        }
+    }
+
     // Fonction pour encoder les rangs des joueurs
     fn enum_ordering_encode(nplayers: usize, ranks: &[usize]) -> u32 {
         let nbits = enum_ordering_nbits(nplayers) as usize;
