@@ -13,6 +13,7 @@ mod handval_low;
 mod eval_low;
 mod t_botcard;
 mod lowball;
+mod enumord;
 
 use deck_std::*;
 use crate::rules_std::*;
@@ -97,5 +98,14 @@ mod tests {
             assert_eq!(usize::from(value), expected_nbits, "Échec au niveau de l'index {}: attendu {}, obtenu {}", index, expected_nbits, value);
 
         }
+    }
+
+    #[test]
+    fn test_enum_ordering_rank() {
+        let mut hands = [HandVal(5), HandVal(3), HandVal(8)]; // Exemple de valeurs
+        let mut ranks = [0; 3];
+        enum_ordering_rank(&mut hands, HandVal(0), 3, &mut ranks, false);
+
+        assert_eq!(ranks, [1, 0, 2]); // Résultats attendus
     }
 }

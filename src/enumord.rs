@@ -1,5 +1,6 @@
 // Importations nécessaires
 use std::cmp::Ordering;
+use crate::HandVal;
 
 // Constantes pour la limite des joueurs
 const ENUM_ORDERING_MAXPLAYERS: usize = 7;
@@ -55,27 +56,33 @@ impl Eq for EnumRankelem {}
 pub fn enum_ordering_rank(hands: &mut [HandVal], noqual: HandVal, nplayers: usize, ranks: &mut [i32], reverse: bool) {
     // Création d'une structure intermédiaire pour le tri
     let mut elems: Vec<(usize, HandVal)> = hands.iter().enumerate()
-        .map(|(index, &handval)| (index, if reverse { -handval } else { handval }))
+        .map(|(index, handval)| (index, *handval))
         .collect();
 
-    // Tri des mains en fonction de leur valeur
-    elems.sort_by(|a, b| a.1.cmp(&b.1));
+    // Tri des mains en fonction de leur valeur, en ordre croissant ou décroissant
+    if reverse {
+        elems.sort_by(|a, b| b.1.value.cmp(&a.1.value)); // Tri en ordre décroissant si reverse est vrai
+    } else {
+        elems.sort_by(|a, b| a.1.value.cmp(&b.1.value)); // Tri en ordre croissant sinon
+    }
 
     // Attribuer des rangs en fonction du tri
     let mut currank = 0;
-    let mut lastval = elems[0].1;
-    for (index, handval) in elems {
-        if handval != lastval {
+    let mut lastval = elems[0].1.value;
+    for &(index, ref handval) in &elems {
+        if handval.value != lastval {
             currank += 1;
-            lastval = handval;
+            lastval = handval.value;
         }
-        if handval == noqual {
+        if handval.value == noqual.value {
             ranks[index] = nplayers as i32; // Rang pour non-qualification
         } else {
             ranks[index] = currank;
         }
     }
 }
+
+
 
 // Fonction pour encoder les rangs en un seul entier
 fn enum_ordering_encode(nplayers: usize, ranks: &[i32]) -> i32 {
@@ -104,16 +111,17 @@ fn enum_ordering_encode_hilo(nplayers: usize, hiranks: &[i32], loranks: &[i32]) 
 // Fonction pour décoder le rang d'un joueur à partir de l'encodage
 fn enum_ordering_decode_k(encoding: i32, nplayers: usize, k: usize) -> i32 {
     let nbits = ENUM_NBITS[nplayers];
-    let shift = (nplayers - k - 1) * nbits;
-    (encoding >> shift) & !(~0 << nbits)
+    let shift = (nplayers - k - 1) * (nbits as usize);
+    (encoding >> shift) & ((1 << nbits) - 1)
 }
+
 
 // Fonction pour calculer le nombre d'entrées dans l'histogramme
 fn enum_ordering_nentries(nplayers: usize) -> i32 {
     if nplayers > ENUM_ORDERING_MAXPLAYERS || ENUM_NBITS[nplayers] < 0 {
         -1
     } else {
-        1 << (nplayers * ENUM_NBITS[nplayers])
+        1 << (nplayers * (ENUM_NBITS[nplayers] as usize))
     }
 }
 
@@ -122,7 +130,7 @@ fn enum_ordering_nentries_hilo(nplayers: usize) -> i32 {
     if nplayers > ENUM_ORDERING_MAXPLAYERS_HILO || ENUM_NBITS[nplayers] < 0 {
         -1
     } else {
-        1 << (2 * nplayers * ENUM_NBITS[nplayers])
+        1 << (2 * nplayers * (ENUM_NBITS[nplayers] as usize))
     }
 }
 
