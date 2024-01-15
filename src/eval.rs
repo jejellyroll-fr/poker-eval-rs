@@ -4,7 +4,6 @@ use crate::deck_std::*;
 use crate::rules_std::HandType;
 use crate::t_nbits::NBITS_TABLE;
 use crate::t_straight::STRAIGHT_TABLE;
-use crate::t_topfivecards::TOP_FIVE_CARDS_TABLE;
 use crate::t_topcard::TOP_CARD_TABLE;
 
 
@@ -60,7 +59,7 @@ impl Eval {
         // Utiliser la fonction count_bits
         //let n_ranks = count_bits(ranks);
         let n_dups = n_cards - n_ranks as usize;
-        let mut hand_val: Option<HandVal> = None;
+        let hand_val: Option<HandVal> = None;
         //println!("main: Rangs combinés: {:b}, Nombre de rangs: {}", ranks, n_ranks);
         //println!("main: Nombre de duplicatas 1: {}", n_dups);
         //println!("main: Spades: {:b}, Clubs: {:b}, Diamonds: {:b}, Hearts: {:b}", ss, sc, sd, sh);

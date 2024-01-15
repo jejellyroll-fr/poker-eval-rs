@@ -19,7 +19,6 @@ use deck_std::*;
 use crate::rules_std::*;
 use crate::handval::*;
 use crate::eval::Eval; 
-use crate::handval_low::LowHandVal;
 use crate::eval_low::std_deck_lowball_eval;
 use crate::lowball::*;
 

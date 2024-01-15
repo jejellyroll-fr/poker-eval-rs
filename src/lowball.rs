@@ -1,8 +1,8 @@
-use crate::handval_low::{LowHandVal, LOW_HAND_VAL_NOTHING};
-use crate::deck_std::{StdDeck, STD_DECK_RANK_ACE, STD_DECK_RANK_COUNT, STD_DECK_RANK_8, STD_DECK_RANK_7, STD_DECK_RANK_6, STD_DECK_RANK_5, STD_DECK_RANK_4, STD_DECK_RANK_2, STD_DECK_RANK_CHARS};
-use crate::rules_std::{HandType, HAND_TYPE_NAMES, N_SIG_CARDS};
-use crate::t_cardmasks::StdDeckCardMask; // Importez StdDeckCardMask
-use crate::t_straight::STRAIGHT_TABLE; // Importez STRAIGHT_TABLE
+use crate::handval_low::{LowHandVal};
+
+use crate::rules_std::{HandType};
+use crate::t_cardmasks::StdDeckCardMask; 
+use crate::t_straight::STRAIGHT_TABLE; 
 use crate::eval_low::extract_top_five_cards_lowball;
 
 pub fn ace_to_five_lowball_eval(cards: &StdDeckCardMask) -> LowHandVal {

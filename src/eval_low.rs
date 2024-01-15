@@ -1,4 +1,4 @@
-use crate::handval_low::{LowHandVal, CARD_WIDTH};
+use crate::handval_low::{LowHandVal};
 use crate::rules_std::*;
 use crate::t_botcard::BOTTOM_CARD_TABLE;
 use crate::t_cardmasks::StdDeckCardMask;
