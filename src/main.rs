@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 // Importez les modules nécessaires
 mod deck;
 mod deck_std;
@@ -21,8 +22,6 @@ mod t_topfivecards;
 use crate::eval::Eval;
 use crate::eval_low::std_deck_lowball_eval;
 use crate::handval::*;
-use crate::lowball::*;
-use crate::rules_std::*;
 use deck_std::*;
 
 fn main() {
@@ -71,7 +70,7 @@ fn main() {
             //println!("Type de main : {:?}", hand_val.get_hand_type());
             println!(
                 "Représentation de la main : {}",
-                hand_val.StdRules_HandVal_toString()
+                hand_val.std_rules_hand_val_to_string()
             );
 
             // Évaluer la main pour low

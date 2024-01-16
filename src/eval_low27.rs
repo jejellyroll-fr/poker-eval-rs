@@ -1,18 +1,16 @@
 use crate::handval_low::LowHandVal;
-use crate::rules_std::*;
-use crate::t_botcard::BOTTOM_CARD_TABLE;
 use crate::t_cardmasks::StdDeckCardMask;
 use crate::t_nbits::NBITS_TABLE;
 
-pub fn std_deck_lowball27_eval(cards: &StdDeckCardMask, n_cards: usize) -> LowHandVal {
+pub fn std_deck_lowball27_eval(cards: &StdDeckCardMask, _n_cards: usize) -> LowHandVal {
     let ss = LowHandVal::rotate_ranks(cards.spades().into());
     let sc = LowHandVal::rotate_ranks(cards.clubs().into());
     let sd = LowHandVal::rotate_ranks(cards.diamonds().into());
     let sh = LowHandVal::rotate_ranks(cards.hearts().into());
 
     let ranks = sc | ss | sd | sh;
-    let n_ranks = NBITS_TABLE[ranks as usize];
-    let dups = (sc & sd) | (sh & (sc | sd)) | (ss & (sh | sc | sd));
+    let _n_ranks = NBITS_TABLE[ranks as usize];
+    let _dups = (sc & sd) | (sh & (sc | sd)) | (ss & (sh | sc | sd));
 
     // Implémentez la logique d'évaluation 2-7 Lowball basée sur eval_low27.h
     // ...

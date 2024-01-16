@@ -59,7 +59,7 @@ impl HandVal {
         HandType::from_usize(self.hand_type() as usize)
     }
 
-    pub fn StdRules_HandVal_toString(&self) -> String {
+    pub fn std_rules_hand_val_to_string(&self) -> String {
         let hand_type = self.get_hand_type();
         let mut result = format!("{} (", HAND_TYPE_NAMES[hand_type.as_usize()]);
 
@@ -81,8 +81,8 @@ impl HandVal {
         result
     }
 
-    pub fn StdRules_HandVal_print(&self) {
-        println!("{}", self.StdRules_HandVal_toString());
+    pub fn std_rules_hand_val_print(&self) {
+        println!("{}", self.std_rules_hand_val_to_string());
     }
 
     // Autres méthodes nécessaires pour HandVal...

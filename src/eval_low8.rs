@@ -8,7 +8,7 @@ use crate::handval_low::{
 };
 use crate::rules_std::HandType;
 use crate::t_botfivecards::BOTTOM_FIVE_CARDS_TABLE;
-use crate::t_cardmasks::{StdDeckCardMask, STD_DECK_CARD_MASKS_TABLE};
+use crate::t_cardmasks::{StdDeckCardMask};
 
 // Function to extract the rank of the top card
 pub fn extract_top_card_rank(val: u32) -> u8 {

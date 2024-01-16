@@ -1,4 +1,3 @@
-use crate::deck_std::*;
 use crate::handval::HandVal;
 use crate::rules_std::HandType;
 use crate::t_cardmasks::StdDeckCardMask;

@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 // Importez les modules nécessaires
 mod deck;
 mod deck_std;
@@ -16,17 +17,13 @@ mod t_topfivecards;
 
 use crate::eval::Eval;
 use crate::eval_low::std_deck_lowball_eval;
-use crate::handval::*;
-use crate::handval_low::LowHandVal;
-use crate::lowball::*;
-use crate::rules_std::*;
 use deck_std::*;
 
 use pyo3::prelude::*;
 
 #[pyfunction]
 fn string_to_mask(input: &str) -> PyResult<String> {
-    let (mask, n) = StdDeck::string_to_mask(input); // Votre logique originale
+    let (mask, _n) = StdDeck::string_to_mask(input); // Votre logique originale
     Ok(format!("{:b}", mask.mask)) // Convertir en binaire et retourner
 }
 
@@ -34,7 +31,7 @@ fn string_to_mask(input: &str) -> PyResult<String> {
 fn eval_n(input: &str) -> PyResult<String> {
     let (mask, num_cards) = StdDeck::string_to_mask(input);
     let hand_val = Eval::eval_n(&mask, num_cards);
-    Ok(hand_val.StdRules_HandVal_toString())
+    Ok(hand_val.std_rules_hand_val_to_string())
 }
 
 #[pyfunction]
@@ -45,7 +42,7 @@ fn eval_low(input: &str) -> PyResult<String> {
 }
 
 #[pymodule]
-fn poker_eval_rs(py: Python, m: &PyModule) -> PyResult<()> {
+fn poker_eval_rs(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(string_to_mask, m)?)?;
     m.add_function(wrap_pyfunction!(eval_n, m)?)?;
     m.add_function(wrap_pyfunction!(eval_low, m)?)?;
