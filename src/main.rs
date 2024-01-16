@@ -23,6 +23,8 @@ use crate::eval::Eval;
 use crate::eval_low::std_deck_lowball_eval;
 use crate::handval::*;
 use deck_std::*;
+use crate::t_nbits::NBITS_TABLE;
+use crate::enumord::enum_ordering_rank;
 
 fn main() {
     let hands = vec![
@@ -113,9 +115,9 @@ mod tests {
 
     #[test]
     fn test_enum_ordering_rank() {
-        let mut hands = [HandVal(5), HandVal(3), HandVal(8)]; // Exemple de valeurs
+        let mut hands = [HandVal { value: 5 }, HandVal { value: 3 }, HandVal { value: 8 }]; // Exemple de valeurs
         let mut ranks = [0; 3];
-        enum_ordering_rank(&mut hands, HandVal(0), 3, &mut ranks, false);
+        enum_ordering_rank(&mut hands, HandVal{ value: 0 }, 3, &mut ranks, false);
 
         assert_eq!(ranks, [1, 0, 2]); // Résultats attendus
     }
