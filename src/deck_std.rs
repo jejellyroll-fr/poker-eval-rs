@@ -1,11 +1,11 @@
-use crate::t_cardmasks::{ StdDeckCardMask, STD_DECK_CARD_MASKS_TABLE};
+use crate::t_cardmasks::{StdDeckCardMask, STD_DECK_CARD_MASKS_TABLE};
 
 // Constantes
 pub const STD_DECK_N_CARDS: usize = 52;
 pub const STD_DECK_RANK_CHARS: &str = "23456789TJQKA";
 pub const STD_DECK_SUIT_CHARS: &str = "hdcs";
 
-// Rangs 
+// Rangs
 pub const STD_DECK_RANK_2: usize = 0;
 pub const STD_DECK_RANK_3: usize = 1;
 pub const STD_DECK_RANK_4: usize = 2;
@@ -40,9 +40,6 @@ pub const STD_DECK_CARDMASK_SPADES: u64 = 0x1fff; // 13 bits pour les piques
 pub const STD_DECK_CARDMASK_CLUBS: u64 = 0x1fff << 16; // 13 bits pour les trèfles
 pub const STD_DECK_CARDMASK_DIAMONDS: u64 = 0x1fff << 32; // 13 bits pour les carreaux
 pub const STD_DECK_CARDMASK_HEARTS: u64 = 0x1fff << 48; // 13 bits pour les cœurs
-
-
-
 
 impl StdDeckCardMask {
     pub fn new() -> Self {
@@ -89,8 +86,6 @@ impl StdDeckCardMask {
         }
     }
 
-
-
     // Autres opérations sur les masques (exemple: OR, AND, etc.)
     pub fn or(&mut self, other: &StdDeckCardMask) {
         self.mask |= other.mask;
@@ -107,7 +102,6 @@ impl StdDeckCardMask {
     pub fn not(&mut self) {
         self.mask = !self.mask;
     }
-
 
     // Autres méthodes si nécessaires...
     pub fn get_mask(index: usize) -> &'static Self {
@@ -138,7 +132,9 @@ impl StdDeckCardMask {
 
     // Méthode pour compter le nombre de cartes dans un masque
     pub fn num_cards(&self) -> usize {
-        (0..STD_DECK_N_CARDS).filter(|&i| self.card_is_set(i)).count()
+        (0..STD_DECK_N_CARDS)
+            .filter(|&i| self.card_is_set(i))
+            .count()
     }
 
     // Méthode pour ajouter une carte au masque
@@ -147,9 +143,6 @@ impl StdDeckCardMask {
         self.mask |= 1 << card_index;
         //println!("Masque après ajout: {:b}", self.mask); //debug
     }
-
-
-
 }
 
 // Structure StdDeck
@@ -173,8 +166,14 @@ impl StdDeck {
 
     // Conversion d'une carte en chaîne de caractères
     pub fn card_to_string(card_index: usize) -> String {
-        let rank_char = STD_DECK_RANK_CHARS.chars().nth(Self::rank(card_index)).unwrap();
-        let suit_char = STD_DECK_SUIT_CHARS.chars().nth(Self::suit(card_index)).unwrap();
+        let rank_char = STD_DECK_RANK_CHARS
+            .chars()
+            .nth(Self::rank(card_index))
+            .unwrap();
+        let suit_char = STD_DECK_SUIT_CHARS
+            .chars()
+            .nth(Self::suit(card_index))
+            .unwrap();
         format!("{}{}", rank_char, suit_char)
     }
 
@@ -199,7 +198,12 @@ impl StdDeck {
         let mut out_mask = StdDeckCardMask::new();
         let mut n = 0;
 
-        for (rank_char, suit_char) in in_string.chars().collect::<Vec<char>>().chunks(2).map(|chunk| (chunk[0], chunk[1])) {
+        for (rank_char, suit_char) in in_string
+            .chars()
+            .collect::<Vec<char>>()
+            .chunks(2)
+            .map(|chunk| (chunk[0], chunk[1]))
+        {
             if rank_char == ' ' {
                 continue;
             }
@@ -219,4 +223,3 @@ impl StdDeck {
         (out_mask, n)
     }
 }
-

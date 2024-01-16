@@ -1,26 +1,26 @@
 // Importez les modules nécessaires
 mod deck;
 mod deck_std;
-mod rules_std;
+mod eval;
+mod eval_low;
 mod handval;
+mod handval_low;
+mod lowball;
+mod rules_std;
+mod t_botcard;
 mod t_cardmasks;
 mod t_nbits;
 mod t_straight;
-mod t_topfivecards;
 mod t_topcard;
-mod eval;
-mod handval_low;
-mod eval_low;
-mod t_botcard;
-mod lowball;
+mod t_topfivecards;
 
-use deck_std::*;
-use crate::rules_std::*;
-use crate::handval::*;
-use crate::eval::Eval; 
-use crate::handval_low::LowHandVal;
+use crate::eval::Eval;
 use crate::eval_low::std_deck_lowball_eval;
+use crate::handval::*;
+use crate::handval_low::LowHandVal;
 use crate::lowball::*;
+use crate::rules_std::*;
+use deck_std::*;
 
 use pyo3::prelude::*;
 

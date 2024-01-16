@@ -1,6 +1,6 @@
 // Importations nécessaires
-use std::cmp::Ordering;
 use crate::HandVal;
+use std::cmp::Ordering;
 
 // Constantes pour la limite des joueurs
 const ENUM_ORDERING_MAXPLAYERS: usize = 7;
@@ -53,9 +53,17 @@ impl PartialEq for EnumRankelem {
 impl Eq for EnumRankelem {}
 
 // Fonction pour calculer le rang des mains
-pub fn enum_ordering_rank(hands: &mut [HandVal], noqual: HandVal, nplayers: usize, ranks: &mut [i32], reverse: bool) {
+pub fn enum_ordering_rank(
+    hands: &mut [HandVal],
+    noqual: HandVal,
+    nplayers: usize,
+    ranks: &mut [i32],
+    reverse: bool,
+) {
     // Création d'une structure intermédiaire pour le tri
-    let mut elems: Vec<(usize, HandVal)> = hands.iter().enumerate()
+    let mut elems: Vec<(usize, HandVal)> = hands
+        .iter()
+        .enumerate()
         .map(|(index, handval)| (index, *handval))
         .collect();
 
@@ -81,8 +89,6 @@ pub fn enum_ordering_rank(hands: &mut [HandVal], noqual: HandVal, nplayers: usiz
         }
     }
 }
-
-
 
 // Fonction pour encoder les rangs en un seul entier
 fn enum_ordering_encode(nplayers: usize, ranks: &[i32]) -> i32 {
@@ -114,7 +120,6 @@ fn enum_ordering_decode_k(encoding: i32, nplayers: usize, k: usize) -> i32 {
     let shift = (nplayers - k - 1) * (nbits as usize);
     (encoding >> shift) & ((1 << nbits) - 1)
 }
-
 
 // Fonction pour calculer le nombre d'entrées dans l'histogramme
 fn enum_ordering_nentries(nplayers: usize) -> i32 {

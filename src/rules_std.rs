@@ -2,7 +2,6 @@ use crate::handval::HandVal;
 // Dans rules_std.rs
 use crate::deck_std::STD_DECK_RANK_CHARS;
 
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum HandType {
     NoPair,
@@ -16,22 +15,20 @@ pub enum HandType {
     StFlush,
 }
 
-
 pub static HAND_TYPE_NAMES: [&str; 9] = [
     "NoPair", "OnePair", "TwoPair", "Trips", "Straight", "Flush", "FlHouse", "Quads", "StFlush",
 ];
 
 // Ajout des noms de type de main rembourrés
 pub static HAND_TYPE_NAMES_PADDED: [&str; 9] = [
-    "NoPair  ", "OnePair ", "TwoPair ", "Trips   ", "Straight", 
-    "Flush   ", "FlHouse ", "Quads   ", "StFlush "
+    "NoPair  ", "OnePair ", "TwoPair ", "Trips   ", "Straight", "Flush   ", "FlHouse ", "Quads   ",
+    "StFlush ",
 ];
 
 pub static N_SIG_CARDS: [usize; 9] = [5, 4, 3, 3, 1, 5, 2, 2, 1];
 
 // Représentation du "Five Straight" pour les straights de basse valeur.
 pub const FIVE_STRAIGHT: u64 = (1 << 14) | (1 << 2) | (1 << 3) | (1 << 4) | (1 << 5);
-
 
 impl HandType {
     // Cette méthode doit retourner un HandType
@@ -49,7 +46,7 @@ impl HandType {
             _ => panic!("Invalid hand type value"),
         }
     }
-    
+
     // Cette méthode retourne l'index de l'enum HandType
     pub fn as_usize(&self) -> usize {
         *self as usize
@@ -61,10 +58,6 @@ impl HandVal {
         // Ici, vous convertissez la valeur numérique du type de main en HandType
         HandType::from_usize(self.hand_type() as usize)
     }
-
-
-
-
 
     pub fn StdRules_HandVal_toString(&self) -> String {
         let hand_type = self.get_hand_type();
