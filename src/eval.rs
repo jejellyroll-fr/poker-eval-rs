@@ -231,3 +231,59 @@ impl Eval {
         }
     }
 }
+
+
+
+// Should return 0 when input is 0
+#[test]
+fn should_return_zero_when_input_is_zero() {
+    let input = 0;
+    let expected = 0;
+    let result = count_bits(input);
+    assert_eq!(result, expected);
+}
+
+// Should return 1 when input is 1
+#[test]
+fn should_return_one_when_input_is_one() {
+    let input = 1;
+    let expected = 1;
+    let result = count_bits(input);
+    assert_eq!(result, expected);
+}
+
+// Should return 1 when input is 2
+#[test]
+fn should_return_one_when_input_is_two() {
+    let input = 2;
+    let expected = 1;
+    let result = count_bits(input);
+    assert_eq!(result, expected);
+}
+
+// Should handle large inputs (e.g. 2^31-1)
+#[test]
+fn should_handle_large_inputs() {
+    let input = std::u32::MAX;
+    let expected = 32;
+    let result = count_bits(input);
+    assert_eq!(result, expected);
+}
+
+// Should handle negative inputs
+#[test]
+fn should_handle_negative_inputs() {
+    let input = -1;
+    let expected = 32;
+    let result = count_bits(input as u32);
+    assert_eq!(result, expected);
+}
+
+ // Should return 2 when input is 3
+#[test]
+fn should_return_two_when_input_is_three() {
+    let input = 3;
+    let expected = 2;
+    let result = count_bits(input);
+    assert_eq!(result, expected);
+}

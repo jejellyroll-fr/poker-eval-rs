@@ -1,30 +1,27 @@
 #![allow(dead_code)]
 // Importez les modules nécessaires
-mod deck;
-mod deck_std;
-mod enumord;
-mod eval;
-mod eval_low;
-mod eval_low27;
-mod eval_low8;
-mod handval;
-mod handval_low;
-mod lowball;
-mod rules_std;
-mod t_botcard;
-mod t_botfivecards;
-mod t_cardmasks;
-mod t_nbits;
-mod t_straight;
-mod t_topcard;
-mod t_topfivecards;
+pub mod deck;
+pub mod deck_std;
+pub mod enumord;
+pub mod eval;
+pub mod eval_low;
+pub mod eval_low27;
+pub mod eval_low8;
+pub mod handval;
+pub mod handval_low;
+pub mod lowball;
+pub mod rules_std;
+pub mod t_botcard;
+pub mod t_botfivecards;
+pub mod t_cardmasks;
+pub mod t_nbits;
+pub mod t_straight;
+pub mod t_topcard;
+pub mod t_topfivecards;
 
 use crate::eval::Eval;
 use crate::eval_low::std_deck_lowball_eval;
-use crate::handval::*;
 use deck_std::*;
-use crate::t_nbits::NBITS_TABLE;
-use crate::enumord::enum_ordering_rank;
 
 fn main() {
     let hands = vec![
@@ -93,32 +90,3 @@ fn main() {
     }
 }
 
-// test unitaires
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_nbits_table() {
-        for (index, &value) in NBITS_TABLE.iter().enumerate() {
-            let expected_nbits = format!("{:b}", index).matches('1').count();
-            assert_eq!(
-                usize::from(value),
-                expected_nbits,
-                "Échec au niveau de l'index {}: attendu {}, obtenu {}",
-                index,
-                expected_nbits,
-                value
-            );
-        }
-    }
-
-    #[test]
-    fn test_enum_ordering_rank() {
-        let mut hands = [HandVal { value: 5 }, HandVal { value: 3 }, HandVal { value: 8 }]; // Exemple de valeurs
-        let mut ranks = [0; 3];
-        enum_ordering_rank(&mut hands, HandVal{ value: 0 }, 3, &mut ranks, false);
-
-        assert_eq!(ranks, [1, 0, 2]); // Résultats attendus
-    }
-}

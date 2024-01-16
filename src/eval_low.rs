@@ -154,3 +154,53 @@ pub fn std_deck_lowball_eval(cards: &StdDeckCardMask, _n_cards: usize) -> LowHan
         }
     }
 }
+
+
+
+    // Extract top five cards from a valid input with all five cards present
+#[test]
+fn test_extract_top_five_cards_all_present() {
+    let cards = 0b11111;
+    let result = extract_top_five_cards_lowball(cards);
+    assert_eq!(result, (1, 2, 3, 4, 5));
+}
+
+    // Extract top five cards from a valid input with less than five cards present
+#[test]
+fn test_extract_top_five_cards_less_than_five_present() {
+    let cards = 0b1100;
+    let result = extract_top_five_cards_lowball(cards);
+    assert_eq!(result, (1, 2, 0, 0, 0));
+}
+
+    // Extract top five cards from a valid input with more than five cards present
+#[test]
+fn test_extract_top_five_cards_more_than_five_present() {
+    let cards = 0b1111111111;
+    let result = extract_top_five_cards_lowball(cards);
+    assert_eq!(result, (1, 2, 3, 4, 5));
+}
+
+    // Extract top five cards from an input with no cards present
+#[test]
+fn test_extract_top_five_cards_no_cards_present() {
+    let cards = 0b0;
+    let result = extract_top_five_cards_lowball(cards);
+    assert_eq!(result, (0, 0, 0, 0, 0));
+}
+
+    // Extract top five cards from an input with all cards present
+#[test]
+fn test_extract_top_five_cards_all_cards_present() {
+    let cards = 0b1111111111111;
+    let result = extract_top_five_cards_lowball(cards);
+    assert_eq!(result, (1, 2, 3, 4, 5));
+}
+
+    // Extract top five cards from an input with only one card present
+#[test]
+fn test_extract_top_five_cards_one_card_present() {
+    let cards = 0b10000;
+    let result = extract_top_five_cards_lowball(cards);
+    assert_eq!(result, (1, 0, 0, 0, 0));
+}

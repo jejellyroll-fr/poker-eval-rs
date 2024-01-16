@@ -35,6 +35,26 @@ bash
 ```
 cargo build
 ```
+
+## examples
+for python example to evaluate hand:
+# Install maturin
+bash
+```
+cargo install maturin
+maturin build
+```
+# install the created lib
+bash
+```
+pip install target/wheels/poker_eval_rs-0.1.0-cp311-cp311-manylinux_2_34_x86_64.whl 
+```
+# use python script as a cli
+bash
+```
+python eval.py -h
+python eval.py -hilo 2h4d5s6h7d
+```
 ## Usage
 
 To use PokerEval-RS in your Rust project, include it as a dependency in your Cargo.toml file.

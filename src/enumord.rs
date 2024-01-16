@@ -1,5 +1,5 @@
 // Importations nécessaires
-use crate::HandVal;
+use crate::handval::HandVal;
 use std::cmp::Ordering;
 
 // Constantes pour la limite des joueurs
@@ -168,3 +168,5 @@ impl EnumOrdering {
 
     // ... D'autres méthodes si nécessaires ...
 }
+
+
