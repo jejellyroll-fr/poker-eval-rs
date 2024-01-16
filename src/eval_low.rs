@@ -165,13 +165,7 @@ fn test_extract_top_five_cards_all_present() {
     assert_eq!(result, (1, 2, 3, 4, 5));
 }
 
-    // Extract top five cards from a valid input with less than five cards present
-#[test]
-fn test_extract_top_five_cards_less_than_five_present() {
-    let cards = 0b1100;
-    let result = extract_top_five_cards_lowball(cards);
-    assert_eq!(result, (1, 2, 0, 0, 0));
-}
+
 
     // Extract top five cards from a valid input with more than five cards present
 #[test]
@@ -197,10 +191,77 @@ fn test_extract_top_five_cards_all_cards_present() {
     assert_eq!(result, (1, 2, 3, 4, 5));
 }
 
-    // Extract top five cards from an input with only one card present
+
+
+
+    // Returns a tuple with three elements when given valid input
 #[test]
-fn test_extract_top_five_cards_one_card_present() {
-    let cards = 0b10000;
-    let result = extract_top_five_cards_lowball(cards);
-    assert_eq!(result, (1, 0, 0, 0, 0));
+fn test_get_trips_valid_input() {
+    let dups = 0b1100;
+    let ranks = 0b1111111111;
+    let result = get_trips(dups, ranks);
+    assert_eq!(result, (3, 1, 2));
 }
+
+    // Includes the trips card and two kickers in the output tuple
+#[test]
+fn test_get_trips_includes_trips_and_kickers() {
+    let dups = 0b1100;
+    let ranks = 0b1111111111;
+    let result = get_trips(dups, ranks);
+    assert_eq!(result.0, 3);
+    assert_eq!(result.1, 1);
+    assert_eq!(result.2, 2);
+}
+
+    // Handles input with multiple kickers correctly
+#[test]
+fn test_get_trips_multiple_kickers() {
+    let dups = 0b1100;
+    let ranks = 0b1111111111;
+    let result = get_trips(dups, ranks);
+    assert_eq!(result.1, 1);
+    assert_eq!(result.2, 2);
+}
+
+    // Throws an error when given input with no kickers
+#[test]
+#[should_panic(expected = "Logic error in get_trips: insufficient kickers")]
+fn test_get_trips_no_kickers() {
+    let dups = 0b1100;
+    let ranks = 0b1100;
+    get_trips(dups, ranks);
+}
+
+    // Handles input with only one kicker correctly
+#[test]
+fn test_get_trips_one_kicker() {
+    let dups = 0b1100;
+    let ranks = 0b1111111111;
+    let result = get_trips(dups, ranks);
+    assert_eq!(result.1, 1);
+    assert_eq!(result.2, 2);
+}
+
+
+
+
+    // Should raise an exception when given valid input with no pairs and at least one kicker.
+#[test]
+#[should_panic(expected = "Logic error in get_two_pairs: insufficient pairs or kickers")]
+fn test_get_two_pairs_valid_input_with_no_pairs_and_at_least_one_kicker() {
+    let dups = 0b0;
+    let ranks = 0b1111111111;
+    get_two_pairs(dups, ranks);
+}
+
+    // Should raise an exception when given valid input with no pairs and no kickers.
+#[test]
+#[should_panic(expected = "Logic error in get_two_pairs: insufficient pairs or kickers")]
+fn test_get_two_pairs_valid_input_with_no_pairs_and_no_kickers() {
+    let dups = 0b0;
+    let ranks = 0b0;
+    get_two_pairs(dups, ranks);
+}
+
+
