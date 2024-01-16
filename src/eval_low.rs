@@ -165,6 +165,22 @@ fn test_extract_top_five_cards_all_present() {
     assert_eq!(result, (1, 2, 3, 4, 5));
 }
 
+#[test]
+fn test_extract_top_five_cards_with_full_set() {
+    // Test avec toutes les cartes présentes
+    let cards = 0b1111111111111; // Représente un ensemble complet de cartes
+    let result = extract_top_five_cards_lowball(cards);
+    assert_eq!(result, (1, 2, 3, 4, 5));
+}
+
+#[test]
+fn test_extract_top_five_cards_with_partial_set() {
+    // Test avec un ensemble partiel de cartes
+    let cards = 0b11011; // Représente un ensemble partiel de cartes
+    let result = extract_top_five_cards_lowball(cards);
+    assert_eq!(result, (1, 2, 4, 5, 0)); // Les dernières cartes devraient être à zéro si moins de 5 cartes
+}
+
 
 
     // Extract top five cards from a valid input with more than five cards present
@@ -265,3 +281,27 @@ fn test_get_two_pairs_valid_input_with_no_pairs_and_no_kickers() {
 }
 
 
+#[test]
+fn test_extract_top_five_cards_few_cards_present() {
+    let cards = 0b101; // Example: Only 2 cards present
+    let result = extract_top_five_cards_lowball(cards);
+    assert_eq!(result, (1, 3, 0, 0, 0)); // Expect the first two cards and zeros for the rest
+}
+
+#[test]
+fn test_extract_top_five_cards_non_sequential() {
+    let cards = 0b1010101; // Example: Non-sequential cards
+    let result = extract_top_five_cards_lowball(cards);
+    assert_eq!(result, (1, 3, 5, 7, 0)); // Expect the correct five cards
+}
+
+#[test]
+#[should_panic(expected = "Logic error in get_two_pairs: insufficient pairs")]
+fn test_get_two_pairs_only_one_pair() {
+    let dups = 0b1000; // Only one pair
+    let ranks = 0b1111111;
+    get_two_pairs(dups, ranks);
+}
+
+
+ 
