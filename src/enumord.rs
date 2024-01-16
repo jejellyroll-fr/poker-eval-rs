@@ -169,4 +169,57 @@ impl EnumOrdering {
     // ... D'autres méthodes si nécessaires ...
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
 
+    // Test pour vérifier la création d'un objet EnumOrdering
+    #[test]
+    fn test_enum_ordering_new() {
+        let ordering = EnumOrdering::new(EnumOrderingMode::Hi, 5);
+        assert_eq!(ordering.mode, EnumOrderingMode::Hi);
+        assert_eq!(ordering.nplayers, 5);
+        // Assurez-vous que le nombre d'entrées et l'histogramme sont correctement initialisés
+    }
+
+
+// Test pour la fonction enum_ordering_rank
+    #[test]
+    fn test_enum_ordering_rank() {
+        let mut hands = vec![
+            HandVal { value: 3 },  // Main 1
+            HandVal { value: 5 },  // Main 2
+            HandVal { value: 2 },  // Main 3
+        ];
+        let noqual = HandVal { value: 0 };
+        let nplayers = 3;
+        let mut ranks = vec![0; nplayers];
+
+        enum_ordering_rank(&mut hands, noqual, nplayers, &mut ranks, false);
+
+        assert_eq!(ranks, vec![1, 2, 0]); // Les rangs attendus après le tri
+    }
+
+    // Test pour enum_ordering_encode
+    #[test]
+    fn test_enum_ordering_encode() {
+        let ranks = vec![1, 2, 0];
+        let nplayers = 3;
+        let encoded = enum_ordering_encode(nplayers, &ranks);
+
+        assert_eq!(encoded, 24); // La valeur encodée attendue
+    }
+
+
+    // Test pour enum_ordering_decode_k
+    #[test]
+    fn test_enum_ordering_decode_k() {
+        let encoded = 9; // Encodage de [1, 2, 0]
+        let nplayers = 3;
+        let rank = enum_ordering_decode_k(encoded, nplayers, 1); // Décodage du 2e rang
+
+        assert_eq!(rank, 2); // Rang attendu
+    }
+
+    // Ajoutez d'autres tests pour les fonctions restantes
+}
