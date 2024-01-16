@@ -25,7 +25,7 @@ use crate::lowball::*;
 use pyo3::prelude::*;
 
 #[pyfunction]
-fn string_to_mask(input: &str) -> PyResult<(String)> {
+fn string_to_mask(input: &str) -> PyResult<String> {
     let (mask, n) = StdDeck::string_to_mask(input); // Votre logique originale
     Ok(format!("{:b}", mask.mask)) // Convertir en binaire et retourner
 }

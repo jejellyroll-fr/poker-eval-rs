@@ -14,6 +14,8 @@ mod eval_low;
 mod t_botcard;
 mod lowball;
 mod enumord;
+mod eval_low8;
+mod t_botfivecards;
 
 use deck_std::*;
 use crate::rules_std::*;
