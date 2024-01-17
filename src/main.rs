@@ -37,6 +37,7 @@ fn main() {
         "3h3d3s6h2c2d",
         "3h3d3s6h2c2d3c",
         "3h3d5s5h7d2c4d",
+        "Ac2s4d6c8h",
     ];
 
     for input in hands {

@@ -31,7 +31,7 @@ pub const LOW_HAND_VAL_WORST_EIGHT: u32 = (HandType::NoPair as u32) << HANDTYPE_
     | (STD_DECK_RANK_5 as u32 + 1) << FOURTH_CARD_SHIFT
     | (STD_DECK_RANK_4 as u32 + 1) << FIFTH_CARD_SHIFT;
 
-#[derive(Debug)]
+#[derive(Debug,PartialEq)]
 pub struct LowHandVal {
     pub value: u32,
 }
@@ -107,11 +107,12 @@ impl LowHandVal {
 
     // Méthode pour faire la rotation des rangs (pour la gestion des As en Omaha Hi/Lo)
     pub fn rotate_ranks(ranks: u32) -> u32 {
-        let ace_bit = ranks & (1 << STD_DECK_RANK_ACE);
-        let without_ace = ranks & !ace_bit;
-        let shifted = without_ace << 1;
-        shifted | ace_bit
+        let ace_bit = (ranks >> STD_DECK_RANK_ACE) & 0x01; // Isoler le bit de l'As et le déplacer à droite
+        let without_ace = ranks & !(1 << STD_DECK_RANK_ACE); // Supprimer le bit de l'As du masque original
+        let shifted = without_ace << 1; // Décaler tous les autres bits d'une position vers le haut
+        shifted | ace_bit // Combiner le bit de l'As décalé avec les autres bits décalés
     }
+    
 
     // Méthode pour ajouter un joker fictif dans les rangs (si nécessaire)
     pub fn jokerfy_ranks(mut ranks: u32) {
