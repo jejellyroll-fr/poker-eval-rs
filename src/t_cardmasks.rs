@@ -162,3 +162,19 @@ pub const STD_DECK_CARD_MASKS_TABLE: [StdDeckCardMask; 52] = [
 ];
 
 // ...
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_std_deck_card_masks_table() {
+        // Test pour s'assurer que chaque masque dans la table est unique
+        let mut mask_set = std::collections::HashSet::new();
+        for mask in STD_DECK_CARD_MASKS_TABLE.iter() {
+            assert!(mask_set.insert(mask.mask));
+        }
+        assert_eq!(mask_set.len(), STD_DECK_CARD_MASKS_TABLE.len());
+    }
+
+    // Vous pouvez ajouter ici des tests supplémentaires si nécessaire
+}

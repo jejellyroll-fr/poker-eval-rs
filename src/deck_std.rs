@@ -218,7 +218,7 @@ impl StdDeck {
             }
         }
 
-        //println!("Masque de cartes généré : {:b}", out_mask.mask); //debug
+        println!("Masque de cartes généré : {:b}", out_mask.mask); //debug
 
         (out_mask, n)
     }
