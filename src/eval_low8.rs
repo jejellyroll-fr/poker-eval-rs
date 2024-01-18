@@ -57,7 +57,11 @@ mod tests {
 
     #[test]
     fn test_valid_lowball_hand() {
-        let (cards, n_cards) = StdDeck::string_to_mask("Ac2s4d6c8h");
+        let result_mask = StdDeck::string_to_mask("Ac2s4d6c8h");
+        let (cards, n_cards) = match result_mask {
+            Ok((mask, num_cards)) => (mask, num_cards),
+            Err(e) => panic!("Erreur lors de la conversion de la chaîne en masque de cartes : {}", e),
+        };
         let result = std_deck_lowball8_eval(&cards, n_cards);
         assert_eq!(result.hand_type(), HandType::NoPair as u8);
         assert_eq!(result.top_card(), 7, "La carte supérieure n'est pas correcte");
@@ -69,7 +73,11 @@ mod tests {
 
     #[test]
     fn test_invalid_lowball_hand_with_pair() {
-        let (cards, n_cards) = StdDeck::string_to_mask("4c4d6c8hJs");
+        let result_mask = StdDeck::string_to_mask("4c4d6c8hJs");
+        let (cards, n_cards) = match result_mask {
+            Ok((mask, num_cards)) => (mask, num_cards),
+            Err(e) => panic!("Erreur lors de la conversion de la chaîne en masque de cartes : {}", e),
+        };
         let result = std_deck_lowball8_eval(&cards, n_cards);
         assert_eq!(result, LowHandVal { value: LOW_HAND_VAL_NOTHING });
     }

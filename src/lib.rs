@@ -27,20 +27,41 @@ use pyo3::prelude::*;
 
 #[pyfunction]
 fn string_to_mask(input: &str) -> PyResult<String> {
-    let (mask, _n) = StdDeck::string_to_mask(input); // Votre logique originale
+    let result = StdDeck::string_to_mask(input); 
+    let (mask, num_cards) = match result {
+        Ok((mask, num_cards)) => (mask, num_cards),
+        Err(e) => {
+            eprintln!("Erreur lors de la conversion de la chaîne en masque de cartes : {}", e);
+            return Err(PyErr::new::<pyo3::exceptions::PyValueError, _>(format!("Erreur lors de la conversion de la chaîne en masque de cartes : {}", e)));
+        }
+    };
     Ok(format!("{:b}", mask.mask)) // Convertir en binaire et retourner
 }
 
 #[pyfunction]
 fn eval_n(input: &str) -> PyResult<String> {
-    let (mask, num_cards) = StdDeck::string_to_mask(input);
+    let result= StdDeck::string_to_mask(input);
+    let (mask, num_cards) = match result {
+        Ok((mask, num_cards)) => (mask, num_cards),
+        Err(e) => {
+            eprintln!("Erreur lors de la conversion de la chaîne en masque de cartes : {}", e);
+            return Err(PyErr::new::<pyo3::exceptions::PyValueError, _>(format!("Erreur lors de la conversion de la chaîne en masque de cartes : {}", e)));
+        }
+    };
     let hand_val = Eval::eval_n(&mask, num_cards);
     Ok(hand_val.std_rules_hand_val_to_string())
 }
 
 #[pyfunction]
 fn eval_low_func(input: &str) -> PyResult<String> {
-    let (mask, num_cards) = StdDeck::string_to_mask(input);
+    let result= StdDeck::string_to_mask(input);
+    let (mask, num_cards) = match result {
+        Ok((mask, num_cards)) => (mask, num_cards),
+        Err(e) => {
+            eprintln!("Erreur lors de la conversion de la chaîne en masque de cartes : {}", e);
+            return Err(PyErr::new::<pyo3::exceptions::PyValueError, _>(format!("Erreur lors de la conversion de la chaîne en masque de cartes : {}", e)));
+        }
+    };
     let low_hand_val = std_deck_lowball_eval(&mask, num_cards);
     Ok(low_hand_val.to_string())
 }

@@ -7,7 +7,7 @@ use crate::t_topcard::TOP_CARD_TABLE;
 
 pub struct Eval;
 
-fn count_bits(mut n: u32) -> u32 {
+pub fn count_bits(mut n: u32) -> u32 {
     let mut count = 0;
     while n != 0 {
         count += (n & 1) as u32;

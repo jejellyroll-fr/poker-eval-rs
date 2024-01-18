@@ -38,13 +38,21 @@ fn main() {
         "3h3d3s6h2c2d3c",
         "3h3d5s5h7d2c4d",
         "Ac2s4d6c8h",
+        "2s3s4d5c7h",
     ];
 
     for input in hands {
         println!("Cartes en entrée: {}", input);
 
         // Étape 1: Convertir la chaîne en un masque de cartes
-        let (mask, num_cards) = StdDeck::string_to_mask(input);
+        let result = StdDeck::string_to_mask(input);
+        let (mask, num_cards) = match result {
+            Ok((mask, num_cards)) => (mask, num_cards),
+            Err(e) => {
+                eprintln!("Erreur lors de la conversion de la chaîne en masque de cartes : {}", e);
+                return; // ou gestion d'erreur alternative
+            }
+        };
         //println!("Masque de cartes : {:b}, Nombre de cartes : {}", mask.mask, num_cards);
 
         // Assurez-vous que le nombre de cartes est correct
