@@ -4,7 +4,7 @@ use crate::t_botfivecards::BOTTOM_FIVE_CARDS_TABLE;
 use crate::rules_std::HandType;
 use crate::deck_std::*;
 
-fn std_deck_lowball8_eval(cards: &StdDeckCardMask, _n_cards: usize) -> LowHandVal {
+pub fn std_deck_lowball8_eval(cards: &StdDeckCardMask, _n_cards: usize) -> LowHandVal {
     //println!("Début de std_deck_lowball8_eval");
     //println!("cards.mask: {:b}", cards.mask);
     //println!("Longueur du masque avant rotation: {}", cards.mask.count_ones());
@@ -67,6 +67,23 @@ mod tests {
         assert_eq!(result.top_card(), 7, "La carte supérieure n'est pas correcte");
         assert_eq!(result.second_card(), 5, "La deuxième carte n'est pas correcte");
         assert_eq!(result.third_card(), 3, "La troisième carte n'est pas correcte");
+        assert_eq!(result.fourth_card(), 1, "La quatrième carte n'est pas correcte");
+        assert_eq!(result.fifth_card(), 0, "La cinquième carte n'est pas correcte");
+    }
+
+    #[test]
+    fn test_valid_lowball_hand2() {
+        let result_mask = StdDeck::string_to_mask("Ac2s3d4c5h");
+        let (cards, n_cards) = match result_mask {
+            Ok((mask, num_cards)) => (mask, num_cards),
+            Err(e) => panic!("Erreur lors de la conversion de la chaîne en masque de cartes : {}", e),
+        };
+        let result = std_deck_lowball8_eval(&cards, n_cards);
+        //println!("result: {:?}", result);
+        assert_eq!(result.hand_type(), HandType::NoPair as u8);
+        assert_eq!(result.top_card(), 4, "La carte supérieure n'est pas correcte");
+        assert_eq!(result.second_card(), 3, "La deuxième carte n'est pas correcte");
+        assert_eq!(result.third_card(), 2, "La troisième carte n'est pas correcte");
         assert_eq!(result.fourth_card(), 1, "La quatrième carte n'est pas correcte");
         assert_eq!(result.fifth_card(), 0, "La cinquième carte n'est pas correcte");
     }

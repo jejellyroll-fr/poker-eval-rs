@@ -26,11 +26,11 @@ pub fn std_deck_lowball27_eval(cards: &StdDeckCardMask, _n_cards: usize) -> Hand
 
     if n_ranks >= 5 {
         for suit in [ss, sc, sd, sh].iter() {
-            println!("Vérification de la couleur : {:b}", suit);
+            //println!("Vérification de la couleur : {:b}", suit);
             if NBITS_TABLE[*suit as usize] >= 5 {
                 let (top, second, third, fourth, fifth) = extract_top_five_cards_lowball(*suit);
                 if STRAIGHT_TABLE[*suit as usize] != 0 {
-                    println!("Straight Flush détecté dans la couleur: {:b}", suit);
+                    //println!("Straight Flush détecté dans la couleur: {:b}", suit);
                     let retval = HandVal::new(
                         HandType::StFlush as u8,
                         top,
@@ -41,7 +41,7 @@ pub fn std_deck_lowball27_eval(cards: &StdDeckCardMask, _n_cards: usize) -> Hand
                     );
                     return retval;
                 } else {
-                    println!("Flush détecté dans la couleur: {:b}", suit);
+                    //println!("Flush détecté dans la couleur: {:b}", suit);
                     let retval = HandVal::new(
                         HandType::Flush as u8,
                         top,
@@ -56,18 +56,18 @@ pub fn std_deck_lowball27_eval(cards: &StdDeckCardMask, _n_cards: usize) -> Hand
         }
         let st = STRAIGHT_TABLE[ranks as usize];
         if st != 0 {
-            println!("Vérification de la suite : {:b}", st);
+            //println!("Vérification de la suite : {:b}", st);
             // Suite trouvée
             let top_card = st;
-            println!("top_card: {}", top_card);
+            //println!("top_card: {}", top_card);
             let second_card = if top_card > 0 { top_card - 1 } else { 0 };
-            println!("second_card: {}", second_card);
+            //println!("second_card: {}", second_card);
             let third_card = if top_card > 1 { top_card - 2 } else { 0 };
-            println!("third_card: {}", third_card);
+            //println!("third_card: {}", third_card);
             let fourth_card = if top_card > 2 { top_card - 3 } else { 0 };
-            println!("fourth_card: {}", fourth_card);
+            //println!("fourth_card: {}", fourth_card);
             let fifth_card = if top_card > 3 { top_card - 4 } else { 0 };
-            println!("fifth_card: {}", fifth_card);
+            //println!("fifth_card: {}", fifth_card);
 
             let retval = HandVal::new(
                 HandType::Straight as u8,
@@ -77,13 +77,13 @@ pub fn std_deck_lowball27_eval(cards: &StdDeckCardMask, _n_cards: usize) -> Hand
                 fourth_card,
                 fifth_card,
             );
-            println!("Retourne retVal pour Straight: {:?}", retval);
+            //println!("Retourne retVal pour Straight: {:?}", retval);
             return retval;
             }
             // Vérifier si hand_val est défini et si n_dups < 3
             if let Some(val) = retval {
                 if n_dups < 3 {
-                    println!("Retourne HandVal pour Flush: {:?}", val);
+                    //println!("Retourne HandVal pour Flush: {:?}", val);
                     return val;
                 }
             }

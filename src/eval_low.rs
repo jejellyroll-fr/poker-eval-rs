@@ -108,9 +108,11 @@ pub fn std_deck_lowball_eval(cards: &StdDeckCardMask, _n_cards: usize) -> LowHan
 
     if _n_ranks >= 5 {
         let (top, second, third, fourth, fifth) = extract_top_five_cards_lowball(ranks);
-        return LowHandVal::new(HandType::NoPair as u8, top, second, third, fourth, fifth);
-        // Soustrayez 2 pour revenir aux indices originaux
+        let low_hanval = LowHandVal::new(HandType::NoPair as u8, top, second, third, fourth, fifth);
+        //println!("Retourne LowHandVal pour NoPair: {:?}", low_hanval);
+        return low_hanval;
     }
+        // Soustrayez 2 pour revenir aux indices originaux
 
     match _n_ranks {
         4 => {

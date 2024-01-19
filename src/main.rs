@@ -18,6 +18,7 @@ pub mod t_nbits;
 pub mod t_straight;
 pub mod t_topcard;
 pub mod t_topfivecards;
+pub mod eval_omaha;
 
 use crate::eval::Eval;
 use crate::eval_low::std_deck_lowball_eval;
@@ -39,6 +40,9 @@ fn main() {
         "3h3d5s5h7d2c4d",
         "Ac2s4d6c8h",
         "2s3s4d5c7h",
+        "As2d4h3c5d",
+        "KhQhJhTh4h",
+
     ];
 
     for input in hands {
