@@ -2,13 +2,17 @@ use crate::deck_std::*;
 use crate::t_cardmasks::StdDeckCardMask;
 use crate::t_jokercardmasks::*;
 
+
 // Constants
 pub const JOKER_DECK_N_CARDS: usize = 53;
+pub const JOKER_DECK_RANK_CHARS: &str = "23456789TJQKA";
+pub const JOKER_DECK_SUIT_CHARS: &str = "hdcs";
 
 // Function to get the mask for a specific index
 pub fn joker_deck_mask(index: usize) -> JokerDeck_CardMask {
-    JOKER_DECK_CARD_MASKS_TABLE[index]
+    JokerDeck_CardMask { cards_n: JOKER_DECK_CARD_MASKS_TABLE[index] }
 }
+
 
 // Rangs
 pub const JOKER_DECK_RANK_2: usize = STD_DECK_RANK_2;
@@ -43,6 +47,90 @@ pub const JOKER_DECK_SUIT_LAST: usize = STD_DECK_SUIT_LAST;
 pub const JOKER_DECK_N_RANKMASKS: usize = STD_DECK_N_RANKMASKS;
 pub const JOKER_DECK_JOKER: usize = JOKER_DECK_N_CARDS - 1;
 
+#[derive(Debug, Clone, Copy)]
+struct JokerDeck_CardMask {
+    // Assuming 64-bit representation for simplicity.
+    // Adjust according to your needs (like the C union structure).
+    cards_n: u64,
+}
+impl JokerDeck_CardMask {
+    pub fn new() -> Self {
+        JokerDeck_CardMask { cards_n: 0 }
+    }
+
+    pub fn spades(&self) -> u64 {
+        self.cards_n & 0x1FFF // Adjust the bitmask according to your card representation
+    }
+    pub fn hearts(&self) -> u64 {
+        (self.cards_n >> 13) & 0x1FFF // Adjust the bitmask according to your card representation
+    }
+    pub fn clubs(&self) -> u64 {
+        (self.cards_n >> 26) & 0x1FFF // Adjust the bitmask according to your card representation
+    }
+    pub fn diamonds(&self) -> u64 {
+        (self.cards_n >> 39) & 0x1FFF // Adjust the bitmask according to your card representation
+    }
+    // Autres opérations sur les masques (exemple: OR, AND, etc.)
+    pub fn or (&self, other: Self) -> Self {
+        JokerDeck_CardMask { cards_n: self.cards_n | other.cards_n }
+    }
+    pub fn and (&self, other: Self) -> Self {
+        JokerDeck_CardMask { cards_n: self.cards_n & other.cards_n }
+    }
+    pub fn not (&self) -> Self {
+        JokerDeck_CardMask { cards_n:!self.cards_n }
+    }
+    pub fn xor (&self, other: Self) -> Self {
+        JokerDeck_CardMask { cards_n: self.cards_n ^ other.cards_n }
+    }
+    // Autres méthodes si nécessaires...
+    pub fn get_mask(index: usize) -> JokerDeck_CardMask {
+        JokerDeck_CardMask { cards_n: JOKER_DECK_CARD_MASKS_TABLE[index] }
+    }
+
+    pub fn mask_to_cards(&self) -> Vec<usize> {
+        let mut cards = Vec::new();
+        for i in (0..JOKER_DECK_N_CARDS).rev() {
+            if self.card_is_set(i) {
+                cards.push(i);
+            }
+        }
+        cards
+    }
+
+    // Méthode pour vérifier si une carte est présente dans le masque
+    fn card_is_set(&self, index: usize) -> bool {
+        (self.cards_n & (1 << index)) != 0
+    }
+
+    // Méthode pour réinitialiser le masque
+    pub fn reset(&mut self) {
+        self.cards_n = 0;
+    }
+
+    // Méthode pour vérifier si le masque est vide
+    pub fn is_empty(&self) -> bool {
+        self.cards_n == 0
+    }
+
+    // Méthode pour vérifier si deux masques sont égaux
+    pub fn equals(&self, other: &Self) -> bool {
+        self.cards_n == other.cards_n
+    }
+
+    // Méthode pour compter le nombre de cartes dans un masque
+    pub fn num_cards(&self) -> usize {
+        (0..JOKER_DECK_N_CARDS)
+            .filter(|&i| self.card_is_set(i))
+            .count()
+    }   
+    
+
+    // Méthode pour ajouter une carte au masque
+    pub fn set(&mut self, card_index: usize) {
+        self.cards_n |= 1 << card_index;
+    }    
+}
 
 
 pub struct JokerDeck;
@@ -62,6 +150,64 @@ impl JokerDeck {
     fn joker_deck_make_card(rank: usize, suit: usize) -> usize {
         StdDeck::make_card(rank, suit)
     }
+
+    // Conversion d'une carte en chaîne de caractères
+    pub fn card_to_string(card_index: usize) -> String {
+        if card_index == JOKER_DECK_JOKER {
+            "Xx".to_string()
+        } else {
+            let rank_char = JOKER_DECK_RANK_CHARS
+                .chars()
+                .nth(StdDeck::rank(card_index))
+                .unwrap();
+            let suit_char = JOKER_DECK_SUIT_CHARS
+                .chars()
+                .nth(StdDeck::suit(card_index))
+                .unwrap();
+            format!("{}{}", rank_char, suit_char)
+        }
+    }
+    
+    // Conversion d'une chaîne de caractères en carte
+    pub fn string_to_card(in_string: &str) -> Option<usize> {
+        if in_string.to_uppercase() == "XX" {
+            Some(JOKER_DECK_JOKER)
+        } else {
+            StdDeck::string_to_card(in_string)  // Assuming StdDeck has a similar method
+        }
+    }
+
+    // Conversion d'une chaîne de caractères représentant des cartes en un masque de cartes
+    pub fn string_to_mask(in_string: &str) -> Result<(JokerDeck_CardMask, usize), String> {
+        let mut out_mask = JokerDeck_CardMask::new();
+        let mut n = 0;
+
+        for chunk in in_string.chars().collect::<Vec<char>>().chunks(2) {
+            if chunk.len() != 2 {
+                return Err(format!("Format de carte invalide : {:?}", chunk));
+            }
+            let (rank_char, suit_char) = (chunk[0], chunk[1]);
+
+            if rank_char == ' ' {
+                continue;
+            }
+
+            let rank = JOKER_DECK_RANK_CHARS.find(rank_char.to_ascii_uppercase());
+            let suit = JOKER_DECK_SUIT_CHARS.find(suit_char.to_ascii_lowercase());
+
+            match (rank, suit) {
+                (Some(rank), Some(suit)) => {
+                    let card = StdDeck::make_card(rank, suit); // Using StdDeck::make_card
+                    out_mask.set(card);
+                    n += 1;
+                },
+                _ => return Err(format!("Caractère de carte non reconnu : {}{}", rank_char, suit_char)),
+            }
+        }
+
+        Ok((out_mask, n))
+    }
 }
+
 
 // Additional implementations, if needed, based on the C source
