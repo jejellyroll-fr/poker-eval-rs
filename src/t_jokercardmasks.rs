@@ -1,8 +1,8 @@
 // Définition de la structure JokerDeck_CardMask en tant que type alias pour u64
-type JokerDeck_CardMask = u64;
+pub type JokerDeck_CardMask = u64;
 
 // Déclaration du tableau JokerDeck_cardMasksTable
-const JOKER_DECK_CARD_MASKS_TABLE: [JokerDeck_CardMask; 53] = [
+pub const JOKER_DECK_CARD_MASKS_TABLE: [JokerDeck_CardMask; 53] = [
     0x0001000000000000,
     0x0002000000000000,
     0x0004000000000000,
