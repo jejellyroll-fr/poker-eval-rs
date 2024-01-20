@@ -143,6 +143,30 @@ impl StdDeckCardMask {
         self.mask |= 1 << card_index;
         //println!("Masque après ajout: {:b}", self.mask); //debug
     }
+
+    // Method to set the spades suit bits
+    pub fn set_spades(&mut self, ranks: u16) {
+        let mask = STD_DECK_CARDMASK_SPADES;
+        self.mask = (self.mask & !mask) | ((ranks as u64) << 39);
+    }
+
+    // Method to set the hearts suit bits
+    pub fn set_hearts(&mut self, ranks: u16) {
+        let mask = STD_DECK_CARDMASK_HEARTS;
+        self.mask = (self.mask & !mask) | ((ranks as u64) << 48);
+    }
+
+    // Method to set the clubs suit bits
+    pub fn set_clubs(&mut self, ranks: u16) {
+        let mask = STD_DECK_CARDMASK_CLUBS;
+        self.mask = (self.mask & !mask) | ((ranks as u64) << 26);
+    }
+
+    // Method to set the diamonds suit bits
+    pub fn set_diamonds(&mut self, ranks: u16) {
+        let mask = STD_DECK_CARDMASK_DIAMONDS;
+        self.mask = (self.mask & !mask) | ((ranks as u64) << 13);
+    }
 }
 
 // Structure StdDeck

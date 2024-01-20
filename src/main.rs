@@ -21,10 +21,12 @@ pub mod t_topfivecards;
 pub mod eval_omaha;
 pub mod t_jokercardmasks;
 pub mod deck_joker;
+pub mod eval_joker_low;
 
 use crate::eval::Eval;
 use crate::eval_low::std_deck_lowball_eval;
 use deck_std::*;
+
 
 fn main() {
     let hands = vec![
@@ -103,5 +105,6 @@ fn main() {
 
         println!("----------------------");
     }
+
 }
 

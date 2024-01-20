@@ -4,10 +4,8 @@ use crate::t_straight::STRAIGHT_TABLE;
 use crate::rules_std::HandType;
 use crate::eval_low::extract_top_five_cards_lowball;
 use crate::t_topcard::TOP_CARD_TABLE;
-use crate::eval::count_bits;
-use crate::deck_std::*;
 use crate::t_topfivecards::TOP_FIVE_CARDS_TABLE;
-use crate::handval::{HandVal, CARD_MASK, HANDTYPE_SHIFT, CARD_WIDTH, FIFTH_CARD_MASK, SECOND_CARD_SHIFT, SECOND_CARD_MASK, THIRD_CARD_SHIFT, THIRD_CARD_MASK, FOURTH_CARD_SHIFT, FOURTH_CARD_MASK, TOP_CARD_SHIFT, TOP_CARD_MASK};
+use crate::handval::{HandVal, CARD_MASK, CARD_WIDTH, FIFTH_CARD_MASK, SECOND_CARD_SHIFT,  THIRD_CARD_SHIFT, FOURTH_CARD_SHIFT};
 
 pub fn std_deck_lowball27_eval(cards: &StdDeckCardMask, _n_cards: usize) -> HandVal {
     let ss = cards.spades().into(); // Rangs pour Spades
@@ -137,7 +135,7 @@ pub fn std_deck_lowball27_eval(cards: &StdDeckCardMask, _n_cards: usize) -> Hand
             //println!("c'est deux paires ou brelan");
             let two_mask = ranks ^ (sc ^ sd ^ sh ^ ss);
             //println!("two_mask: {}", two_mask);
-            let t = ranks ^ two_mask;
+            let _t = ranks ^ two_mask;
             //println!("t: {}", t);
         
             if two_mask == 0 {

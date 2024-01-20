@@ -9,8 +9,9 @@ pub const JOKER_DECK_RANK_CHARS: &str = "23456789TJQKA";
 pub const JOKER_DECK_SUIT_CHARS: &str = "hdcs";
 
 // Function to get the mask for a specific index
-pub fn joker_deck_mask(index: usize) -> JokerDeck_CardMask {
-    JokerDeck_CardMask { cards_n: JOKER_DECK_CARD_MASKS_TABLE[index] }
+// Function to get the mask for a specific index
+pub fn joker_deck_mask(index: usize) -> JokerDeckCardMask {
+    JOKER_DECK_CARD_MASKS_TABLE[index]
 }
 
 
@@ -47,46 +48,46 @@ pub const JOKER_DECK_SUIT_LAST: usize = STD_DECK_SUIT_LAST;
 pub const JOKER_DECK_N_RANKMASKS: usize = STD_DECK_N_RANKMASKS;
 pub const JOKER_DECK_JOKER: usize = JOKER_DECK_N_CARDS - 1;
 
-#[derive(Debug, Clone, Copy)]
-struct JokerDeck_CardMask {
-    // Assuming 64-bit representation for simplicity.
-    // Adjust according to your needs (like the C union structure).
-    cards_n: u64,
-}
-impl JokerDeck_CardMask {
+
+
+impl JokerDeckCardMask {
     pub fn new() -> Self {
-        JokerDeck_CardMask { cards_n: 0 }
+        JokerDeckCardMask { cards_n: 0 }
     }
 
     pub fn spades(&self) -> u64 {
-        self.cards_n & 0x1FFF // Adjust the bitmask according to your card representation
+        (self.cards_n >> 39) & 0x1FFF
     }
+
     pub fn hearts(&self) -> u64 {
-        (self.cards_n >> 13) & 0x1FFF // Adjust the bitmask according to your card representation
+        (self.cards_n >> 26) & 0x1FFF
     }
+
     pub fn clubs(&self) -> u64 {
-        (self.cards_n >> 26) & 0x1FFF // Adjust the bitmask according to your card representation
+        (self.cards_n >> 13) & 0x1FFF
     }
+
     pub fn diamonds(&self) -> u64 {
-        (self.cards_n >> 39) & 0x1FFF // Adjust the bitmask according to your card representation
+        self.cards_n & 0x1FFF
     }
     // Autres opérations sur les masques (exemple: OR, AND, etc.)
     pub fn or (&self, other: Self) -> Self {
-        JokerDeck_CardMask { cards_n: self.cards_n | other.cards_n }
+        JokerDeckCardMask { cards_n: self.cards_n | other.cards_n }
     }
     pub fn and (&self, other: Self) -> Self {
-        JokerDeck_CardMask { cards_n: self.cards_n & other.cards_n }
+        JokerDeckCardMask { cards_n: self.cards_n & other.cards_n }
     }
     pub fn not (&self) -> Self {
-        JokerDeck_CardMask { cards_n:!self.cards_n }
+        JokerDeckCardMask { cards_n:!self.cards_n }
     }
     pub fn xor (&self, other: Self) -> Self {
-        JokerDeck_CardMask { cards_n: self.cards_n ^ other.cards_n }
+        JokerDeckCardMask { cards_n: self.cards_n ^ other.cards_n }
     }
     // Autres méthodes si nécessaires...
-    pub fn get_mask(index: usize) -> JokerDeck_CardMask {
-        JokerDeck_CardMask { cards_n: JOKER_DECK_CARD_MASKS_TABLE[index] }
+    pub fn get_mask(index: usize) -> JokerDeckCardMask {
+        JOKER_DECK_CARD_MASKS_TABLE[index]
     }
+    
 
     pub fn mask_to_cards(&self) -> Vec<usize> {
         let mut cards = Vec::new();
@@ -98,10 +99,32 @@ impl JokerDeck_CardMask {
         cards
     }
 
+    // ...
+
+    // Assuming Joker is a single bit, adjust this based on your representation
+    pub fn set_joker(&mut self, joker: bool) {
+        let joker_bit = 1 << 52; // Adjust this based on where the joker bit is
+        self.cards_n = if joker { self.cards_n | joker_bit } else { self.cards_n & !joker_bit };
+    }
     // Méthode pour vérifier si une carte est présente dans le masque
-    fn card_is_set(&self, index: usize) -> bool {
+    pub fn card_is_set(&self, index: usize) -> bool {
         (self.cards_n & (1 << index)) != 0
     }
+
+    pub fn to_std(&self) -> StdDeckCardMask {
+        let mut s_cards = StdDeckCardMask::new(); // Assuming you have a constructor for StdDeckCardMask
+        s_cards.reset();
+
+        // Set spades, hearts, clubs, diamonds from JokerDeckCardMask
+        // Assuming you have methods to get these values from JokerDeckCardMask
+        // and set these values in StdDeckCardMask
+        s_cards.set_spades(self.spades() as u16);
+        s_cards.set_hearts(self.hearts() as u16);
+        s_cards.set_clubs(self.clubs() as u16);
+        s_cards.set_diamonds(self.diamonds() as u16);
+
+        s_cards
+    }    
 
     // Méthode pour réinitialiser le masque
     pub fn reset(&mut self) {
@@ -178,8 +201,8 @@ impl JokerDeck {
     }
 
     // Conversion d'une chaîne de caractères représentant des cartes en un masque de cartes
-    pub fn string_to_mask(in_string: &str) -> Result<(JokerDeck_CardMask, usize), String> {
-        let mut out_mask = JokerDeck_CardMask::new();
+    pub fn string_to_mask(in_string: &str) -> Result<(JokerDeckCardMask, usize), String> {
+        let mut out_mask = JokerDeckCardMask::new();
         let mut n = 0;
 
         for chunk in in_string.chars().collect::<Vec<char>>().chunks(2) {

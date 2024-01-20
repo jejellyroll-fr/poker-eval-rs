@@ -1,8 +1,8 @@
-use crate::handval_low::{LowHandVal, LOW_HAND_VAL_NOTHING, LOW_HAND_VAL_WORST_EIGHT, HANDTYPE_SHIFT, HANDTYPE_MASK, TOP_CARD_SHIFT, TOP_CARD_MASK, SECOND_CARD_SHIFT, SECOND_CARD_MASK, THIRD_CARD_SHIFT, THIRD_CARD_MASK, FOURTH_CARD_SHIFT, FOURTH_CARD_MASK, FIFTH_CARD_SHIFT, FIFTH_CARD_MASK};
+use crate::handval_low::{LowHandVal, LOW_HAND_VAL_NOTHING, LOW_HAND_VAL_WORST_EIGHT, HANDTYPE_SHIFT, HANDTYPE_MASK, TOP_CARD_SHIFT,  SECOND_CARD_SHIFT,  THIRD_CARD_SHIFT, FOURTH_CARD_SHIFT, FIFTH_CARD_SHIFT};
 use crate::t_cardmasks::StdDeckCardMask;
 use crate::t_botfivecards::BOTTOM_FIVE_CARDS_TABLE;
 use crate::rules_std::HandType;
-use crate::deck_std::*;
+
 
 pub fn std_deck_lowball8_eval(cards: &StdDeckCardMask, _n_cards: usize) -> LowHandVal {
     //println!("Début de std_deck_lowball8_eval");

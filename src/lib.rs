@@ -28,7 +28,7 @@ use pyo3::prelude::*;
 #[pyfunction]
 fn string_to_mask(input: &str) -> PyResult<String> {
     let result = StdDeck::string_to_mask(input); 
-    let (mask, num_cards) = match result {
+    let (mask, _num_cards) = match result {
         Ok((mask, num_cards)) => (mask, num_cards),
         Err(e) => {
             eprintln!("Erreur lors de la conversion de la chaîne en masque de cartes : {}", e);
