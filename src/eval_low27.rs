@@ -242,8 +242,9 @@ pub fn std_deck_lowball27_eval(cards: &StdDeckCardMask, _n_cards: usize) -> Hand
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::deck_std::{StdDeck, STD_DECK_RANK_2, STD_DECK_RANK_3, STD_DECK_RANK_4, STD_DECK_RANK_5, STD_DECK_RANK_6, STD_DECK_RANK_7, STD_DECK_RANK_8, STD_DECK_RANK_TEN};
-    use crate::deck_std::{STD_DECK_SUIT_SPADES, STD_DECK_SUIT_DIAMONDS, STD_DECK_SUIT_CLUBS, STD_DECK_SUIT_HEARTS};
+    use crate::deck_std::StdDeck;
+    use crate::handval_low::HANDTYPE_SHIFT;
+
 
     fn create_mask_from_string(cards_str: &str) -> StdDeckCardMask {
         let (mask, _) = StdDeck::string_to_mask(cards_str).expect("Failed to create mask");

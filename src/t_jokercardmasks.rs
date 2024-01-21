@@ -1,6 +1,6 @@
 pub const JOKER_DECK_N_CARDS: usize = 53;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct JokerDeckCardMask {
     pub cards_n: u64,
 }

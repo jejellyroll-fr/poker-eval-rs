@@ -54,6 +54,7 @@ pub fn std_deck_lowball8_eval(cards: &StdDeckCardMask, _n_cards: usize) -> LowHa
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::deck_std::StdDeck;
 
     #[test]
     fn test_valid_lowball_hand() {
