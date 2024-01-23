@@ -1,6 +1,8 @@
 use std::cmp::Ordering;
+use std::ptr::NonNull;
+use crate::enumord::EnumOrdering;
 
-const ENUM_MAXPLAYERS: usize = 12;
+pub const ENUM_MAXPLAYERS: usize = 12;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Game {
@@ -55,5 +57,7 @@ pub struct EnumResult {
     pub nsharelo: [[u32; ENUM_MAXPLAYERS + 1]; ENUM_MAXPLAYERS],  // shares for low hand
     pub nshare: [[[u32; ENUM_MAXPLAYERS + 1]; ENUM_MAXPLAYERS + 1]; ENUM_MAXPLAYERS], // shares for both hands
     pub ev: [f64; ENUM_MAXPLAYERS],         // pot equity of player i averaged over all outcomes
-    pub ordering: *mut Ordering, // or a safer Rust equivalent
+
+    // A safer nullable pointer using NonNull
+    pub ordering: Option<NonNull<EnumOrdering>>,
 }

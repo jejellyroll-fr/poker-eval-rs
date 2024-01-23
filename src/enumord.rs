@@ -17,7 +17,7 @@ pub enum EnumOrderingMode {
 
 // Structure pour le suivi des ordres des mains
 pub struct EnumOrdering {
-    mode: EnumOrderingMode,
+    pub mode: EnumOrderingMode,
     nplayers: usize,
     nentries: usize,
     hist: Vec<u32>,

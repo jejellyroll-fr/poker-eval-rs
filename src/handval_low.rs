@@ -31,7 +31,7 @@ pub const LOW_HAND_VAL_WORST_EIGHT: u32 = (HandType::NoPair as u32) << HANDTYPE_
     | (STD_DECK_RANK_5 as u32 + 1) << FOURTH_CARD_SHIFT
     | (STD_DECK_RANK_4 as u32 + 1) << FIFTH_CARD_SHIFT;
 
-#[derive(Debug,PartialEq)]
+#[derive(Debug, Copy, Clone, PartialEq, PartialOrd)]
 pub struct LowHandVal {
     pub value: u32,
 }

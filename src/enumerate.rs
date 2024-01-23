@@ -1,7 +1,16 @@
 use crate::t_cardmasks::StdDeckCardMask;
 use crate::t_jokercardmasks::JokerDeckCardMask;
 use crate::combinaison::*;
+use crate::enumdefs::{Game,GameParams};
+use crate::handval::HandVal;
+use crate::handval_low::{LowHandVal, LOW_HAND_VAL_NOTHING };
+use crate::enumdefs::{EnumResult, ENUM_MAXPLAYERS};
+use crate::enumord::{EnumOrdering, EnumOrderingMode};
 use std::ops::BitOr;
+use std::ptr::NonNull;
+use rand::seq::SliceRandom; // Assurez-vous que la crate rand est incluse dans votre Cargo.toml
+use rand::thread_rng;
+
 
 
 
@@ -580,7 +589,7 @@ fn enumerate_permutations_d<T, F>(
     T: CardMask + Clone + PartialEq + std::ops::BitOr<Output = T>,
     F: FnMut(Vec<Vec<T>>),
 {
-    let mut live_cards: Vec<T> = decks.iter().flatten()
+    let live_cards: Vec<T> = decks.iter().flatten()
         .filter(|&card| !dead_cards.contains(card))
         .cloned()
         .collect();
@@ -647,3 +656,193 @@ fn enumerate_permutations_d<T, F>(
         }
     }
 }
+
+
+
+fn deck_montecarlo_n_cards_d<T, F>(
+    deck: &[T],
+    dead_cards: &[T],
+    num_cards: usize,
+    num_iter: usize,
+    mut action: F,
+) where
+    T: CardMask + Clone,
+    F: FnMut(Vec<&T>),
+{
+    let mut rng = rand::thread_rng();
+
+    for _ in 0..num_iter {
+        let mut used = dead_cards.to_vec();
+        let mut cards_var = Vec::with_capacity(num_cards);
+
+        while cards_var.len() < num_cards {
+            let card = deck.choose(&mut rng).unwrap();
+
+            if !used.contains(card) {
+                used.push(card.clone());
+                cards_var.push(card);
+            }
+        }
+
+        action(cards_var.clone());
+    }
+}
+
+
+
+fn montecarlo_permutations_d<T, F>(
+    decks: &[Vec<T>],
+    set_sizes: &[usize],
+    dead_cards: &[T],
+    num_iter: usize,
+    mut action: F,
+) where
+    T: CardMask + Clone,
+    F: FnMut(Vec<Vec<&T>>),
+{
+    let mut rng = thread_rng();
+    for _ in 0..num_iter {
+        let mut used_cards = dead_cards.to_vec();
+        let mut set_vars = Vec::with_capacity(set_sizes.len());
+
+        for (&size, deck) in set_sizes.iter().zip(decks.iter()) {
+            let mut set = Vec::with_capacity(size);
+            while set.len() < size {
+                let card = deck.choose(&mut rng).expect("Deck is empty");
+                if !used_cards.contains(card) {
+                    used_cards.push(card.clone());
+                    set.push(card);
+                }
+            }
+            set_vars.push(set);
+        }
+
+        action(set_vars);
+    }
+}
+
+pub fn game_params() -> Vec<GameParams> {
+    vec![
+        GameParams { game: Game::Holdem, minpocket: 2, maxpocket: 2, maxboard: 5, haslopot: 0, hashipot: 1, name: "Holdem Hi".to_string() },
+        GameParams { game: Game::Holdem8, minpocket: 2, maxpocket: 2, maxboard: 5, haslopot: 1, hashipot: 1, name: "Holdem Hi/Low 8-or-better".to_string() },
+        GameParams { game: Game::Omaha, minpocket: 4, maxpocket: 4, maxboard: 5, haslopot: 0, hashipot: 1, name: "Omaha Hi".to_string() },
+        GameParams { game: Game::Omaha5, minpocket: 5, maxpocket: 5, maxboard: 5, haslopot: 0, hashipot: 1, name: "Omaha Hi 5cards".to_string() },
+        GameParams { game: Game::Omaha6, minpocket: 6, maxpocket: 6, maxboard: 5, haslopot: 0, hashipot: 1, name: "Omaha Hi 6cards".to_string() },
+        GameParams { game: Game::Omaha8, minpocket: 4, maxpocket: 4, maxboard: 5, haslopot: 1, hashipot: 1, name: "Omaha Hi/Low 8-or-better".to_string() },
+        GameParams { game: Game::Omaha85, minpocket: 5, maxpocket: 5, maxboard: 5, haslopot: 1, hashipot: 1, name: "Omaha 5cards Hi/Low 8-or-better".to_string() },
+        GameParams { game: Game::Stud7, minpocket: 3, maxpocket: 7, maxboard: 0, haslopot: 0, hashipot: 1, name: "7-card Stud Hi".to_string() },
+        GameParams { game: Game::Stud78, minpocket: 3, maxpocket: 7, maxboard: 0, haslopot: 1, hashipot: 1, name: "7-card Stud Hi/Low 8-or-better".to_string() },
+        GameParams { game: Game::Stud7nsq, minpocket: 3, maxpocket: 7, maxboard: 0, haslopot: 1, hashipot: 1, name: "7-card Stud Hi/Low no qualifier".to_string() },
+        GameParams { game: Game::Razz, minpocket: 3, maxpocket: 7, maxboard: 0, haslopot: 1, hashipot: 0, name: "Razz (7-card Stud A-5 Low)".to_string() },
+        GameParams { game: Game::Draw5, minpocket: 0, maxpocket: 5, maxboard: 0, haslopot: 0, hashipot: 1, name: "5-card Draw Hi with joker".to_string() },
+        GameParams { game: Game::Draw58, minpocket: 0, maxpocket: 5, maxboard: 0, haslopot: 1, hashipot: 1, name: "5-card Draw Hi/Low 8-or-better with joker".to_string() },
+        GameParams { game: Game::Draw5nsq, minpocket: 0, maxpocket: 5, maxboard: 0, haslopot: 1, hashipot: 1, name: "5-card Draw Hi/Low no qualifier with joker".to_string() },
+        GameParams { game: Game::Lowball, minpocket: 0, maxpocket: 5, maxboard: 0, haslopot: 1, hashipot: 0, name: "5-card Draw A-5 Lowball with joker".to_string() },
+        GameParams { game: Game::Lowball27, minpocket: 0, maxpocket: 5, maxboard: 0, haslopot: 1, hashipot: 0, name: "5-card Draw 2-7 Lowball".to_string() }
+    ]
+}
+
+fn inner_loop<F, G, H>(
+    npockets: usize,
+    mut evalwrap: F,
+    mut ordering_increment: G,
+    mut ordering_increment_hilo: H,
+    result: &mut EnumResult,
+) where
+    F: FnMut(usize) -> (Result<HandVal, i32>, Result<LowHandVal, i32>),
+    G: FnMut(&mut EnumResult, &[usize], &[usize]),
+    H: FnMut(&mut EnumResult, &[usize], &[usize]),
+{
+
+    let HANDVAL_NOTHING: u32 = HandVal::new(0, 0, 0, 0, 0, 0).value;
+
+    let mut hival = vec![HANDVAL_NOTHING; ENUM_MAXPLAYERS];
+    let mut loval = vec![LOW_HAND_VAL_NOTHING; ENUM_MAXPLAYERS];
+    let mut besthi = HANDVAL_NOTHING;
+    let mut bestlo = LOW_HAND_VAL_NOTHING;
+    let mut hishare = 0;
+    let mut loshare = 0;
+
+    // Determine winning hands for high and low
+    for i in 0..npockets {
+        let (hi_res, lo_res) = evalwrap(i);
+
+        let hi = hi_res.map(|h| h.value).unwrap_or(HANDVAL_NOTHING);
+        let lo = lo_res.map(|l| l.value).unwrap_or(LOW_HAND_VAL_NOTHING);
+
+        hival[i] = hi;
+        loval[i] = lo;
+
+        if hi != HANDVAL_NOTHING {
+            if hi > besthi {
+                besthi = hi;
+                hishare = 1;
+            } else if hi == besthi {
+                hishare += 1;
+            }
+        }
+
+        if lo != LOW_HAND_VAL_NOTHING {
+            if lo < bestlo {
+                bestlo = lo;
+                loshare = 1;
+            } else if lo == bestlo {
+                loshare += 1;
+            }
+        }
+    }
+
+    let hipot = if besthi != HANDVAL_NOTHING { 1.0 / hishare as f64 } else { 0.0 };
+    let lopot = if bestlo != LOW_HAND_VAL_NOTHING { 1.0 / loshare as f64 } else { 0.0 };
+
+    // Award pot fractions to winning hands
+    for i in 0..npockets {
+        let mut potfrac = 0.0;
+
+        if hival[i] == besthi {
+            potfrac += hipot;
+            if hishare == 1 {
+                result.nwinhi[i] += 1;
+            } else {
+                result.ntiehi[i] += 1;
+            }
+        } else if hival[i] != HANDVAL_NOTHING {
+            result.nlosehi[i] += 1;
+        }
+
+        if loval[i] == bestlo {
+            potfrac += lopot;
+            if loshare == 1 {
+                result.nwinlo[i] += 1;
+            } else {
+                result.ntielo[i] += 1;
+            }
+        } else if loval[i] != LOW_HAND_VAL_NOTHING {
+            result.nloselo[i] += 1;
+        }
+
+        result.ev[i] += potfrac;
+    }
+
+    // Update ordering if applicable
+    unsafe {
+        if let Some(mut ordering_ptr) = result.ordering {
+            let ordering = ordering_ptr.as_mut(); // Get a mutable reference to EnumOrdering
+
+
+            let hiranks: Vec<_> = hival.iter().map(|&val| val as usize).collect();
+            let loranks: Vec<_> = loval.iter().map(|&val| val as usize).collect();
+
+            match ordering.mode{
+                EnumOrderingMode::Hi => ordering_increment(result, &hiranks, &loranks),
+                EnumOrderingMode::Lo => ordering_increment(result, &loranks, &hiranks),
+                EnumOrderingMode::Hilo => ordering_increment_hilo(result, &hiranks, &loranks),
+                _ => (),
+            }
+        }
+    }
+
+    result.nsamples += 1;
+}
+
+
