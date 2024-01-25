@@ -92,7 +92,7 @@ pub fn std_deck_lowball27_eval(cards: &StdDeckCardMask, _n_cards: usize) -> Hand
         0 => {
             // C'est une main sans paire
             let retval = HandVal {
-                value: ((HandType::NoPair as u32) ) + TOP_FIVE_CARDS_TABLE[ranks as usize],
+                value: (HandType::NoPair as u32)  + TOP_FIVE_CARDS_TABLE[ranks as usize],
             };
             //println!("Retourne HandVal pour NoPair: {:?}", retval);
             return retval;
