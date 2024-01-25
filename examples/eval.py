@@ -15,12 +15,12 @@ def main():
         print(f"High Hand: {result_high}")
 
     if args.low:
-        result_low = poker_eval_rs.eval_low(args.cards)
+        result_low = poker_eval_rs.eval_low_func(args.cards)  # Changez ici eval_low par eval_low_func
         print(f"Low Hand: {result_low}")
 
     if args.highlow:
         result_high = poker_eval_rs.eval_n(args.cards)
-        result_low = poker_eval_rs.eval_low(args.cards)
+        result_low = poker_eval_rs.eval_low_func(args.cards)  # Changez également ici
         print(f"High Hand: {result_high}, Low Hand: {result_low}")
 
 if __name__ == "__main__":
