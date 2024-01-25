@@ -112,7 +112,6 @@ impl LowHandVal {
         let shifted = without_ace << 1; // Décaler tous les autres bits d'une position vers le haut
         shifted | ace_bit // Combiner le bit de l'As décalé avec les autres bits décalés
     }
-    
 
     // Méthode pour ajouter un joker fictif dans les rangs (si nécessaire)
     pub fn jokerfy_ranks(mut ranks: u32) {

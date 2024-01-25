@@ -232,8 +232,6 @@ impl Eval {
     }
 }
 
-
-
 // Should return 0 when input is 0
 #[test]
 fn should_return_zero_when_input_is_zero() {
@@ -279,7 +277,7 @@ fn should_handle_negative_inputs() {
     assert_eq!(result, expected);
 }
 
- // Should return 2 when input is 3
+// Should return 2 when input is 3
 #[test]
 fn should_return_two_when_input_is_three() {
     let input = 3;

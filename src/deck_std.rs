@@ -221,33 +221,37 @@ impl StdDeck {
     pub fn string_to_mask(in_string: &str) -> Result<(StdDeckCardMask, usize), String> {
         let mut out_mask = StdDeckCardMask::new();
         let mut n = 0;
-    
+
         for chunk in in_string.chars().collect::<Vec<char>>().chunks(2) {
             if chunk.len() != 2 {
                 return Err(format!("Format de carte invalide : {:?}", chunk));
             }
             let (rank_char, suit_char) = (chunk[0], chunk[1]);
-    
+
             if rank_char == ' ' {
                 continue;
             }
-    
+
             let rank = STD_DECK_RANK_CHARS.find(rank_char.to_ascii_uppercase());
             let suit = STD_DECK_SUIT_CHARS.find(suit_char.to_ascii_lowercase());
-    
+
             match (rank, suit) {
                 (Some(rank), Some(suit)) => {
                     let card = Self::make_card(rank, suit);
                     out_mask.set(card);
                     n += 1;
-                },
-                _ => return Err(format!("Caractère de carte non reconnu : {}{}", rank_char, suit_char)),
+                }
+                _ => {
+                    return Err(format!(
+                        "Caractère de carte non reconnu : {}{}",
+                        rank_char, suit_char
+                    ))
+                }
             }
         }
-    
+
         //println!("Masque de cartes généré : {:b}", out_mask.mask); //debug
-    
+
         Ok((out_mask, n))
     }
-    
 }

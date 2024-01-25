@@ -27,12 +27,18 @@ use pyo3::prelude::*;
 
 #[pyfunction]
 fn string_to_mask(input: &str) -> PyResult<String> {
-    let result = StdDeck::string_to_mask(input); 
+    let result = StdDeck::string_to_mask(input);
     let (mask, _num_cards) = match result {
         Ok((mask, num_cards)) => (mask, num_cards),
         Err(e) => {
-            eprintln!("Erreur lors de la conversion de la chaîne en masque de cartes : {}", e);
-            return Err(PyErr::new::<pyo3::exceptions::PyValueError, _>(format!("Erreur lors de la conversion de la chaîne en masque de cartes : {}", e)));
+            eprintln!(
+                "Erreur lors de la conversion de la chaîne en masque de cartes : {}",
+                e
+            );
+            return Err(PyErr::new::<pyo3::exceptions::PyValueError, _>(format!(
+                "Erreur lors de la conversion de la chaîne en masque de cartes : {}",
+                e
+            )));
         }
     };
     Ok(format!("{:b}", mask.mask)) // Convertir en binaire et retourner
@@ -40,12 +46,18 @@ fn string_to_mask(input: &str) -> PyResult<String> {
 
 #[pyfunction]
 fn eval_n(input: &str) -> PyResult<String> {
-    let result= StdDeck::string_to_mask(input);
+    let result = StdDeck::string_to_mask(input);
     let (mask, num_cards) = match result {
         Ok((mask, num_cards)) => (mask, num_cards),
         Err(e) => {
-            eprintln!("Erreur lors de la conversion de la chaîne en masque de cartes : {}", e);
-            return Err(PyErr::new::<pyo3::exceptions::PyValueError, _>(format!("Erreur lors de la conversion de la chaîne en masque de cartes : {}", e)));
+            eprintln!(
+                "Erreur lors de la conversion de la chaîne en masque de cartes : {}",
+                e
+            );
+            return Err(PyErr::new::<pyo3::exceptions::PyValueError, _>(format!(
+                "Erreur lors de la conversion de la chaîne en masque de cartes : {}",
+                e
+            )));
         }
     };
     let hand_val = Eval::eval_n(&mask, num_cards);
@@ -54,12 +66,18 @@ fn eval_n(input: &str) -> PyResult<String> {
 
 #[pyfunction]
 fn eval_low_func(input: &str) -> PyResult<String> {
-    let result= StdDeck::string_to_mask(input);
+    let result = StdDeck::string_to_mask(input);
     let (mask, num_cards) = match result {
         Ok((mask, num_cards)) => (mask, num_cards),
         Err(e) => {
-            eprintln!("Erreur lors de la conversion de la chaîne en masque de cartes : {}", e);
-            return Err(PyErr::new::<pyo3::exceptions::PyValueError, _>(format!("Erreur lors de la conversion de la chaîne en masque de cartes : {}", e)));
+            eprintln!(
+                "Erreur lors de la conversion de la chaîne en masque de cartes : {}",
+                e
+            );
+            return Err(PyErr::new::<pyo3::exceptions::PyValueError, _>(format!(
+                "Erreur lors de la conversion de la chaîne en masque de cartes : {}",
+                e
+            )));
         }
     };
     let low_hand_val = std_deck_lowball_eval(&mask, num_cards);

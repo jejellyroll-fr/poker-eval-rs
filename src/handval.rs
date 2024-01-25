@@ -16,7 +16,6 @@ pub const FIFTH_CARD_MASK: u32 = 0x0000000F;
 pub const CARD_WIDTH: u32 = 4;
 pub const CARD_MASK: u32 = 0x0F;
 
-
 #[derive(Debug, Copy, Clone, PartialEq, PartialOrd)]
 pub struct HandVal {
     pub value: u32,

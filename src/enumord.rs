@@ -182,14 +182,13 @@ mod tests {
         // Assurez-vous que le nombre d'entrées et l'histogramme sont correctement initialisés
     }
 
-
-// Test pour la fonction enum_ordering_rank
+    // Test pour la fonction enum_ordering_rank
     #[test]
     fn test_enum_ordering_rank() {
         let mut hands = vec![
-            HandVal { value: 3 },  // Main 1
-            HandVal { value: 5 },  // Main 2
-            HandVal { value: 2 },  // Main 3
+            HandVal { value: 3 }, // Main 1
+            HandVal { value: 5 }, // Main 2
+            HandVal { value: 2 }, // Main 3
         ];
         let noqual = HandVal { value: 0 };
         let nplayers = 3;
@@ -209,7 +208,6 @@ mod tests {
 
         assert_eq!(encoded, 24); // La valeur encodée attendue
     }
-
 
     // Test pour enum_ordering_decode_k
     #[test]

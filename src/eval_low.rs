@@ -112,7 +112,7 @@ pub fn std_deck_lowball_eval(cards: &StdDeckCardMask, _n_cards: usize) -> LowHan
         //println!("Retourne LowHandVal pour NoPair: {:?}", low_hanval);
         return low_hanval;
     }
-        // Soustrayez 2 pour revenir aux indices originaux
+    // Soustrayez 2 pour revenir aux indices originaux
 
     match _n_ranks {
         4 => {
@@ -157,9 +157,7 @@ pub fn std_deck_lowball_eval(cards: &StdDeckCardMask, _n_cards: usize) -> LowHan
     }
 }
 
-
-
-    // Extract top five cards from a valid input with all five cards present
+// Extract top five cards from a valid input with all five cards present
 #[test]
 fn test_extract_top_five_cards_all_present() {
     let cards = 0b11111;
@@ -183,9 +181,7 @@ fn test_extract_top_five_cards_with_partial_set() {
     assert_eq!(result, (1, 2, 4, 5, 0)); // Les dernières cartes devraient être à zéro si moins de 5 cartes
 }
 
-
-
-    // Extract top five cards from a valid input with more than five cards present
+// Extract top five cards from a valid input with more than five cards present
 #[test]
 fn test_extract_top_five_cards_more_than_five_present() {
     let cards = 0b1111111111;
@@ -193,7 +189,7 @@ fn test_extract_top_five_cards_more_than_five_present() {
     assert_eq!(result, (1, 2, 3, 4, 5));
 }
 
-    // Extract top five cards from an input with no cards present
+// Extract top five cards from an input with no cards present
 #[test]
 fn test_extract_top_five_cards_no_cards_present() {
     let cards = 0b0;
@@ -201,7 +197,7 @@ fn test_extract_top_five_cards_no_cards_present() {
     assert_eq!(result, (0, 0, 0, 0, 0));
 }
 
-    // Extract top five cards from an input with all cards present
+// Extract top five cards from an input with all cards present
 #[test]
 fn test_extract_top_five_cards_all_cards_present() {
     let cards = 0b1111111111111;
@@ -209,10 +205,7 @@ fn test_extract_top_five_cards_all_cards_present() {
     assert_eq!(result, (1, 2, 3, 4, 5));
 }
 
-
-
-
-    // Returns a tuple with three elements when given valid input
+// Returns a tuple with three elements when given valid input
 #[test]
 fn test_get_trips_valid_input() {
     let dups = 0b1100;
@@ -221,7 +214,7 @@ fn test_get_trips_valid_input() {
     assert_eq!(result, (3, 1, 2));
 }
 
-    // Includes the trips card and two kickers in the output tuple
+// Includes the trips card and two kickers in the output tuple
 #[test]
 fn test_get_trips_includes_trips_and_kickers() {
     let dups = 0b1100;
@@ -232,7 +225,7 @@ fn test_get_trips_includes_trips_and_kickers() {
     assert_eq!(result.2, 2);
 }
 
-    // Handles input with multiple kickers correctly
+// Handles input with multiple kickers correctly
 #[test]
 fn test_get_trips_multiple_kickers() {
     let dups = 0b1100;
@@ -242,7 +235,7 @@ fn test_get_trips_multiple_kickers() {
     assert_eq!(result.2, 2);
 }
 
-    // Throws an error when given input with no kickers
+// Throws an error when given input with no kickers
 #[test]
 #[should_panic(expected = "Logic error in get_trips: insufficient kickers")]
 fn test_get_trips_no_kickers() {
@@ -251,7 +244,7 @@ fn test_get_trips_no_kickers() {
     get_trips(dups, ranks);
 }
 
-    // Handles input with only one kicker correctly
+// Handles input with only one kicker correctly
 #[test]
 fn test_get_trips_one_kicker() {
     let dups = 0b1100;
@@ -261,10 +254,7 @@ fn test_get_trips_one_kicker() {
     assert_eq!(result.2, 2);
 }
 
-
-
-
-    // Should raise an exception when given valid input with no pairs and at least one kicker.
+// Should raise an exception when given valid input with no pairs and at least one kicker.
 #[test]
 #[should_panic(expected = "Logic error in get_two_pairs: insufficient pairs or kickers")]
 fn test_get_two_pairs_valid_input_with_no_pairs_and_at_least_one_kicker() {
@@ -273,7 +263,7 @@ fn test_get_two_pairs_valid_input_with_no_pairs_and_at_least_one_kicker() {
     get_two_pairs(dups, ranks);
 }
 
-    // Should raise an exception when given valid input with no pairs and no kickers.
+// Should raise an exception when given valid input with no pairs and no kickers.
 #[test]
 #[should_panic(expected = "Logic error in get_two_pairs: insufficient pairs or kickers")]
 fn test_get_two_pairs_valid_input_with_no_pairs_and_no_kickers() {
@@ -281,7 +271,6 @@ fn test_get_two_pairs_valid_input_with_no_pairs_and_no_kickers() {
     let ranks = 0b0;
     get_two_pairs(dups, ranks);
 }
-
 
 #[test]
 fn test_extract_top_five_cards_few_cards_present() {
@@ -304,6 +293,3 @@ fn test_get_two_pairs_only_one_pair() {
     let ranks = 0b1111111;
     get_two_pairs(dups, ranks);
 }
-
-
- 

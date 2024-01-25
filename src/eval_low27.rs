@@ -1,11 +1,14 @@
+use crate::eval_low::extract_top_five_cards_lowball;
+use crate::handval::{
+    HandVal, CARD_MASK, CARD_WIDTH, FIFTH_CARD_MASK, FOURTH_CARD_SHIFT, SECOND_CARD_SHIFT,
+    THIRD_CARD_SHIFT,
+};
+use crate::rules_std::HandType;
 use crate::t_cardmasks::StdDeckCardMask;
 use crate::t_nbits::NBITS_TABLE;
 use crate::t_straight::STRAIGHT_TABLE;
-use crate::rules_std::HandType;
-use crate::eval_low::extract_top_five_cards_lowball;
 use crate::t_topcard::TOP_CARD_TABLE;
 use crate::t_topfivecards::TOP_FIVE_CARDS_TABLE;
-use crate::handval::{HandVal, CARD_MASK, CARD_WIDTH, FIFTH_CARD_MASK, SECOND_CARD_SHIFT,  THIRD_CARD_SHIFT, FOURTH_CARD_SHIFT};
 
 pub fn std_deck_lowball27_eval(cards: &StdDeckCardMask, _n_cards: usize) -> HandVal {
     let ss = cards.spades().into(); // Rangs pour Spades
@@ -29,25 +32,13 @@ pub fn std_deck_lowball27_eval(cards: &StdDeckCardMask, _n_cards: usize) -> Hand
                 let (top, second, third, fourth, fifth) = extract_top_five_cards_lowball(*suit);
                 if STRAIGHT_TABLE[*suit as usize] != 0 {
                     //println!("Straight Flush détecté dans la couleur: {:b}", suit);
-                    let retval = HandVal::new(
-                        HandType::StFlush as u8,
-                        top,
-                        second,
-                        third,
-                        fourth,
-                        fifth,
-                    );
+                    let retval =
+                        HandVal::new(HandType::StFlush as u8, top, second, third, fourth, fifth);
                     return retval;
                 } else {
                     //println!("Flush détecté dans la couleur: {:b}", suit);
-                    let retval = HandVal::new(
-                        HandType::Flush as u8,
-                        top,
-                        second,
-                        third,
-                        fourth,
-                        fifth,
-                    );
+                    let retval =
+                        HandVal::new(HandType::Flush as u8, top, second, third, fourth, fifth);
                     return retval;
                 }
             }
@@ -77,26 +68,25 @@ pub fn std_deck_lowball27_eval(cards: &StdDeckCardMask, _n_cards: usize) -> Hand
             );
             //println!("Retourne retVal pour Straight: {:?}", retval);
             return retval;
+        }
+        // Vérifier si hand_val est défini et si n_dups < 3
+        if let Some(val) = retval {
+            if n_dups < 3 {
+                //println!("Retourne HandVal pour Flush: {:?}", val);
+                return val;
             }
-            // Vérifier si hand_val est défini et si n_dups < 3
-            if let Some(val) = retval {
-                if n_dups < 3 {
-                    //println!("Retourne HandVal pour Flush: {:?}", val);
-                    return val;
-                }
-            }
+        }
     }
-
 
     match n_dups {
         0 => {
             // C'est une main sans paire
             let retval = HandVal {
-                value: (HandType::NoPair as u32)  + TOP_FIVE_CARDS_TABLE[ranks as usize],
+                value: (HandType::NoPair as u32) + TOP_FIVE_CARDS_TABLE[ranks as usize],
             };
             //println!("Retourne HandVal pour NoPair: {:?}", retval);
             return retval;
-        },
+        }
         1 => {
             // C'est une main avec une paire
             //println!("c'est une paire");
@@ -108,17 +98,17 @@ pub fn std_deck_lowball27_eval(cards: &StdDeckCardMask, _n_cards: usize) -> Hand
             //println!("kickers_mask: {}", kickers_mask);
             //let (kicker1, kicker2, kicker3, _, _) = extract_top_five_cards_lowball(kickers_mask);
             // Obtenir les kickers en utilisant la table topFiveCardsTable
-            let kickers = TOP_FIVE_CARDS_TABLE[kickers_mask as usize] >> CARD_WIDTH
-                            & !FIFTH_CARD_MASK;
+            let kickers =
+                TOP_FIVE_CARDS_TABLE[kickers_mask as usize] >> CARD_WIDTH & !FIFTH_CARD_MASK;
 
             let kicker1_mask = CARD_MASK << SECOND_CARD_SHIFT;
             let kicker2_mask = CARD_MASK << THIRD_CARD_SHIFT;
             let kicker3_mask = CARD_MASK << FOURTH_CARD_SHIFT;
-                            
+
             let kicker1 = (kickers & kicker1_mask) >> SECOND_CARD_SHIFT;
             let kicker2 = (kickers & kicker2_mask) >> THIRD_CARD_SHIFT;
             let kicker3 = (kickers & kicker3_mask) >> FOURTH_CARD_SHIFT;
-                            
+
             //println!("Kickers: Kicker1: {}, Kicker2: {}, Kicker3: {}", kicker1, kicker2, kicker3);
             let retval = HandVal::new(
                 HandType::OnePair as u8,
@@ -130,14 +120,14 @@ pub fn std_deck_lowball27_eval(cards: &StdDeckCardMask, _n_cards: usize) -> Hand
             );
             //println!("Retourne HandVal pour OnePair: {:?}", retval);
             return retval;
-        },
+        }
         2 => {
             //println!("c'est deux paires ou brelan");
             let two_mask = ranks ^ (sc ^ sd ^ sh ^ ss);
             //println!("two_mask: {}", two_mask);
             let _t = ranks ^ two_mask;
             //println!("t: {}", t);
-        
+
             if two_mask == 0 {
                 // C'est un brelan
                 //println!("C'est un brelan");
@@ -150,14 +140,8 @@ pub fn std_deck_lowball27_eval(cards: &StdDeckCardMask, _n_cards: usize) -> Hand
                 let (kicker1, kicker2, _, _, _) = extract_top_five_cards_lowball(kickers_mask);
                 //println!("kicker1: {}", kicker1);
                 //println!("kicker2: {}", kicker2);
-                let retval = HandVal::new(
-                    HandType::Trips as u8,
-                    trips_card,
-                    kicker1,
-                    kicker2,
-                    0,
-                    0,
-                );
+                let retval =
+                    HandVal::new(HandType::Trips as u8, trips_card, kicker1, kicker2, 0, 0);
                 //println!("Retourne HandVal pour Trips: {:?}", retval);
                 return retval;
             } else {
@@ -180,9 +164,8 @@ pub fn std_deck_lowball27_eval(cards: &StdDeckCardMask, _n_cards: usize) -> Hand
                 //println!("Retourne HandVal pour TwoPair: {:?}", retval);
                 return retval;
             }
-        },
-        
-        
+        }
+
         _ => {
             // Possible quads, fullhouse, straight or flush, or two pair
             let four_mask = sh & sd & sc & ss;
@@ -190,14 +173,7 @@ pub fn std_deck_lowball27_eval(cards: &StdDeckCardMask, _n_cards: usize) -> Hand
                 // C'est un carré (Quads)
                 let quads_card = TOP_CARD_TABLE[four_mask as usize];
                 let kicker = TOP_CARD_TABLE[(ranks ^ (1 << quads_card)) as usize];
-                let retval = HandVal::new(
-                    HandType::Quads as u8,
-                    quads_card,
-                    kicker,
-                    0,
-                    0,
-                    0,
-                );
+                let retval = HandVal::new(HandType::Quads as u8, quads_card, kicker, 0, 0, 0);
                 //println!("Retourne HandVal pour Quads: {:?}", retval);
                 return retval;
             } else {
@@ -245,7 +221,6 @@ mod tests {
     use crate::deck_std::StdDeck;
     use crate::handval_low::HANDTYPE_SHIFT;
 
-
     fn create_mask_from_string(cards_str: &str) -> StdDeckCardMask {
         let (mask, _) = StdDeck::string_to_mask(cards_str).expect("Failed to create mask");
         mask
@@ -257,10 +232,11 @@ mod tests {
             cards.diamonds(),
             cards.hearts(),
         ];
-    
-        ranks.iter().fold(0, |acc, &suit_ranks| acc | suit_ranks as u32)
-    }
 
+        ranks
+            .iter()
+            .fold(0, |acc, &suit_ranks| acc | suit_ranks as u32)
+    }
 
     #[test]
     fn test_no_pair() {
@@ -268,9 +244,11 @@ mod tests {
         let rank_mask = calculate_rank_mask(&mask);
         let result = std_deck_lowball27_eval(&mask, 5);
         let expected_value = TOP_FIVE_CARDS_TABLE[rank_mask as usize];
-        assert_eq!(result.value, expected_value, "Failed to evaluate no pair hand");
+        assert_eq!(
+            result.value, expected_value,
+            "Failed to evaluate no pair hand"
+        );
     }
-
 
     #[test]
     fn test_no_pair_withace() {
@@ -278,45 +256,63 @@ mod tests {
         let rank_mask = calculate_rank_mask(&mask);
         let result = std_deck_lowball27_eval(&mask, 5);
         let expected_value = TOP_FIVE_CARDS_TABLE[rank_mask as usize];
-        assert_eq!(result.value, expected_value, "Failed to evaluate no pair hand");
+        assert_eq!(
+            result.value, expected_value,
+            "Failed to evaluate no pair hand"
+        );
     }
 
     #[test]
     fn test_one_pair() {
         let mask = create_mask_from_string("2s2d4c7h8s");
         let result = std_deck_lowball27_eval(&mask, 5);
-        
+
         // Extract hand type from the result
         let hand_type = result.value >> HANDTYPE_SHIFT;
-        assert_eq!(hand_type, HandType::OnePair as u32, "Failed to detect one pair");
+        assert_eq!(
+            hand_type,
+            HandType::OnePair as u32,
+            "Failed to detect one pair"
+        );
     }
-    
-    
+
     #[test]
     fn test_two_pair() {
         let mask = create_mask_from_string("2s2d3c3h8s");
         let result = std_deck_lowball27_eval(&mask, 5);
         let hand_type = result.value >> HANDTYPE_SHIFT;
-        assert_eq!(hand_type, HandType::TwoPair as u32, "Failed to detect two pair");
+        assert_eq!(
+            hand_type,
+            HandType::TwoPair as u32,
+            "Failed to detect two pair"
+        );
     }
-    
+
     #[test]
     fn test_three_of_a_kind() {
         let mask = create_mask_from_string("2s2d2c7h8s");
         let result = std_deck_lowball27_eval(&mask, 5);
         let hand_type = result.value >> HANDTYPE_SHIFT;
         println!("hand_type: {}", hand_type);
-        assert_eq!(hand_type, HandType::Trips as u32, "Failed to detect three of a kind");
+        assert_eq!(
+            hand_type,
+            HandType::Trips as u32,
+            "Failed to detect three of a kind"
+        );
     }
-    
+
     #[test]
     fn test_straight() {
         let mask = create_mask_from_string("2s3d4c5h6s");
         let result = std_deck_lowball27_eval(&mask, 5);
         let hand_type = result.value >> HANDTYPE_SHIFT;
-        assert_eq!(hand_type, HandType::Straight as u32, "Failed to detect straight");
+        assert_eq!(
+            hand_type,
+            HandType::Straight as u32,
+            "Failed to detect straight"
+        );
     }
-    
+
     #[test]
     fn test_flush() {
         let mask = create_mask_from_string("2s4s6s8sTs");
@@ -324,31 +320,40 @@ mod tests {
         let hand_type = result.value >> HANDTYPE_SHIFT;
         assert_eq!(hand_type, HandType::Flush as u32, "Failed to detect flush");
     }
-    
+
     #[test]
     fn test_full_house() {
         let mask = create_mask_from_string("2s2d2c3h3s");
         let result = std_deck_lowball27_eval(&mask, 5);
         let hand_type = result.value >> HANDTYPE_SHIFT;
-        assert_eq!(hand_type, HandType::FullHouse as u32, "Failed to detect full house");
+        assert_eq!(
+            hand_type,
+            HandType::FullHouse as u32,
+            "Failed to detect full house"
+        );
     }
-    
+
     #[test]
     fn test_four_of_a_kind() {
         let mask = create_mask_from_string("2s2d2c2h8s");
         let result = std_deck_lowball27_eval(&mask, 5);
         let hand_type = result.value >> HANDTYPE_SHIFT;
-        assert_eq!(hand_type, HandType::Quads as u32, "Failed to detect four of a kind");
+        assert_eq!(
+            hand_type,
+            HandType::Quads as u32,
+            "Failed to detect four of a kind"
+        );
     }
-    
+
     #[test]
     fn test_straight_flush() {
         let mask = create_mask_from_string("2s3s4s5s6s");
         let result = std_deck_lowball27_eval(&mask, 5);
         let hand_type = result.value >> HANDTYPE_SHIFT;
-        assert_eq!(hand_type, HandType::StFlush as u32, "Failed to detect straight flush");
+        assert_eq!(
+            hand_type,
+            HandType::StFlush as u32,
+            "Failed to detect straight flush"
+        );
     }
-}    
-
-
-
+}
