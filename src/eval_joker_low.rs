@@ -1,7 +1,7 @@
-use crate::handval_low::LowHandVal;
-use crate::t_jokercardmasks::JokerDeckCardMask;
 use crate::deck_joker::*;
 use crate::eval_low::std_deck_lowball_eval;
+use crate::handval_low::LowHandVal;
+use crate::t_jokercardmasks::JokerDeckCardMask;
 
 pub fn joker_lowball_eval(cards: &JokerDeckCardMask, n_cards: usize) -> LowHandVal {
     let ss = cards.spades();

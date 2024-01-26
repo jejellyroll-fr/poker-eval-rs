@@ -1,19 +1,20 @@
+use crate::combinaison::*;
+use crate::enumdefs::{EnumResult, ENUM_MAXPLAYERS};
+use crate::enumdefs::{Game, GameParams};
+use crate::enumord::{EnumOrdering, EnumOrderingMode};
+use crate::eval_low::std_deck_lowball_eval;
+use crate::eval_low8::std_deck_lowball8_eval;
+use crate::eval_omaha::std_deck_omaha_hi_low8_eval;
+use crate::handval::HandVal;
+use crate::handval_low::{LowHandVal, LOW_HAND_VAL_NOTHING};
 use crate::t_cardmasks::StdDeckCardMask;
 use crate::t_jokercardmasks::JokerDeckCardMask;
-use crate::combinaison::*;
-use crate::enumdefs::{Game,GameParams};
-use crate::handval::HandVal;
-use crate::handval_low::{LowHandVal, LOW_HAND_VAL_NOTHING };
-use crate::enumdefs::{EnumResult, ENUM_MAXPLAYERS};
-use crate::enumord::{EnumOrdering, EnumOrderingMode};
+
 use crate::eval::Eval;
-use std::ops::BitOr;
-use std::ptr::NonNull;
 use rand::seq::SliceRandom; // Assurez-vous que la crate rand est incluse dans votre Cargo.toml
 use rand::thread_rng;
-
-
-
+use std::ops::BitOr;
+use std::ptr::NonNull;
 
 // Trait pour gérer les masques de cartes
 pub trait CardMask: BitOr<Output = Self> + Clone + PartialEq {
@@ -212,7 +213,10 @@ where
     F: FnMut(&T),
 {
     for card in deck {
-        if dead_cards.iter().any(|dead_card| dead_card.mask() == card.mask()) {
+        if dead_cards
+            .iter()
+            .any(|dead_card| dead_card.mask() == card.mask())
+        {
             continue; // Skip dead cards
         }
         action(card);
@@ -227,13 +231,19 @@ where
     let n_cards = deck.len();
     for i1 in 0..n_cards {
         let card1 = &deck[i1];
-        if dead_cards.iter().any(|dead_card| dead_card.mask() == card1.mask()) {
+        if dead_cards
+            .iter()
+            .any(|dead_card| dead_card.mask() == card1.mask())
+        {
             continue;
         }
 
         for i2 in 0..i1 {
             let card2 = &deck[i2];
-            if dead_cards.iter().any(|dead_card| dead_card.mask() == card2.mask()) {
+            if dead_cards
+                .iter()
+                .any(|dead_card| dead_card.mask() == card2.mask())
+            {
                 continue;
             }
 
@@ -241,7 +251,6 @@ where
         }
     }
 }
-
 
 fn enumerate_3_cards_d<T, F>(deck: &[T], dead_cards: &[T], mut action: F)
 where
@@ -251,19 +260,28 @@ where
     let n_cards = deck.len();
     for i1 in 0..n_cards {
         let card1 = &deck[i1];
-        if dead_cards.iter().any(|dead_card| dead_card.mask() == card1.mask()) {
+        if dead_cards
+            .iter()
+            .any(|dead_card| dead_card.mask() == card1.mask())
+        {
             continue;
         }
 
         for i2 in 0..i1 {
             let card2 = &deck[i2];
-            if dead_cards.iter().any(|dead_card| dead_card.mask() == card2.mask()) {
+            if dead_cards
+                .iter()
+                .any(|dead_card| dead_card.mask() == card2.mask())
+            {
                 continue;
             }
 
             for i3 in 0..i2 {
                 let card3 = &deck[i3];
-                if dead_cards.iter().any(|dead_card| dead_card.mask() == card3.mask()) {
+                if dead_cards
+                    .iter()
+                    .any(|dead_card| dead_card.mask() == card3.mask())
+                {
                     continue;
                 }
 
@@ -281,25 +299,37 @@ where
     let n_cards = deck.len();
     for i1 in 0..n_cards {
         let card1 = &deck[i1];
-        if dead_cards.iter().any(|dead_card| dead_card.mask() == card1.mask()) {
+        if dead_cards
+            .iter()
+            .any(|dead_card| dead_card.mask() == card1.mask())
+        {
             continue;
         }
 
         for i2 in 0..i1 {
             let card2 = &deck[i2];
-            if dead_cards.iter().any(|dead_card| dead_card.mask() == card2.mask()) {
+            if dead_cards
+                .iter()
+                .any(|dead_card| dead_card.mask() == card2.mask())
+            {
                 continue;
             }
 
             for i3 in 0..i2 {
                 let card3 = &deck[i3];
-                if dead_cards.iter().any(|dead_card| dead_card.mask() == card3.mask()) {
+                if dead_cards
+                    .iter()
+                    .any(|dead_card| dead_card.mask() == card3.mask())
+                {
                     continue;
                 }
 
                 for i4 in 0..i3 {
                     let card4 = &deck[i4];
-                    if dead_cards.iter().any(|dead_card| dead_card.mask() == card4.mask()) {
+                    if dead_cards
+                        .iter()
+                        .any(|dead_card| dead_card.mask() == card4.mask())
+                    {
                         continue;
                     }
 
@@ -318,31 +348,46 @@ where
     let n_cards = deck.len();
     for i1 in 0..n_cards {
         let card1 = &deck[i1];
-        if dead_cards.iter().any(|dead_card| dead_card.mask() == card1.mask()) {
+        if dead_cards
+            .iter()
+            .any(|dead_card| dead_card.mask() == card1.mask())
+        {
             continue;
         }
 
         for i2 in 0..i1 {
             let card2 = &deck[i2];
-            if dead_cards.iter().any(|dead_card| dead_card.mask() == card2.mask()) {
+            if dead_cards
+                .iter()
+                .any(|dead_card| dead_card.mask() == card2.mask())
+            {
                 continue;
             }
 
             for i3 in 0..i2 {
                 let card3 = &deck[i3];
-                if dead_cards.iter().any(|dead_card| dead_card.mask() == card3.mask()) {
+                if dead_cards
+                    .iter()
+                    .any(|dead_card| dead_card.mask() == card3.mask())
+                {
                     continue;
                 }
 
                 for i4 in 0..i3 {
                     let card4 = &deck[i4];
-                    if dead_cards.iter().any(|dead_card| dead_card.mask() == card4.mask()) {
+                    if dead_cards
+                        .iter()
+                        .any(|dead_card| dead_card.mask() == card4.mask())
+                    {
                         continue;
                     }
 
                     for i5 in 0..i4 {
                         let card5 = &deck[i5];
-                        if dead_cards.iter().any(|dead_card| dead_card.mask() == card5.mask()) {
+                        if dead_cards
+                            .iter()
+                            .any(|dead_card| dead_card.mask() == card5.mask())
+                        {
                             continue;
                         }
 
@@ -362,37 +407,55 @@ where
     let n_cards = deck.len();
     for i1 in 0..n_cards {
         let card1 = &deck[i1];
-        if dead_cards.iter().any(|dead_card| dead_card.mask() == card1.mask()) {
+        if dead_cards
+            .iter()
+            .any(|dead_card| dead_card.mask() == card1.mask())
+        {
             continue;
         }
 
         for i2 in 0..i1 {
             let card2 = &deck[i2];
-            if dead_cards.iter().any(|dead_card| dead_card.mask() == card2.mask()) {
+            if dead_cards
+                .iter()
+                .any(|dead_card| dead_card.mask() == card2.mask())
+            {
                 continue;
             }
 
             for i3 in 0..i2 {
                 let card3 = &deck[i3];
-                if dead_cards.iter().any(|dead_card| dead_card.mask() == card3.mask()) {
+                if dead_cards
+                    .iter()
+                    .any(|dead_card| dead_card.mask() == card3.mask())
+                {
                     continue;
                 }
 
                 for i4 in 0..i3 {
                     let card4 = &deck[i4];
-                    if dead_cards.iter().any(|dead_card| dead_card.mask() == card4.mask()) {
+                    if dead_cards
+                        .iter()
+                        .any(|dead_card| dead_card.mask() == card4.mask())
+                    {
                         continue;
                     }
 
                     for i5 in 0..i4 {
                         let card5 = &deck[i5];
-                        if dead_cards.iter().any(|dead_card| dead_card.mask() == card5.mask()) {
+                        if dead_cards
+                            .iter()
+                            .any(|dead_card| dead_card.mask() == card5.mask())
+                        {
                             continue;
                         }
 
                         for i6 in 0..i5 {
                             let card6 = &deck[i6];
-                            if dead_cards.iter().any(|dead_card| dead_card.mask() == card6.mask()) {
+                            if dead_cards
+                                .iter()
+                                .any(|dead_card| dead_card.mask() == card6.mask())
+                            {
                                 continue;
                             }
 
@@ -405,7 +468,6 @@ where
     }
 }
 
-
 fn enumerate_7_cards_d<T, F>(deck: &[T], dead_cards: &[T], mut action: F)
 where
     T: CardMask,
@@ -414,43 +476,64 @@ where
     let n_cards = deck.len();
     for i1 in 0..n_cards {
         let card1 = &deck[i1];
-        if dead_cards.iter().any(|dead_card| dead_card.mask() == card1.mask()) {
+        if dead_cards
+            .iter()
+            .any(|dead_card| dead_card.mask() == card1.mask())
+        {
             continue;
         }
 
         for i2 in 0..i1 {
             let card2 = &deck[i2];
-            if dead_cards.iter().any(|dead_card| dead_card.mask() == card2.mask()) {
+            if dead_cards
+                .iter()
+                .any(|dead_card| dead_card.mask() == card2.mask())
+            {
                 continue;
             }
 
             for i3 in 0..i2 {
                 let card3 = &deck[i3];
-                if dead_cards.iter().any(|dead_card| dead_card.mask() == card3.mask()) {
+                if dead_cards
+                    .iter()
+                    .any(|dead_card| dead_card.mask() == card3.mask())
+                {
                     continue;
                 }
 
                 for i4 in 0..i3 {
                     let card4 = &deck[i4];
-                    if dead_cards.iter().any(|dead_card| dead_card.mask() == card4.mask()) {
+                    if dead_cards
+                        .iter()
+                        .any(|dead_card| dead_card.mask() == card4.mask())
+                    {
                         continue;
                     }
 
                     for i5 in 0..i4 {
                         let card5 = &deck[i5];
-                        if dead_cards.iter().any(|dead_card| dead_card.mask() == card5.mask()) {
+                        if dead_cards
+                            .iter()
+                            .any(|dead_card| dead_card.mask() == card5.mask())
+                        {
                             continue;
                         }
 
                         for i6 in 0..i5 {
                             let card6 = &deck[i6];
-                            if dead_cards.iter().any(|dead_card| dead_card.mask() == card6.mask()) {
+                            if dead_cards
+                                .iter()
+                                .any(|dead_card| dead_card.mask() == card6.mask())
+                            {
                                 continue;
                             }
 
                             for i7 in 0..i6 {
                                 let card7 = &deck[i7];
-                                if dead_cards.iter().any(|dead_card| dead_card.mask() == card7.mask()) {
+                                if dead_cards
+                                    .iter()
+                                    .any(|dead_card| dead_card.mask() == card7.mask())
+                                {
                                     continue;
                                 }
 
@@ -473,7 +556,9 @@ where
     while !indices.is_empty() {
         if indices.last().unwrap() < &deck.len() {
             if indices.iter().all(|&i| {
-                !dead_cards.iter().any(|dead_card| dead_card.mask() == deck[i].mask())
+                !dead_cards
+                    .iter()
+                    .any(|dead_card| dead_card.mask() == deck[i].mask())
             }) {
                 let current_combination = indices.iter().map(|&i| &deck[i]).collect::<Vec<_>>();
                 action(current_combination);
@@ -516,7 +601,6 @@ where
         }
     }
 }
-
 
 fn enumerate_combinations_d<T, F>(
     decks: Vec<&[T]>,
@@ -590,7 +674,9 @@ fn enumerate_permutations_d<T, F>(
     T: CardMask + Clone + PartialEq + std::ops::BitOr<Output = T>,
     F: FnMut(Vec<Vec<T>>),
 {
-    let live_cards: Vec<T> = decks.iter().flatten()
+    let live_cards: Vec<T> = decks
+        .iter()
+        .flatten()
         .filter(|&card| !dead_cards.contains(card))
         .cloned()
         .collect();
@@ -658,8 +744,6 @@ fn enumerate_permutations_d<T, F>(
     }
 }
 
-
-
 fn deck_montecarlo_n_cards_d<T, F>(
     deck: &[T],
     dead_cards: &[T],
@@ -688,8 +772,6 @@ fn deck_montecarlo_n_cards_d<T, F>(
         action(cards_var.clone());
     }
 }
-
-
 
 fn montecarlo_permutations_d<T, F>(
     decks: &[Vec<T>],
@@ -724,22 +806,150 @@ fn montecarlo_permutations_d<T, F>(
 
 pub fn game_params() -> Vec<GameParams> {
     vec![
-        GameParams { game: Game::Holdem, minpocket: 2, maxpocket: 2, maxboard: 5, haslopot: 0, hashipot: 1, name: "Holdem Hi".to_string() },
-        GameParams { game: Game::Holdem8, minpocket: 2, maxpocket: 2, maxboard: 5, haslopot: 1, hashipot: 1, name: "Holdem Hi/Low 8-or-better".to_string() },
-        GameParams { game: Game::Omaha, minpocket: 4, maxpocket: 4, maxboard: 5, haslopot: 0, hashipot: 1, name: "Omaha Hi".to_string() },
-        GameParams { game: Game::Omaha5, minpocket: 5, maxpocket: 5, maxboard: 5, haslopot: 0, hashipot: 1, name: "Omaha Hi 5cards".to_string() },
-        GameParams { game: Game::Omaha6, minpocket: 6, maxpocket: 6, maxboard: 5, haslopot: 0, hashipot: 1, name: "Omaha Hi 6cards".to_string() },
-        GameParams { game: Game::Omaha8, minpocket: 4, maxpocket: 4, maxboard: 5, haslopot: 1, hashipot: 1, name: "Omaha Hi/Low 8-or-better".to_string() },
-        GameParams { game: Game::Omaha85, minpocket: 5, maxpocket: 5, maxboard: 5, haslopot: 1, hashipot: 1, name: "Omaha 5cards Hi/Low 8-or-better".to_string() },
-        GameParams { game: Game::Stud7, minpocket: 3, maxpocket: 7, maxboard: 0, haslopot: 0, hashipot: 1, name: "7-card Stud Hi".to_string() },
-        GameParams { game: Game::Stud78, minpocket: 3, maxpocket: 7, maxboard: 0, haslopot: 1, hashipot: 1, name: "7-card Stud Hi/Low 8-or-better".to_string() },
-        GameParams { game: Game::Stud7nsq, minpocket: 3, maxpocket: 7, maxboard: 0, haslopot: 1, hashipot: 1, name: "7-card Stud Hi/Low no qualifier".to_string() },
-        GameParams { game: Game::Razz, minpocket: 3, maxpocket: 7, maxboard: 0, haslopot: 1, hashipot: 0, name: "Razz (7-card Stud A-5 Low)".to_string() },
-        GameParams { game: Game::Draw5, minpocket: 0, maxpocket: 5, maxboard: 0, haslopot: 0, hashipot: 1, name: "5-card Draw Hi with joker".to_string() },
-        GameParams { game: Game::Draw58, minpocket: 0, maxpocket: 5, maxboard: 0, haslopot: 1, hashipot: 1, name: "5-card Draw Hi/Low 8-or-better with joker".to_string() },
-        GameParams { game: Game::Draw5nsq, minpocket: 0, maxpocket: 5, maxboard: 0, haslopot: 1, hashipot: 1, name: "5-card Draw Hi/Low no qualifier with joker".to_string() },
-        GameParams { game: Game::Lowball, minpocket: 0, maxpocket: 5, maxboard: 0, haslopot: 1, hashipot: 0, name: "5-card Draw A-5 Lowball with joker".to_string() },
-        GameParams { game: Game::Lowball27, minpocket: 0, maxpocket: 5, maxboard: 0, haslopot: 1, hashipot: 0, name: "5-card Draw 2-7 Lowball".to_string() }
+        GameParams {
+            game: Game::Holdem,
+            minpocket: 2,
+            maxpocket: 2,
+            maxboard: 5,
+            haslopot: 0,
+            hashipot: 1,
+            name: "Holdem Hi".to_string(),
+        },
+        GameParams {
+            game: Game::Holdem8,
+            minpocket: 2,
+            maxpocket: 2,
+            maxboard: 5,
+            haslopot: 1,
+            hashipot: 1,
+            name: "Holdem Hi/Low 8-or-better".to_string(),
+        },
+        GameParams {
+            game: Game::Omaha,
+            minpocket: 4,
+            maxpocket: 4,
+            maxboard: 5,
+            haslopot: 0,
+            hashipot: 1,
+            name: "Omaha Hi".to_string(),
+        },
+        GameParams {
+            game: Game::Omaha5,
+            minpocket: 5,
+            maxpocket: 5,
+            maxboard: 5,
+            haslopot: 0,
+            hashipot: 1,
+            name: "Omaha Hi 5cards".to_string(),
+        },
+        GameParams {
+            game: Game::Omaha6,
+            minpocket: 6,
+            maxpocket: 6,
+            maxboard: 5,
+            haslopot: 0,
+            hashipot: 1,
+            name: "Omaha Hi 6cards".to_string(),
+        },
+        GameParams {
+            game: Game::Omaha8,
+            minpocket: 4,
+            maxpocket: 4,
+            maxboard: 5,
+            haslopot: 1,
+            hashipot: 1,
+            name: "Omaha Hi/Low 8-or-better".to_string(),
+        },
+        GameParams {
+            game: Game::Omaha85,
+            minpocket: 5,
+            maxpocket: 5,
+            maxboard: 5,
+            haslopot: 1,
+            hashipot: 1,
+            name: "Omaha 5cards Hi/Low 8-or-better".to_string(),
+        },
+        GameParams {
+            game: Game::Stud7,
+            minpocket: 3,
+            maxpocket: 7,
+            maxboard: 0,
+            haslopot: 0,
+            hashipot: 1,
+            name: "7-card Stud Hi".to_string(),
+        },
+        GameParams {
+            game: Game::Stud78,
+            minpocket: 3,
+            maxpocket: 7,
+            maxboard: 0,
+            haslopot: 1,
+            hashipot: 1,
+            name: "7-card Stud Hi/Low 8-or-better".to_string(),
+        },
+        GameParams {
+            game: Game::Stud7nsq,
+            minpocket: 3,
+            maxpocket: 7,
+            maxboard: 0,
+            haslopot: 1,
+            hashipot: 1,
+            name: "7-card Stud Hi/Low no qualifier".to_string(),
+        },
+        GameParams {
+            game: Game::Razz,
+            minpocket: 3,
+            maxpocket: 7,
+            maxboard: 0,
+            haslopot: 1,
+            hashipot: 0,
+            name: "Razz (7-card Stud A-5 Low)".to_string(),
+        },
+        GameParams {
+            game: Game::Draw5,
+            minpocket: 0,
+            maxpocket: 5,
+            maxboard: 0,
+            haslopot: 0,
+            hashipot: 1,
+            name: "5-card Draw Hi with joker".to_string(),
+        },
+        GameParams {
+            game: Game::Draw58,
+            minpocket: 0,
+            maxpocket: 5,
+            maxboard: 0,
+            haslopot: 1,
+            hashipot: 1,
+            name: "5-card Draw Hi/Low 8-or-better with joker".to_string(),
+        },
+        GameParams {
+            game: Game::Draw5nsq,
+            minpocket: 0,
+            maxpocket: 5,
+            maxboard: 0,
+            haslopot: 1,
+            hashipot: 1,
+            name: "5-card Draw Hi/Low no qualifier with joker".to_string(),
+        },
+        GameParams {
+            game: Game::Lowball,
+            minpocket: 0,
+            maxpocket: 5,
+            maxboard: 0,
+            haslopot: 1,
+            hashipot: 0,
+            name: "5-card Draw A-5 Lowball with joker".to_string(),
+        },
+        GameParams {
+            game: Game::Lowball27,
+            minpocket: 0,
+            maxpocket: 5,
+            maxboard: 0,
+            haslopot: 1,
+            hashipot: 0,
+            name: "5-card Draw 2-7 Lowball".to_string(),
+        },
     ]
 }
 
@@ -754,7 +964,6 @@ fn inner_loop<F, G, H>(
     G: FnMut(&mut EnumResult, &[usize], &[usize]),
     H: FnMut(&mut EnumResult, &[usize], &[usize]),
 {
-
     let HANDVAL_NOTHING: u32 = HandVal::new(0, 0, 0, 0, 0, 0).value;
 
     let mut hival = vec![HANDVAL_NOTHING; ENUM_MAXPLAYERS];
@@ -793,8 +1002,16 @@ fn inner_loop<F, G, H>(
         }
     }
 
-    let hipot = if besthi != HANDVAL_NOTHING { 1.0 / hishare as f64 } else { 0.0 };
-    let lopot = if bestlo != LOW_HAND_VAL_NOTHING { 1.0 / loshare as f64 } else { 0.0 };
+    let hipot = if besthi != HANDVAL_NOTHING {
+        1.0 / hishare as f64
+    } else {
+        0.0
+    };
+    let lopot = if bestlo != LOW_HAND_VAL_NOTHING {
+        1.0 / loshare as f64
+    } else {
+        0.0
+    };
 
     // Award pot fractions to winning hands
     for i in 0..npockets {
@@ -830,11 +1047,10 @@ fn inner_loop<F, G, H>(
         if let Some(mut ordering_ptr) = result.ordering {
             let ordering = ordering_ptr.as_mut(); // Get a mutable reference to EnumOrdering
 
-
             let hiranks: Vec<_> = hival.iter().map(|&val| val as usize).collect();
             let loranks: Vec<_> = loval.iter().map(|&val| val as usize).collect();
 
-            match ordering.mode{
+            match ordering.mode {
                 EnumOrderingMode::Hi => ordering_increment(result, &hiranks, &loranks),
                 EnumOrderingMode::Lo => ordering_increment(result, &loranks, &hiranks),
                 EnumOrderingMode::Hilo => ordering_increment_hilo(result, &hiranks, &loranks),
@@ -846,7 +1062,14 @@ fn inner_loop<F, G, H>(
     result.nsamples += 1;
 }
 
-pub fn inner_loop_holdem(pockets: &[StdDeckCardMask], board: &StdDeckCardMask, shared_cards: &StdDeckCardMask, hival: &mut [HandVal], loval: &mut [LowHandVal]) {
+// Variante: Texas Hold'em
+pub fn inner_loop_holdem(
+    pockets: &[StdDeckCardMask],
+    board: &StdDeckCardMask,
+    shared_cards: &StdDeckCardMask,
+    hival: &mut [HandVal],
+    loval: &mut [LowHandVal],
+) {
     for (i, pocket) in pockets.iter().enumerate() {
         // Clone the values before performing the bitwise OR operation
         let final_board = board.clone() | shared_cards.clone();
@@ -858,5 +1081,289 @@ pub fn inner_loop_holdem(pockets: &[StdDeckCardMask], board: &StdDeckCardMask, s
     }
 }
 
+// Variante: Texas Hold'em Hi/Lo 8 or better
+pub fn inner_loop_holdem8(
+    pockets: &[StdDeckCardMask],
+    board: &StdDeckCardMask,
+    shared_cards: &StdDeckCardMask,
+    hival: &mut [HandVal],
+    loval: &mut [LowHandVal],
+) {
+    for (i, pocket) in pockets.iter().enumerate() {
+        // Combinaison des cartes du tableau et des cartes partagées
+        let final_board = board.clone() | shared_cards.clone();
+        let hand = pocket.clone() | final_board;
 
+        // Évaluation des mains hautes et basses
+        hival[i] = Eval::eval_n(&hand, 7); // Remplacer par la fonction appropriée
+        loval[i] = std_deck_lowball8_eval(&hand, 7); // Remplacer par la fonction appropriée
+    }
+}
 
+// Variante: Omaha
+pub fn inner_loop_omaha(
+    pockets: &[StdDeckCardMask],
+    board: &StdDeckCardMask,
+    shared_cards: &StdDeckCardMask,
+    hival: &mut [HandVal],
+    loval: &mut [LowHandVal],
+) {
+    for (i, pocket) in pockets.iter().enumerate() {
+        let final_board = board.clone() | shared_cards.clone();
+        let mut high_option: Option<HandVal> = None;
+        let mut low_option: Option<LowHandVal> = None;
+
+        // Appel de la fonction d'évaluation avec les bons arguments
+        match std_deck_omaha_hi_low8_eval(
+            pocket.clone(),
+            final_board,
+            &mut high_option,
+            &mut low_option,
+        ) {
+            Ok(()) => {
+                // Assigner les valeurs évaluées à hival et loval
+                if let Some(high_hand) = high_option {
+                    hival[i] = high_hand;
+                }
+                // ou utilisez une autre fonction si nécessaire
+                loval[i] = LowHandVal { value: 0 }; // Utiliser une constante appropriée pour "rien"
+            }
+            Err(e) => {
+                eprintln!("Erreur lors de l'évaluation : {}", e);
+                continue; // Gestion d'erreur
+            }
+        }
+    }
+}
+// Variante: Omaha 5 Cards
+pub fn inner_loop_omaha5(
+    pockets: &[StdDeckCardMask],
+    board: &StdDeckCardMask,
+    shared_cards: &StdDeckCardMask,
+    hival: &mut [HandVal],
+    loval: &mut [LowHandVal],
+) {
+    for (i, pocket) in pockets.iter().enumerate() {
+        let final_board = board.clone() | shared_cards.clone();
+        let mut high_option: Option<HandVal> = None;
+        let mut low_option: Option<LowHandVal> = None;
+
+        // Appel de la fonction d'évaluation avec les bons arguments
+        match std_deck_omaha_hi_low8_eval(
+            pocket.clone(),
+            final_board,
+            &mut high_option,
+            &mut low_option,
+        ) {
+            Ok(()) => {
+                // Assigner les valeurs évaluées à hival et loval
+                if let Some(high_hand) = high_option {
+                    hival[i] = high_hand;
+                }
+                // ou utilisez une autre fonction si nécessaire
+                loval[i] = LowHandVal { value: 0 }; // Utiliser une constante appropriée pour "rien"
+            }
+            Err(e) => {
+                eprintln!("Erreur lors de l'évaluation : {}", e);
+                continue; // Gestion d'erreur
+            }
+        }
+    }
+}
+// Variante: Omaha 6 Cards
+pub fn inner_loop_omaha6(
+    pockets: &[StdDeckCardMask],
+    board: &StdDeckCardMask,
+    shared_cards: &StdDeckCardMask,
+    hival: &mut [HandVal],
+    loval: &mut [LowHandVal],
+) {
+    for (i, pocket) in pockets.iter().enumerate() {
+        let final_board = board.clone() | shared_cards.clone();
+        let mut high_option: Option<HandVal> = None;
+        let mut low_option: Option<LowHandVal> = None;
+
+        // Appel de la fonction d'évaluation avec les bons arguments
+        match std_deck_omaha_hi_low8_eval(
+            pocket.clone(),
+            final_board,
+            &mut high_option,
+            &mut low_option,
+        ) {
+            Ok(()) => {
+                // Assigner les valeurs évaluées à hival et loval
+                if let Some(high_hand) = high_option {
+                    hival[i] = high_hand;
+                }
+                // ou utilisez une autre fonction si nécessaire
+                loval[i] = LowHandVal { value: 0 }; // Utiliser une constante appropriée pour "rien"
+            }
+            Err(e) => {
+                eprintln!("Erreur lors de l'évaluation : {}", e);
+                continue; // Gestion d'erreur
+            }
+        }
+    }
+}
+// Variante: Omaha 4 Cards Hi/Lo
+pub fn inner_loop_omaha8(
+    pockets: &[StdDeckCardMask],
+    board: &StdDeckCardMask,
+    shared_cards: &StdDeckCardMask,
+    hival: &mut [HandVal],
+    loval: &mut [LowHandVal],
+) {
+    for (i, pocket) in pockets.iter().enumerate() {
+        let final_board = board.clone() | shared_cards.clone();
+        let mut high_option: Option<HandVal> = None;
+        let mut low_option: Option<LowHandVal> = None;
+
+        // Appel de la fonction d'évaluation pour Omaha Hi/Lo
+        match std_deck_omaha_hi_low8_eval(
+            pocket.clone(),
+            final_board,
+            &mut high_option,
+            &mut low_option,
+        ) {
+            Ok(()) => {
+                // Assigner les valeurs évaluées à hival et loval
+                if let Some(high_hand) = high_option {
+                    hival[i] = high_hand;
+                }
+                if let Some(low_hand) = low_option {
+                    loval[i] = low_hand;
+                }
+            }
+            Err(e) => {
+                eprintln!("Erreur lors de l'évaluation : {}", e);
+                continue; // Gestion d'erreur
+            }
+        }
+    }
+}
+// Variante: Omaha 5 Cards Hi/Lo
+pub fn inner_loop_omaha85(
+    pockets: &[StdDeckCardMask],
+    board: &StdDeckCardMask,
+    shared_cards: &StdDeckCardMask,
+    hival: &mut [HandVal],
+    loval: &mut [LowHandVal],
+) {
+    for (i, pocket) in pockets.iter().enumerate() {
+        let final_board = board.clone() | shared_cards.clone();
+        let mut high_option: Option<HandVal> = None;
+        let mut low_option: Option<LowHandVal> = None;
+
+        // Appel de la fonction d'évaluation pour Omaha 5 Hi/Lo
+        match std_deck_omaha_hi_low8_eval(
+            pocket.clone(),
+            final_board,
+            &mut high_option,
+            &mut low_option,
+        ) {
+            Ok(()) => {
+                // Assigner les valeurs évaluées à hival et loval
+                if let Some(high_hand) = high_option {
+                    hival[i] = high_hand;
+                }
+                if let Some(low_hand) = low_option {
+                    loval[i] = low_hand;
+                }
+            }
+            Err(e) => {
+                eprintln!("Erreur lors de l'évaluation : {}", e);
+                continue; // Gestion d'erreur
+            }
+        }
+    }
+}
+// Variante: 7-Card Stud
+pub fn inner_loop_7stud(
+    pockets: &[StdDeckCardMask],
+    unshared_cards: &[StdDeckCardMask],
+    hival: &mut [HandVal],
+    loval: &mut [LowHandVal],
+) {
+    for (i, pocket) in pockets.iter().enumerate() {
+        // Assurez-vous qu'il y a un nombre correspondant de cartes non partagées pour chaque poche
+        if i >= unshared_cards.len() {
+            eprintln!(
+                "Nombre insuffisant de cartes non partagées pour l'index {}",
+                i
+            );
+            continue;
+        }
+
+        // Combinaison des cartes de poche et des cartes non partagées
+        let hand = pocket.clone() | unshared_cards[i].clone();
+
+        // Évaluation de la main haute
+        hival[i] = Eval::eval_n(&hand, 7); // Remplacer par la fonction appropriée
+
+        // La main basse n'est pas évaluée dans le 7-Card Stud standard
+        loval[i] = LowHandVal { value: 0 }; // Utilisez une constante appropriée pour "rien"
+    }
+}
+// Variante: 7-Card Stud Hi/Lo 8 or better
+pub fn inner_loop_7stud8(
+    pockets: &[StdDeckCardMask],
+    unshared_cards: &[StdDeckCardMask],
+    hival: &mut [HandVal],
+    loval: &mut [LowHandVal],
+) {
+    for (i, pocket) in pockets.iter().enumerate() {
+        // Assurez-vous qu'il y a un nombre correspondant de cartes non partagées pour chaque poche
+        if i >= unshared_cards.len() {
+            eprintln!(
+                "Nombre insuffisant de cartes non partagées pour l'index {}",
+                i
+            );
+            continue;
+        }
+
+        // Combinaison des cartes de poche et des cartes non partagées
+        let hand = pocket.clone() | unshared_cards[i].clone();
+
+        // Évaluation de la main haute
+        hival[i] = Eval::eval_n(&hand, 7); // Remplacer par la fonction appropriée
+
+        // Évaluation de la main basse (lowball 8 ou mieux)
+        loval[i] = std_deck_lowball8_eval(&hand, 7); // Remplacer par la fonction appropriée
+    }
+}
+// Variante: 7-Card Stud Hi/Lo no stinking qualifier
+pub fn inner_loop_7studnsq(
+    pockets: &[StdDeckCardMask],
+    unshared_cards: &[StdDeckCardMask],
+    hival: &mut [HandVal],
+    loval: &mut [LowHandVal],
+) {
+    for (i, pocket) in pockets.iter().enumerate() {
+        // Combinaison des cartes privatives du joueur avec les cartes non partagées
+        let hand = pocket.clone() | unshared_cards[i].clone();
+
+        // Évaluation de la main haute
+        hival[i] = Eval::eval_n(&hand, 7);
+
+        // Évaluation de la main basse (A-5 lowball)
+        loval[i] = std_deck_lowball_eval(&hand, 7);
+    }
+}
+// Variante: Razz
+pub fn inner_loop_razz(
+    pockets: &[StdDeckCardMask],
+    unshared_cards: &[StdDeckCardMask],
+    hival: &mut [HandVal],
+    loval: &mut [LowHandVal],
+) {
+    for (i, pocket) in pockets.iter().enumerate() {
+        // Combinaison des cartes privatives du joueur avec les cartes non partagées
+        let hand = pocket.clone() | unshared_cards[i].clone();
+
+        // Dans Razz, il n'y a pas de main haute, donc on la définit comme "rien"
+        hival[i] = HandVal { value: 0 }; // Assurez-vous que HANDVAL_NOTHING est défini
+
+        // Évaluation de la main basse selon les règles du lowball 2-7
+        loval[i] = std_deck_lowball_eval(&hand, 7);
+    }
+}

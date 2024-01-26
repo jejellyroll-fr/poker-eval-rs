@@ -2,7 +2,6 @@ use crate::deck_std::*;
 use crate::t_cardmasks::StdDeckCardMask;
 use crate::t_jokercardmasks::*;
 
-
 // Constants
 pub const JOKER_DECK_N_CARDS: usize = 53;
 pub const JOKER_DECK_RANK_CHARS: &str = "23456789TJQKA";
@@ -13,7 +12,6 @@ pub const JOKER_DECK_SUIT_CHARS: &str = "hdcs";
 pub fn joker_deck_mask(index: usize) -> JokerDeckCardMask {
     JOKER_DECK_CARD_MASKS_TABLE[index]
 }
-
 
 // Rangs
 pub const JOKER_DECK_RANK_2: usize = STD_DECK_RANK_2;
@@ -43,12 +41,9 @@ pub const JOKER_DECK_SUIT_COUNT: usize = STD_DECK_SUIT_COUNT;
 pub const JOKER_DECK_SUIT_FIRST: usize = STD_DECK_SUIT_FIRST;
 pub const JOKER_DECK_SUIT_LAST: usize = STD_DECK_SUIT_LAST;
 
-
 // N_RANKMASKS utilisé pour les calculs de masque de bit
 pub const JOKER_DECK_N_RANKMASKS: usize = STD_DECK_N_RANKMASKS;
 pub const JOKER_DECK_JOKER: usize = JOKER_DECK_N_CARDS - 1;
-
-
 
 impl JokerDeckCardMask {
     pub fn new() -> Self {
@@ -71,23 +66,30 @@ impl JokerDeckCardMask {
         self.cards_n & 0x1FFF
     }
     // Autres opérations sur les masques (exemple: OR, AND, etc.)
-    pub fn or (&self, other: Self) -> Self {
-        JokerDeckCardMask { cards_n: self.cards_n | other.cards_n }
+    pub fn or(&self, other: Self) -> Self {
+        JokerDeckCardMask {
+            cards_n: self.cards_n | other.cards_n,
+        }
     }
-    pub fn and (&self, other: Self) -> Self {
-        JokerDeckCardMask { cards_n: self.cards_n & other.cards_n }
+    pub fn and(&self, other: Self) -> Self {
+        JokerDeckCardMask {
+            cards_n: self.cards_n & other.cards_n,
+        }
     }
-    pub fn not (&self) -> Self {
-        JokerDeckCardMask { cards_n:!self.cards_n }
+    pub fn not(&self) -> Self {
+        JokerDeckCardMask {
+            cards_n: !self.cards_n,
+        }
     }
-    pub fn xor (&self, other: Self) -> Self {
-        JokerDeckCardMask { cards_n: self.cards_n ^ other.cards_n }
+    pub fn xor(&self, other: Self) -> Self {
+        JokerDeckCardMask {
+            cards_n: self.cards_n ^ other.cards_n,
+        }
     }
     // Autres méthodes si nécessaires...
     pub fn get_mask(index: usize) -> JokerDeckCardMask {
         JOKER_DECK_CARD_MASKS_TABLE[index]
     }
-    
 
     pub fn mask_to_cards(&self) -> Vec<usize> {
         let mut cards = Vec::new();
@@ -99,12 +101,19 @@ impl JokerDeckCardMask {
         cards
     }
 
-    // ...
+    // Method to check if the joker is set
+    pub fn is_joker_set(&self) -> bool {
+        self.cards_n & (1 << JOKER_DECK_JOKER) != 0
+    }
 
     // Assuming Joker is a single bit, adjust this based on your representation
     pub fn set_joker(&mut self, joker: bool) {
         let joker_bit = 1 << 52; // Adjust this based on where the joker bit is
-        self.cards_n = if joker { self.cards_n | joker_bit } else { self.cards_n & !joker_bit };
+        self.cards_n = if joker {
+            self.cards_n | joker_bit
+        } else {
+            self.cards_n & !joker_bit
+        };
     }
     // Méthode pour vérifier si une carte est présente dans le masque
     pub fn card_is_set(&self, index: usize) -> bool {
@@ -124,7 +133,7 @@ impl JokerDeckCardMask {
         s_cards.set_diamonds(self.diamonds() as u16);
 
         s_cards
-    }    
+    }
 
     // Méthode pour réinitialiser le masque
     pub fn reset(&mut self) {
@@ -146,15 +155,13 @@ impl JokerDeckCardMask {
         (0..JOKER_DECK_N_CARDS)
             .filter(|&i| self.card_is_set(i))
             .count()
-    }   
-    
+    }
 
     // Méthode pour ajouter une carte au masque
     pub fn set(&mut self, card_index: usize) {
         self.cards_n |= 1 << card_index;
-    }    
+    }
 }
-
 
 pub struct JokerDeck;
 
@@ -190,13 +197,13 @@ impl JokerDeck {
             format!("{}{}", rank_char, suit_char)
         }
     }
-    
+
     // Conversion d'une chaîne de caractères en carte
     pub fn string_to_card(in_string: &str) -> Option<usize> {
         if in_string.to_uppercase() == "XX" {
             Some(JOKER_DECK_JOKER)
         } else {
-            StdDeck::string_to_card(in_string)  // Assuming StdDeck has a similar method
+            StdDeck::string_to_card(in_string) // Assuming StdDeck has a similar method
         }
     }
 
@@ -223,14 +230,18 @@ impl JokerDeck {
                     let card = StdDeck::make_card(rank, suit); // Using StdDeck::make_card
                     out_mask.set(card);
                     n += 1;
-                },
-                _ => return Err(format!("Caractère de carte non reconnu : {}{}", rank_char, suit_char)),
+                }
+                _ => {
+                    return Err(format!(
+                        "Caractère de carte non reconnu : {}{}",
+                        rank_char, suit_char
+                    ))
+                }
             }
         }
 
         Ok((out_mask, n))
     }
 }
-
 
 // Additional implementations, if needed, based on the C source

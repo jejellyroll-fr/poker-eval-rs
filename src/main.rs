@@ -1,40 +1,41 @@
 #![allow(dead_code)]
 // Importez les modules nécessaires
+pub mod combinaison;
 pub mod deck;
+pub mod deck_joker;
 pub mod deck_std;
+pub mod enumdefs;
+pub mod enumerate;
 pub mod enumord;
 pub mod eval;
+pub mod eval_joker;
+pub mod eval_joker_low;
 pub mod eval_low;
 pub mod eval_low27;
 pub mod eval_low8;
+pub mod eval_omaha;
 pub mod handval;
 pub mod handval_low;
 pub mod lowball;
+pub mod rules_joker;
 pub mod rules_std;
 pub mod t_botcard;
 pub mod t_botfivecards;
 pub mod t_cardmasks;
+pub mod t_jokercardmasks;
+pub mod t_jokerstraight;
 pub mod t_nbits;
 pub mod t_straight;
 pub mod t_topcard;
 pub mod t_topfivecards;
-pub mod eval_omaha;
-pub mod t_jokercardmasks;
-pub mod deck_joker;
-pub mod eval_joker_low;
-pub mod enumdefs;
-pub mod combinaison;
-pub mod enumerate;
 
+use crate::enumerate::inner_loop_holdem;
 use crate::eval::Eval;
 use crate::eval_low::std_deck_lowball_eval;
-use crate::enumerate::inner_loop_holdem;
-use crate::t_cardmasks::StdDeckCardMask;
 use crate::handval::HandVal;
 use crate::handval_low::LowHandVal;
+use crate::t_cardmasks::StdDeckCardMask;
 use deck_std::*;
-
-
 
 fn main() {
     let hands = vec![
@@ -54,8 +55,7 @@ fn main() {
         "2s3s4d5c7h",
         "As2d4h3c5d",
         "KhQhJhTh4h",
-        "AsKcTd2c7s"
-
+        "AsKcTd2c7s",
     ];
 
     for input in hands {
@@ -66,7 +66,10 @@ fn main() {
         let (mask, num_cards) = match result {
             Ok((mask, num_cards)) => (mask, num_cards),
             Err(e) => {
-                eprintln!("Erreur lors de la conversion de la chaîne en masque de cartes : {}", e);
+                eprintln!(
+                    "Erreur lors de la conversion de la chaîne en masque de cartes : {}",
+                    e
+                );
                 return; // ou gestion d'erreur alternative
             }
         };
@@ -115,16 +118,14 @@ fn main() {
         println!("----------------------");
     }
 
-
-
     // Cartes de poche des joueurs
     let pocket_str1 = "AsKc"; // As de pique, Roi de cœur (Joueur 1)
     let pocket_str2 = "QhJh"; // Dame de cœur, Valet de cœur (Joueur 2)
 
     // Cartes du board (flop, turn, river)
     let flop_str = "Td2c7s"; // Flop
-    let turn_str = "5c";     // Turn
-    let river_str = "9d";    // River
+    let turn_str = "5c"; // Turn
+    let river_str = "9d"; // River
 
     // Convertir les chaînes en masques de cartes
     let pocket_cards1 = StdDeck::string_to_mask(pocket_str1).unwrap().0;
@@ -139,17 +140,33 @@ fn main() {
     // Évaluer les mains pour les deux joueurs
     let mut hival1 = vec![HandVal { value: 0 }; 1];
     let mut loval1 = vec![LowHandVal { value: 0 }; 1];
-    inner_loop_holdem(&[pocket_cards1], &board, &StdDeckCardMask { mask: 0 }, &mut hival1, &mut loval1);
+    inner_loop_holdem(
+        &[pocket_cards1],
+        &board,
+        &StdDeckCardMask { mask: 0 },
+        &mut hival1,
+        &mut loval1,
+    );
 
     let mut hival2 = vec![HandVal { value: 0 }; 1];
     let mut loval2 = vec![LowHandVal { value: 0 }; 1];
-    inner_loop_holdem(&[pocket_cards2], &board, &StdDeckCardMask { mask: 0 }, &mut hival2, &mut loval2);
+    inner_loop_holdem(
+        &[pocket_cards2],
+        &board,
+        &StdDeckCardMask { mask: 0 },
+        &mut hival2,
+        &mut loval2,
+    );
 
     // Afficher les résultats
-    println!("Représentation de la main haute pour le Joueur 1: {}", hival1[0].std_rules_hand_val_to_string());
+    println!(
+        "Représentation de la main haute pour le Joueur 1: {}",
+        hival1[0].std_rules_hand_val_to_string()
+    );
     //println!("Représentation de la main basse pour le Joueur 1: {}", loval1[0].to_string());
-    println!("Représentation de la main haute pour le Joueur 2: {}", hival2[0].std_rules_hand_val_to_string());
+    println!(
+        "Représentation de la main haute pour le Joueur 2: {}",
+        hival2[0].std_rules_hand_val_to_string()
+    );
     //println!("Représentation de la main basse pour le Joueur 2: {}", loval2[0].to_string());
-
 }
-

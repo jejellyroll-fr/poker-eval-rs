@@ -1,6 +1,6 @@
+use crate::enumord::EnumOrdering;
 use std::cmp::Ordering;
 use std::ptr::NonNull;
-use crate::enumord::EnumOrdering;
 
 pub const ENUM_MAXPLAYERS: usize = 12;
 
@@ -46,17 +46,17 @@ pub struct EnumResult {
     pub sample_type: SampleType,
     pub nsamples: u32,
     pub nplayers: u32,
-    pub nwinhi: [u32; ENUM_MAXPLAYERS],     // qualifies for high and wins (no tie)
-    pub ntiehi: [u32; ENUM_MAXPLAYERS],     // qualifies for high and ties
-    pub nlosehi: [u32; ENUM_MAXPLAYERS],    // qualifies for high and loses
-    pub nwinlo: [u32; ENUM_MAXPLAYERS],     // qualifies for low and wins (no tie)
-    pub ntielo: [u32; ENUM_MAXPLAYERS],     // qualifies for low and ties
-    pub nloselo: [u32; ENUM_MAXPLAYERS],    // qualifies for low and loses
-    pub nscoop: [u32; ENUM_MAXPLAYERS],     // wins entire pot
-    pub nsharehi: [[u32; ENUM_MAXPLAYERS + 1]; ENUM_MAXPLAYERS],  // shares for high hand
-    pub nsharelo: [[u32; ENUM_MAXPLAYERS + 1]; ENUM_MAXPLAYERS],  // shares for low hand
+    pub nwinhi: [u32; ENUM_MAXPLAYERS], // qualifies for high and wins (no tie)
+    pub ntiehi: [u32; ENUM_MAXPLAYERS], // qualifies for high and ties
+    pub nlosehi: [u32; ENUM_MAXPLAYERS], // qualifies for high and loses
+    pub nwinlo: [u32; ENUM_MAXPLAYERS], // qualifies for low and wins (no tie)
+    pub ntielo: [u32; ENUM_MAXPLAYERS], // qualifies for low and ties
+    pub nloselo: [u32; ENUM_MAXPLAYERS], // qualifies for low and loses
+    pub nscoop: [u32; ENUM_MAXPLAYERS], // wins entire pot
+    pub nsharehi: [[u32; ENUM_MAXPLAYERS + 1]; ENUM_MAXPLAYERS], // shares for high hand
+    pub nsharelo: [[u32; ENUM_MAXPLAYERS + 1]; ENUM_MAXPLAYERS], // shares for low hand
     pub nshare: [[[u32; ENUM_MAXPLAYERS + 1]; ENUM_MAXPLAYERS + 1]; ENUM_MAXPLAYERS], // shares for both hands
-    pub ev: [f64; ENUM_MAXPLAYERS],         // pot equity of player i averaged over all outcomes
+    pub ev: [f64; ENUM_MAXPLAYERS], // pot equity of player i averaged over all outcomes
 
     // A safer nullable pointer using NonNull
     pub ordering: Option<NonNull<EnumOrdering>>,
