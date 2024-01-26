@@ -6,6 +6,7 @@ use crate::handval::HandVal;
 use crate::handval_low::{LowHandVal, LOW_HAND_VAL_NOTHING };
 use crate::enumdefs::{EnumResult, ENUM_MAXPLAYERS};
 use crate::enumord::{EnumOrdering, EnumOrderingMode};
+use crate::eval::Eval;
 use std::ops::BitOr;
 use std::ptr::NonNull;
 use rand::seq::SliceRandom; // Assurez-vous que la crate rand est incluse dans votre Cargo.toml
@@ -844,5 +845,18 @@ fn inner_loop<F, G, H>(
 
     result.nsamples += 1;
 }
+
+pub fn inner_loop_holdem(pockets: &[StdDeckCardMask], board: &StdDeckCardMask, shared_cards: &StdDeckCardMask, hival: &mut [HandVal], loval: &mut [LowHandVal]) {
+    for (i, pocket) in pockets.iter().enumerate() {
+        // Clone the values before performing the bitwise OR operation
+        let final_board = board.clone() | shared_cards.clone();
+        let hand = pocket.clone() | final_board;
+
+        // Assuming Eval::eval_n() is a function that evaluates the hand
+        hival[i] = Eval::eval_n(&hand, 7);
+        loval[i] = LowHandVal { value: 0 };
+    }
+}
+
 
 

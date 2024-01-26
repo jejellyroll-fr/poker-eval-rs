@@ -28,7 +28,12 @@ pub mod enumerate;
 
 use crate::eval::Eval;
 use crate::eval_low::std_deck_lowball_eval;
+use crate::enumerate::inner_loop_holdem;
+use crate::t_cardmasks::StdDeckCardMask;
+use crate::handval::HandVal;
+use crate::handval_low::LowHandVal;
 use deck_std::*;
+
 
 
 fn main() {
@@ -49,6 +54,7 @@ fn main() {
         "2s3s4d5c7h",
         "As2d4h3c5d",
         "KhQhJhTh4h",
+        "AsKcTd2c7s"
 
     ];
 
@@ -108,6 +114,42 @@ fn main() {
 
         println!("----------------------");
     }
+
+
+
+    // Cartes de poche des joueurs
+    let pocket_str1 = "AsKc"; // As de pique, Roi de cœur (Joueur 1)
+    let pocket_str2 = "QhJh"; // Dame de cœur, Valet de cœur (Joueur 2)
+
+    // Cartes du board (flop, turn, river)
+    let flop_str = "Td2c7s"; // Flop
+    let turn_str = "5c";     // Turn
+    let river_str = "9d";    // River
+
+    // Convertir les chaînes en masques de cartes
+    let pocket_cards1 = StdDeck::string_to_mask(pocket_str1).unwrap().0;
+    let pocket_cards2 = StdDeck::string_to_mask(pocket_str2).unwrap().0;
+    let flop_cards = StdDeck::string_to_mask(flop_str).unwrap().0;
+    let turn_card = StdDeck::string_to_mask(turn_str).unwrap().0;
+    let river_card = StdDeck::string_to_mask(river_str).unwrap().0;
+
+    // Combinez le flop, le turn et la river pour créer le board
+    let board = flop_cards | turn_card | river_card;
+
+    // Évaluer les mains pour les deux joueurs
+    let mut hival1 = vec![HandVal { value: 0 }; 1];
+    let mut loval1 = vec![LowHandVal { value: 0 }; 1];
+    inner_loop_holdem(&[pocket_cards1], &board, &StdDeckCardMask { mask: 0 }, &mut hival1, &mut loval1);
+
+    let mut hival2 = vec![HandVal { value: 0 }; 1];
+    let mut loval2 = vec![LowHandVal { value: 0 }; 1];
+    inner_loop_holdem(&[pocket_cards2], &board, &StdDeckCardMask { mask: 0 }, &mut hival2, &mut loval2);
+
+    // Afficher les résultats
+    println!("Représentation de la main haute pour le Joueur 1: {}", hival1[0].std_rules_hand_val_to_string());
+    //println!("Représentation de la main basse pour le Joueur 1: {}", loval1[0].to_string());
+    println!("Représentation de la main haute pour le Joueur 2: {}", hival2[0].std_rules_hand_val_to_string());
+    //println!("Représentation de la main basse pour le Joueur 2: {}", loval2[0].to_string());
 
 }
 
