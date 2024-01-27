@@ -959,7 +959,10 @@ pub fn game_params() -> Vec<GameParams> {
         },
     ]
 }
-
+// Boucle pour évaluer des mains de poker, mettre à jour les statistiques de résultats et gérer le classement des mains.
+// `npockets` est le nombre de poches (mains de départ) à évaluer, `evalwrap` est une fonction d'évaluation de main,
+// `ordering_increment` et `ordering_increment_hilo` sont des fonctions pour mettre à jour le classement des mains,
+// et `result` est la structure pour stocker les résultats de l'énumération.
 fn inner_loop<F, G, H>(
     npockets: usize,
     mut evalwrap: F,
@@ -980,7 +983,6 @@ fn inner_loop<F, G, H>(
     let mut hishare = 0;
     let mut loshare = 0;
 
-    // Determine winning hands for high and low
     for i in 0..npockets {
         let (hi_res, lo_res) = evalwrap(i);
 
@@ -1020,7 +1022,6 @@ fn inner_loop<F, G, H>(
         0.0
     };
 
-    // Award pot fractions to winning hands
     for i in 0..npockets {
         let mut potfrac = 0.0;
 
@@ -1049,10 +1050,9 @@ fn inner_loop<F, G, H>(
         result.ev[i] += potfrac;
     }
 
-    // Update ordering if applicable
     unsafe {
         if let Some(mut ordering_ptr) = result.ordering {
-            let ordering = ordering_ptr.as_mut(); // Get a mutable reference to EnumOrdering
+            let ordering = ordering_ptr.as_mut();
 
             let hiranks: Vec<_> = hival.iter().map(|&val| val as usize).collect();
             let loranks: Vec<_> = loval.iter().map(|&val| val as usize).collect();
@@ -1078,11 +1078,9 @@ pub fn inner_loop_holdem(
     loval: &mut [LowHandVal],
 ) {
     for (i, pocket) in pockets.iter().enumerate() {
-        // Clone the values before performing the bitwise OR operation
         let final_board = board.clone() | shared_cards.clone();
         let hand = pocket.clone() | final_board;
 
-        // Assuming Eval::eval_n() is a function that evaluates the hand
         hival[i] = Eval::eval_n(&hand, 7);
         loval[i] = LowHandVal { value: 0 };
     }
@@ -1102,8 +1100,8 @@ pub fn inner_loop_holdem8(
         let hand = pocket.clone() | final_board;
 
         // Évaluation des mains hautes et basses
-        hival[i] = Eval::eval_n(&hand, 7); // Remplacer par la fonction appropriée
-        loval[i] = std_deck_lowball8_eval(&hand, 7); // Remplacer par la fonction appropriée
+        hival[i] = Eval::eval_n(&hand, 7);
+        loval[i] = std_deck_lowball8_eval(&hand, 7);
     }
 }
 
@@ -1132,12 +1130,12 @@ pub fn inner_loop_omaha(
                 if let Some(high_hand) = high_option {
                     hival[i] = high_hand;
                 }
-                // ou utilisez une autre fonction si nécessaire
-                loval[i] = LowHandVal { value: 0 }; // Utiliser une constante appropriée pour "rien"
+
+                loval[i] = LowHandVal { value: 0 };
             }
             Err(e) => {
                 eprintln!("Erreur lors de l'évaluation : {}", e);
-                continue; // Gestion d'erreur
+                continue;
             }
         }
     }
@@ -1167,12 +1165,12 @@ pub fn inner_loop_omaha5(
                 if let Some(high_hand) = high_option {
                     hival[i] = high_hand;
                 }
-                // ou utilisez une autre fonction si nécessaire
-                loval[i] = LowHandVal { value: 0 }; // Utiliser une constante appropriée pour "rien"
+
+                loval[i] = LowHandVal { value: 0 };
             }
             Err(e) => {
                 eprintln!("Erreur lors de l'évaluation : {}", e);
-                continue; // Gestion d'erreur
+                continue;
             }
         }
     }
@@ -1202,12 +1200,12 @@ pub fn inner_loop_omaha6(
                 if let Some(high_hand) = high_option {
                     hival[i] = high_hand;
                 }
-                // ou utilisez une autre fonction si nécessaire
-                loval[i] = LowHandVal { value: 0 }; // Utiliser une constante appropriée pour "rien"
+
+                loval[i] = LowHandVal { value: 0 };
             }
             Err(e) => {
                 eprintln!("Erreur lors de l'évaluation : {}", e);
-                continue; // Gestion d'erreur
+                continue;
             }
         }
     }
@@ -1243,7 +1241,7 @@ pub fn inner_loop_omaha8(
             }
             Err(e) => {
                 eprintln!("Erreur lors de l'évaluation : {}", e);
-                continue; // Gestion d'erreur
+                continue;
             }
         }
     }
@@ -1279,7 +1277,7 @@ pub fn inner_loop_omaha85(
             }
             Err(e) => {
                 eprintln!("Erreur lors de l'évaluation : {}", e);
-                continue; // Gestion d'erreur
+                continue;
             }
         }
     }
@@ -1292,7 +1290,6 @@ pub fn inner_loop_7stud(
     loval: &mut [LowHandVal],
 ) {
     for (i, pocket) in pockets.iter().enumerate() {
-        // Assurez-vous qu'il y a un nombre correspondant de cartes non partagées pour chaque poche
         if i >= unshared_cards.len() {
             eprintln!(
                 "Nombre insuffisant de cartes non partagées pour l'index {}",
@@ -1305,10 +1302,10 @@ pub fn inner_loop_7stud(
         let hand = pocket.clone() | unshared_cards[i].clone();
 
         // Évaluation de la main haute
-        hival[i] = Eval::eval_n(&hand, 7); // Remplacer par la fonction appropriée
+        hival[i] = Eval::eval_n(&hand, 7);
 
         // La main basse n'est pas évaluée dans le 7-Card Stud standard
-        loval[i] = LowHandVal { value: 0 }; // Utilisez une constante appropriée pour "rien"
+        loval[i] = LowHandVal { value: 0 };
     }
 }
 // Variante: 7-Card Stud Hi/Lo 8 or better
@@ -1319,7 +1316,6 @@ pub fn inner_loop_7stud8(
     loval: &mut [LowHandVal],
 ) {
     for (i, pocket) in pockets.iter().enumerate() {
-        // Assurez-vous qu'il y a un nombre correspondant de cartes non partagées pour chaque poche
         if i >= unshared_cards.len() {
             eprintln!(
                 "Nombre insuffisant de cartes non partagées pour l'index {}",
@@ -1332,10 +1328,10 @@ pub fn inner_loop_7stud8(
         let hand = pocket.clone() | unshared_cards[i].clone();
 
         // Évaluation de la main haute
-        hival[i] = Eval::eval_n(&hand, 7); // Remplacer par la fonction appropriée
+        hival[i] = Eval::eval_n(&hand, 7);
 
-        // Évaluation de la main basse (lowball 8 ou mieux)
-        loval[i] = std_deck_lowball8_eval(&hand, 7); // Remplacer par la fonction appropriée
+        // Évaluation de la main basse (lowball 8 or better)
+        loval[i] = std_deck_lowball8_eval(&hand, 7);
     }
 }
 // Variante: 7-Card Stud Hi/Lo no stinking qualifier
@@ -1368,9 +1364,9 @@ pub fn inner_loop_razz(
         let hand = pocket.clone() | unshared_cards[i].clone();
 
         // Dans Razz, il n'y a pas de main haute, donc on la définit comme "rien"
-        hival[i] = HandVal { value: 0 }; // Assurez-vous que handval_nothing est défini
+        hival[i] = HandVal { value: 0 };
 
-        // Évaluation de la main basse selon les règles du lowball 2-7
+        // Évaluation de la main basse (A-5 lowball)
         loval[i] = std_deck_lowball_eval(&hand, 7);
     }
 }

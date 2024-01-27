@@ -3,6 +3,8 @@ use crate::eval_low::std_deck_lowball_eval;
 use crate::handval_low::LowHandVal;
 use crate::t_jokercardmasks::JokerDeckCardMask;
 
+// Fonction d'évaluation pour le lowball incluant un joker.
+// `cards` représente le masque des cartes incluant potentiellement un joker, `n_cards` est le nombre de cartes en main
 pub fn joker_lowball_eval(cards: &JokerDeckCardMask, n_cards: usize) -> LowHandVal {
     let ss = cards.spades();
     let sh = cards.hearts();
@@ -30,7 +32,7 @@ pub fn joker_lowball_eval(cards: &JokerDeckCardMask, n_cards: usize) -> LowHandV
         }
     }
 
-    // Convertissez `rank` en `u16` uniquement lors de l'appel des méthodes
+
     let rank_u16 = rank as u16;
 
     if (sc & rank) == 0 {

@@ -83,7 +83,7 @@ pub fn enum_ordering_rank(
             lastval = handval.value;
         }
         if handval.value == noqual.value {
-            ranks[index] = nplayers as i32; // Rang pour non-qualification
+            ranks[index] = nplayers as i32; // Rang pour no qualifier
         } else {
             ranks[index] = currank;
         }
@@ -165,8 +165,6 @@ impl EnumOrdering {
             hist: vec![0; nentries],
         }
     }
-
-    // ... D'autres méthodes si nécessaires ...
 }
 
 #[cfg(test)]
@@ -179,7 +177,6 @@ mod tests {
         let ordering = EnumOrdering::new(EnumOrderingMode::Hi, 5);
         assert_eq!(ordering.mode, EnumOrderingMode::Hi);
         assert_eq!(ordering.nplayers, 5);
-        // Assurez-vous que le nombre d'entrées et l'histogramme sont correctement initialisés
     }
 
     // Test pour la fonction enum_ordering_rank
@@ -218,6 +215,4 @@ mod tests {
 
         assert_eq!(rank, 2); // Rang attendu
     }
-
-    // Ajoutez d'autres tests pour les fonctions restantes
 }
