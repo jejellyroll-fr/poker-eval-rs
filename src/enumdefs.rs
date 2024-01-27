@@ -1,5 +1,4 @@
 use crate::enumord::EnumOrdering;
-use std::cmp::Ordering;
 use std::ptr::NonNull;
 
 pub const ENUM_MAXPLAYERS: usize = 12;

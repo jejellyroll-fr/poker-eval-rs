@@ -1,7 +1,7 @@
 use crate::combinaison::*;
 use crate::enumdefs::{EnumResult, ENUM_MAXPLAYERS};
 use crate::enumdefs::{Game, GameParams};
-use crate::enumord::{EnumOrdering, EnumOrderingMode};
+use crate::enumord::EnumOrderingMode;
 use crate::eval_low::std_deck_lowball_eval;
 use crate::eval_low8::std_deck_lowball8_eval;
 use crate::eval_omaha::std_deck_omaha_hi_low8_eval;
@@ -14,7 +14,6 @@ use crate::eval::Eval;
 use rand::seq::SliceRandom; // Assurez-vous que la crate rand est incluse dans votre Cargo.toml
 use rand::thread_rng;
 use std::ops::BitOr;
-use std::ptr::NonNull;
 
 // Trait pour gérer les masques de cartes
 pub trait CardMask: BitOr<Output = Self> + Clone + PartialEq {
@@ -964,11 +963,11 @@ fn inner_loop<F, G, H>(
     G: FnMut(&mut EnumResult, &[usize], &[usize]),
     H: FnMut(&mut EnumResult, &[usize], &[usize]),
 {
-    let HANDVAL_NOTHING: u32 = HandVal::new(0, 0, 0, 0, 0, 0).value;
+    let handval_nothing: u32 = HandVal::new(0, 0, 0, 0, 0, 0).value;
 
-    let mut hival = vec![HANDVAL_NOTHING; ENUM_MAXPLAYERS];
+    let mut hival = vec![handval_nothing; ENUM_MAXPLAYERS];
     let mut loval = vec![LOW_HAND_VAL_NOTHING; ENUM_MAXPLAYERS];
-    let mut besthi = HANDVAL_NOTHING;
+    let mut besthi = handval_nothing;
     let mut bestlo = LOW_HAND_VAL_NOTHING;
     let mut hishare = 0;
     let mut loshare = 0;
@@ -977,13 +976,13 @@ fn inner_loop<F, G, H>(
     for i in 0..npockets {
         let (hi_res, lo_res) = evalwrap(i);
 
-        let hi = hi_res.map(|h| h.value).unwrap_or(HANDVAL_NOTHING);
+        let hi = hi_res.map(|h| h.value).unwrap_or(handval_nothing);
         let lo = lo_res.map(|l| l.value).unwrap_or(LOW_HAND_VAL_NOTHING);
 
         hival[i] = hi;
         loval[i] = lo;
 
-        if hi != HANDVAL_NOTHING {
+        if hi != handval_nothing {
             if hi > besthi {
                 besthi = hi;
                 hishare = 1;
@@ -1002,7 +1001,7 @@ fn inner_loop<F, G, H>(
         }
     }
 
-    let hipot = if besthi != HANDVAL_NOTHING {
+    let hipot = if besthi != handval_nothing {
         1.0 / hishare as f64
     } else {
         0.0
@@ -1024,7 +1023,7 @@ fn inner_loop<F, G, H>(
             } else {
                 result.ntiehi[i] += 1;
             }
-        } else if hival[i] != HANDVAL_NOTHING {
+        } else if hival[i] != handval_nothing {
             result.nlosehi[i] += 1;
         }
 
@@ -1361,7 +1360,7 @@ pub fn inner_loop_razz(
         let hand = pocket.clone() | unshared_cards[i].clone();
 
         // Dans Razz, il n'y a pas de main haute, donc on la définit comme "rien"
-        hival[i] = HandVal { value: 0 }; // Assurez-vous que HANDVAL_NOTHING est défini
+        hival[i] = HandVal { value: 0 }; // Assurez-vous que handval_nothing est défini
 
         // Évaluation de la main basse selon les règles du lowball 2-7
         loval[i] = std_deck_lowball_eval(&hand, 7);

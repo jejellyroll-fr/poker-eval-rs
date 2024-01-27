@@ -5,7 +5,6 @@ use crate::t_jokercardmasks::JokerDeckCardMask;
 use crate::t_jokerstraight::JOKER_STRAIGHT_TABLE;
 use crate::t_nbits::NBITS_TABLE;
 use crate::t_topcard::TOP_CARD_TABLE;
-use crate::t_topfivecards::TOP_FIVE_CARDS_TABLE;
 use crate::Eval;
 
 pub struct EvalJoker;
@@ -87,42 +86,45 @@ impl EvalJoker {
         //println!("Hearts: {:b}", sh);
         let ranks = ss | sc | sd | sh;
         //println!("Combined ranks: {:b}", ranks);
-        let n_ranks = NBITS_TABLE[ranks as usize];
-        let mut retval = HandVal::new(0, 0, 0, 0, 0, 0);
+        let _n_ranks = NBITS_TABLE[ranks as usize];
+        let _retval: Option<HandVal> = None;
 
         // Check for straight, flush, or straight flush
         if NBITS_TABLE[ss as usize] >= 4 {
             let straight = JOKER_STRAIGHT_TABLE[ss as usize];
-            retval = if straight != 0 {
-                HandVal::new(JokerRulesHandType::StFlush as u8, straight, 0, 0, 0, 0)
+            if straight != 0 {
+                let hand_val =
+                    HandVal::new(JokerRulesHandType::StFlush as u8, straight, 0, 0, 0, 0);
+                //println!("Retourne HandVal pour Straight Flush: {:?}", hand_val);
+                return hand_val;
             } else {
-                flush_val(ss as u32)
-            };
+                return flush_val(ss as u32);
+            }
         } else if NBITS_TABLE[sc as usize] >= 4 {
-            let straight = JOKER_STRAIGHT_TABLE[ss as usize];
-            retval = if straight != 0 {
-                HandVal::new(JokerRulesHandType::StFlush as u8, straight, 0, 0, 0, 0)
+            let straight = JOKER_STRAIGHT_TABLE[sc as usize];
+            if straight != 0 {
+                return HandVal::new(JokerRulesHandType::StFlush as u8, straight, 0, 0, 0, 0);
             } else {
-                flush_val(sc as u32)
-            };
+                return flush_val(sc as u32);
+            }
         } else if NBITS_TABLE[sd as usize] >= 4 {
-            let straight = JOKER_STRAIGHT_TABLE[ss as usize];
-            retval = if straight != 0 {
-                HandVal::new(JokerRulesHandType::StFlush as u8, straight, 0, 0, 0, 0)
+            let straight = JOKER_STRAIGHT_TABLE[sd as usize];
+            if straight != 0 {
+                return HandVal::new(JokerRulesHandType::StFlush as u8, straight, 0, 0, 0, 0);
             } else {
-                flush_val(sd as u32)
-            };
+                return flush_val(sd as u32);
+            }
         } else if NBITS_TABLE[sh as usize] >= 4 {
-            let straight = JOKER_STRAIGHT_TABLE[ss as usize];
-            retval = if straight != 0 {
-                HandVal::new(JokerRulesHandType::StFlush as u8, straight, 0, 0, 0, 0)
+            let straight = JOKER_STRAIGHT_TABLE[sh as usize];
+            if straight != 0 {
+                return HandVal::new(JokerRulesHandType::StFlush as u8, straight, 0, 0, 0, 0);
             } else {
-                flush_val(sh as u32)
-            };
+                return flush_val(sh as u32);
+            }
         } else {
             let straight = JOKER_STRAIGHT_TABLE[ranks as usize];
             if straight != 0 {
-                retval = HandVal::new(JokerRulesHandType::Straight as u8, straight, 0, 0, 0, 0);
+                return HandVal::new(JokerRulesHandType::Straight as u8, straight, 0, 0, 0, 0);
             }
         }
 
