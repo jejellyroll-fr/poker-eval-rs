@@ -1,10 +1,11 @@
 pub struct Combination {
-    pub nelem: usize,
-    pub ncombo: usize,
-    pub combos: Vec<Vec<usize>>,
+    pub nelem: usize,            // Nombre d'éléments dans chaque combinaison
+    pub ncombo: usize,           // Nombre total de combinaisons
+    pub combos: Vec<Vec<usize>>, // Vecteur contenant toutes les combinaisons possibles
 }
 
 impl Combination {
+    // Constructeur pour initialiser une nouvelle instance de `Combination`.
     pub fn new(nuniv: usize, nelem: usize) -> Option<Combination> {
         if nelem > nuniv {
             return None;
@@ -43,11 +44,11 @@ impl Combination {
             combos,
         })
     }
-
+    // Retourne le nombre total de combinaisons.
     pub fn num_combinations(&self) -> usize {
         self.ncombo
     }
-
+    // Retourne une combinaison spécifique basée sur son index.
     pub fn get_combination(&self, cnum: usize) -> Option<Vec<usize>> {
         if cnum >= self.ncombo {
             return None;
