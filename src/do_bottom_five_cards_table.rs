@@ -1,9 +1,8 @@
 use std::fs::File;
 use std::io::{self, Write};
 
-const HANDVAL_CARD_WIDTH: u32 = 4; // Ajustez selon la définition originale
-const STDDECK_N_RANKMASKS: usize = 1 << 13; // Supposons 13 bits pour les rangs
-
+const HANDVAL_CARD_WIDTH: u32 = 4; 
+const STDDECK_N_RANKMASKS: usize = 1 << 13; 
 fn bottom_card_func(mask: u32) -> u32 {
     mask.trailing_zeros()
 }
@@ -30,7 +29,7 @@ fn do_bottom_five_cards_table() -> io::Result<()> {
         if i < (STDDECK_N_RANKMASKS as u32 - 1) {
             writeln!(file, "    0x{:08x},", eval)?;
         } else {
-            // Pas de virgule après le dernier élément
+
             writeln!(file, "    0x{:08x}", eval)?;
         }
     }

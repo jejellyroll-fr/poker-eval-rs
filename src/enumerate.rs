@@ -11,7 +11,7 @@ use crate::t_cardmasks::StdDeckCardMask;
 use crate::t_jokercardmasks::JokerDeckCardMask;
 
 use crate::eval::Eval;
-use rand::seq::SliceRandom; // Assurez-vous que la crate rand est incluse dans votre Cargo.toml
+use rand::seq::SliceRandom;
 use rand::thread_rng;
 use std::ops::BitOr;
 
@@ -60,7 +60,7 @@ impl BitOr for JokerDeckCardMask {
         }
     }
 }
-
+// Fonction pour énumérer chaque carte dans un deck et appliquer une action donnée sur chaque carte
 fn enumerate_1_cards<T, F>(deck: &[T], mut action: F)
 where
     T: CardMask,
@@ -205,7 +205,7 @@ where
         }
     }
 }
-
+// Fonction pour énumérer chaque carte dans un deck, en excluant les dead cards, et appliquer une action donnée sur chaque carte restante.
 fn enumerate_1_cards_d<T, F>(deck: &[T], dead_cards: &[T], mut action: F)
 where
     T: CardMask,
@@ -545,6 +545,8 @@ where
         }
     }
 }
+// Fonction pour énumérer toutes les combinaisons possibles de `n_cards` cartes dans un deck, en excluant les dead card,
+// et appliquer une action donnée sur chaque combinaison valide
 fn enumerate_n_cards_d<T, F>(deck: &[T], dead_cards: &[T], n_cards: usize, mut action: F)
 where
     T: CardMask,
@@ -576,6 +578,8 @@ where
     }
 }
 
+// Fonction pour énumérer toutes les combinaisons possibles de `n_cards` cartes dans un deck
+// et appliquer une action donnée sur chaque combinaison
 fn enumerate_n_cards<T, F>(deck: &[T], n_cards: usize, mut action: F)
 where
     T: CardMask,
@@ -600,7 +604,8 @@ where
         }
     }
 }
-
+// Fonction pour énumérer toutes les combinaisons possibles à partir de plusieurs sets de cartes, en excluant les cartes spécifiées comme dead.
+// Chaque set dans le `decks` de cartes a sa propre taille de combinaison spécifiée dans `set_sizes`. `dead_cards` contient les cartes à exclure
 fn enumerate_combinations_d<T, F>(
     decks: Vec<&[T]>,
     set_sizes: Vec<usize>,
@@ -633,7 +638,7 @@ fn enumerate_combinations_d<T, F>(
         for (index, combo) in indices.iter().zip(combos.iter()) {
             if let Some(set) = combo.get_combination(*index) {
                 let set_cards: Vec<_> = set.iter().map(|&i| &decks[combo.nelem][i]).collect();
-                // Vérifier si la combinaison contient des cartes mortes
+                // Vérifier si la combinaison contient des dead cards
                 if set_cards.iter().any(|&card| dead_cards.contains(card)) {
                     is_valid = false;
                     break;
@@ -663,6 +668,8 @@ fn enumerate_combinations_d<T, F>(
     }
 }
 
+// Fonction pour énumérer toutes les permutations possibles à partir de plusieurs sets de cartes, en excluant les cartes spécifiées comme dead.
+// `decks` contient les sets de cartes, `set_sizes` les tailles de chaque set, `dead_cards` les cartes à exclure, et `default_card` une carte par défaut utilisée pour initialiser les masques OR
 fn enumerate_permutations_d<T, F>(
     decks: &[Vec<T>],
     set_sizes: &[usize],
@@ -742,7 +749,7 @@ fn enumerate_permutations_d<T, F>(
         }
     }
 }
-
+// Fonction pour simuler des tirages de cartes aléatoires à partir d'un deck, en excluant certaines cartes, et appliquer une action donnée sur chaque tirage
 fn deck_montecarlo_n_cards_d<T, F>(
     deck: &[T],
     dead_cards: &[T],
@@ -771,7 +778,7 @@ fn deck_montecarlo_n_cards_d<T, F>(
         action(cards_var.clone());
     }
 }
-
+// Fonction pour simuler des tirages aléatoires de plusieurs sets de cartes à partir de plusieurs decks, en excluant certaines cartes
 fn montecarlo_permutations_d<T, F>(
     decks: &[Vec<T>],
     set_sizes: &[usize],
@@ -803,6 +810,7 @@ fn montecarlo_permutations_d<T, F>(
     }
 }
 
+// Fonction qui renvoie la liste des paramètres des différentes variantes
 pub fn game_params() -> Vec<GameParams> {
     vec![
         GameParams {

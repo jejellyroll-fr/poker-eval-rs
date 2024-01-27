@@ -1,5 +1,6 @@
 const STRING_CARDS: usize = 100;
 
+// Correspond à GenericDeck
 pub struct Deck {
     pub n_cards: i32,
     pub name: String,
@@ -14,7 +15,7 @@ pub struct CardMask {
 }
 
 impl Deck {
-    // Correspond à GenericDeck_maskToString
+    // transforme un masque de carte en une chaine de caractères
     pub fn generic_deck_mask_to_string(&self, card_mask: &CardMask) -> String {
         let mut cards = vec![0; STRING_CARDS];
         let n = (self.mask_to_cards)(card_mask, &mut cards);
@@ -30,29 +31,28 @@ impl Deck {
         out_string
     }
 
-    // Correspond à GenericDeck_printMask
+    // Affiche le masque de carte en utilisant la représentation sous forme de chaîne.
     pub fn generic_deck_print_mask(&self, card_mask: &CardMask) {
         let out_string = self.generic_deck_mask_to_string(card_mask);
         println!("{}", out_string);
     }
 
-    // Correspond à GenericDeck_maskString
+    // Retourne une représentation sous forme de chaîne de caractères du masque de carte.
     pub fn generic_deck_mask_string(&self, card_mask: &CardMask) -> String {
         self.generic_deck_mask_to_string(card_mask)
     }
 
-    // Correspond à GenericDeck_numCards
+    // Calcule et retourne le nombre de cartes définies dans le masque de carte.
     pub fn generic_deck_num_cards(&self, card_mask: &CardMask) -> i32 {
         (self.num_cards)(card_mask)
     }
 
-    // Correspond à GenericDeck_cardString
+    // Convertit un index de carte en une chaîne de caractères
     pub fn generic_deck_card_to_string(&self, card_index: i32) -> String {
-        // Votre logique de conversion ici
         format!("Card {}", card_index)
     }
 
-    // Correspond à GenericDeck_printCard
+    // Affiche la représentation sous forme de chaîne de caractères d'une carte spécifiée par son index
     pub fn generic_deck_print_card(&self, card_index: i32) {
         let out_string = self.generic_deck_card_to_string(card_index);
         if !out_string.is_empty() {

@@ -86,11 +86,11 @@ impl JokerDeckCardMask {
             cards_n: self.cards_n ^ other.cards_n,
         }
     }
-    // Autres méthodes si nécessaires...
+    // Methode pour savoir si une carte est dans un masque
     pub fn get_mask(index: usize) -> JokerDeckCardMask {
         JOKER_DECK_CARD_MASKS_TABLE[index]
     }
-
+    // Methode pour convertir un masque en liste de cartes
     pub fn mask_to_cards(&self) -> Vec<usize> {
         let mut cards = Vec::new();
         for i in (0..JOKER_DECK_N_CARDS).rev() {
@@ -101,14 +101,14 @@ impl JokerDeckCardMask {
         cards
     }
 
-    // Method to check if the joker is set
+    // Methode pour savoir si le masque contient le joker
     pub fn is_joker_set(&self) -> bool {
         self.cards_n & (1 << JOKER_DECK_JOKER) != 0
     }
 
-    // Assuming Joker is a single bit, adjust this based on your representation
+    // Méthode pour définir le joker
     pub fn set_joker(&mut self, joker: bool) {
-        let joker_bit = 1 << 52; // Adjust this based on where the joker bit is
+        let joker_bit = 1 << 52; // Ajuster le bit de joker
         self.cards_n = if joker {
             self.cards_n | joker_bit
         } else {
@@ -119,14 +119,11 @@ impl JokerDeckCardMask {
     pub fn card_is_set(&self, index: usize) -> bool {
         (self.cards_n & (1 << index)) != 0
     }
-
+    // Methode pour convertir le masque en StdDeckCardMask
     pub fn to_std(&self) -> StdDeckCardMask {
-        let mut s_cards = StdDeckCardMask::new(); // Assuming you have a constructor for StdDeckCardMask
+        let mut s_cards = StdDeckCardMask::new();
         s_cards.reset();
 
-        // Set spades, hearts, clubs, diamonds from JokerDeckCardMask
-        // Assuming you have methods to get these values from JokerDeckCardMask
-        // and set these values in StdDeckCardMask
         s_cards.set_spades(self.spades() as u16);
         s_cards.set_hearts(self.hearts() as u16);
         s_cards.set_clubs(self.clubs() as u16);
@@ -166,17 +163,17 @@ impl JokerDeckCardMask {
 pub struct JokerDeck;
 
 impl JokerDeck {
-    // Define the JokerDeck_RANK function
+    // Definit le rang du joker
     fn joker_deck_rank(index: usize) -> usize {
         StdDeck::rank(index)
     }
 
-    // Define the JokerDeck_SUIT function
+    // Definit la couleur du joker
     fn joker_deck_suit(index: usize) -> usize {
         StdDeck::suit(index)
     }
 
-    // Define the JokerDeck_MAKE_CARD function
+    // Création d'une carte du joker
     fn joker_deck_make_card(rank: usize, suit: usize) -> usize {
         StdDeck::make_card(rank, suit)
     }
@@ -203,7 +200,7 @@ impl JokerDeck {
         if in_string.to_uppercase() == "XX" {
             Some(JOKER_DECK_JOKER)
         } else {
-            StdDeck::string_to_card(in_string) // Assuming StdDeck has a similar method
+            StdDeck::string_to_card(in_string)
         }
     }
 
@@ -227,7 +224,7 @@ impl JokerDeck {
 
             match (rank, suit) {
                 (Some(rank), Some(suit)) => {
-                    let card = StdDeck::make_card(rank, suit); // Using StdDeck::make_card
+                    let card = StdDeck::make_card(rank, suit);
                     out_mask.set(card);
                     n += 1;
                 }
@@ -243,5 +240,3 @@ impl JokerDeck {
         Ok((out_mask, n))
     }
 }
-
-// Additional implementations, if needed, based on the C source

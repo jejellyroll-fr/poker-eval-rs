@@ -45,7 +45,7 @@ impl StdDeckCardMask {
     pub fn new() -> Self {
         StdDeckCardMask { mask: 0 }
     }
-
+    // masque piques
     pub fn spades(&self) -> u16 {
         let mask_13_bits = 0x1FFF; // Masque pour conserver les 13 bits
         let shifted_mask = (self.mask >> 39) as u16;
@@ -55,7 +55,7 @@ impl StdDeckCardMask {
             shifted_mask
         }
     }
-
+    // masque trêfles
     pub fn clubs(&self) -> u16 {
         let mask_13_bits = 0x1FFF; // Masque pour conserver les 13 bits
         let shifted_mask = (self.mask >> 26) as u16;
@@ -65,7 +65,7 @@ impl StdDeckCardMask {
             shifted_mask
         }
     }
-
+    // masque carreaux
     pub fn diamonds(&self) -> u16 {
         let mask_13_bits = 0x1FFF; // Masque pour conserver les 13 bits
         let shifted_mask = (self.mask >> 13) as u16;
@@ -75,7 +75,7 @@ impl StdDeckCardMask {
             shifted_mask
         }
     }
-
+    // masque cœurs
     pub fn hearts(&self) -> u16 {
         let mask_13_bits = 0x1FFF; // Masque pour conserver les 13 bits
         let hearts_mask = self.mask as u16;
@@ -103,7 +103,7 @@ impl StdDeckCardMask {
         self.mask = !self.mask;
     }
 
-    // Autres méthodes si nécessaires...
+    // Méthode pour obtenir le masque d'une carte
     pub fn get_mask(index: usize) -> &'static Self {
         &STD_DECK_CARD_MASKS_TABLE[index]
     }
@@ -144,25 +144,25 @@ impl StdDeckCardMask {
         //println!("Masque après ajout: {:b}", self.mask); //debug
     }
 
-    // Method to set the spades suit bits
+    // Methode pour definir le masque des cartes piques
     pub fn set_spades(&mut self, ranks: u16) {
         let mask = STD_DECK_CARDMASK_SPADES;
         self.mask = (self.mask & !mask) | ((ranks as u64) << 39);
     }
 
-    // Method to set the hearts suit bits
+    // Methode pour definir le masque des cartes cœurs
     pub fn set_hearts(&mut self, ranks: u16) {
         let mask = STD_DECK_CARDMASK_HEARTS;
         self.mask = (self.mask & !mask) | ((ranks as u64) << 48);
     }
 
-    // Method to set the clubs suit bits
+    // Methode pour definir le masque des cartes trèfles
     pub fn set_clubs(&mut self, ranks: u16) {
         let mask = STD_DECK_CARDMASK_CLUBS;
         self.mask = (self.mask & !mask) | ((ranks as u64) << 26);
     }
 
-    // Method to set the diamonds suit bits
+    // Methode pour definir le masque des cartes carreaux
     pub fn set_diamonds(&mut self, ranks: u16) {
         let mask = STD_DECK_CARDMASK_DIAMONDS;
         self.mask = (self.mask & !mask) | ((ranks as u64) << 13);
