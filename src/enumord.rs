@@ -3,8 +3,8 @@ use crate::handval::HandVal;
 use std::cmp::Ordering;
 
 // Constantes pour la limite des joueurs
-const ENUM_ORDERING_MAXPLAYERS: usize = 7;
-const ENUM_ORDERING_MAXPLAYERS_HILO: usize = 5;
+pub const ENUM_ORDERING_MAXPLAYERS: usize = 7;
+pub const ENUM_ORDERING_MAXPLAYERS_HILO: usize = 5;
 
 // Enum pour les modes d'ordre final des mains
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -18,9 +18,9 @@ pub enum EnumOrderingMode {
 // Structure pour le suivi des ordres des mains
 pub struct EnumOrdering {
     pub mode: EnumOrderingMode,
-    nplayers: usize,
-    nentries: usize,
-    hist: Vec<u32>,
+    pub nplayers: usize,
+    pub nentries: usize,
+    pub hist: Vec<u32>,
 }
 
 // Tableau de bits pour les rangs des joueurs
@@ -91,7 +91,7 @@ pub fn enum_ordering_rank(
 }
 
 // Fonction pour encoder les rangs en un seul entier
-fn enum_ordering_encode(nplayers: usize, ranks: &[i32]) -> i32 {
+pub fn enum_ordering_encode(nplayers: usize, ranks: &[i32]) -> i32 {
     let mut encoding = 0;
     let nbits = ENUM_NBITS[nplayers];
     for &rank in ranks.iter() {
@@ -101,7 +101,7 @@ fn enum_ordering_encode(nplayers: usize, ranks: &[i32]) -> i32 {
 }
 
 // Fonction pour encoder les rangs high/low en un seul entier
-fn enum_ordering_encode_hilo(nplayers: usize, hiranks: &[i32], loranks: &[i32]) -> i32 {
+pub fn enum_ordering_encode_hilo(nplayers: usize, hiranks: &[i32], loranks: &[i32]) -> i32 {
     let mut encoding = 0;
     let nbits = ENUM_NBITS[nplayers];
     for &rank in hiranks.iter() {
@@ -115,14 +115,14 @@ fn enum_ordering_encode_hilo(nplayers: usize, hiranks: &[i32], loranks: &[i32]) 
 
 //
 // Fonction pour décoder le rang d'un joueur à partir de l'encodage
-fn enum_ordering_decode_k(encoding: i32, nplayers: usize, k: usize) -> i32 {
+pub fn enum_ordering_decode_k(encoding: i32, nplayers: usize, k: usize) -> i32 {
     let nbits = ENUM_NBITS[nplayers];
     let shift = (nplayers - k - 1) * (nbits as usize);
     (encoding >> shift) & ((1 << nbits) - 1)
 }
 
 // Fonction pour calculer le nombre d'entrées dans l'histogramme
-fn enum_ordering_nentries(nplayers: usize) -> i32 {
+pub fn enum_ordering_nentries(nplayers: usize) -> i32 {
     if nplayers > ENUM_ORDERING_MAXPLAYERS || ENUM_NBITS[nplayers] < 0 {
         -1
     } else {
@@ -131,7 +131,7 @@ fn enum_ordering_nentries(nplayers: usize) -> i32 {
 }
 
 // Fonction pour calculer le nombre d'entrées dans l'histogramme pour les jeux high/low
-fn enum_ordering_nentries_hilo(nplayers: usize) -> i32 {
+pub fn enum_ordering_nentries_hilo(nplayers: usize) -> i32 {
     if nplayers > ENUM_ORDERING_MAXPLAYERS_HILO || ENUM_NBITS[nplayers] < 0 {
         -1
     } else {
@@ -140,13 +140,13 @@ fn enum_ordering_nentries_hilo(nplayers: usize) -> i32 {
 }
 
 // Fonction pour incrémenter la valeur d'une entrée spécifique de l'histogramme
-fn enum_ordering_increment(ordering: &mut EnumOrdering, ranks: &[i32]) {
+pub fn enum_ordering_increment(ordering: &mut EnumOrdering, ranks: &[i32]) {
     let encoding = enum_ordering_encode(ordering.nplayers, ranks);
     ordering.hist[encoding as usize] += 1;
 }
 
 // Fonction pour incrémenter la valeur d'une entrée spécifique de l'histogramme pour les jeux high/low
-fn enum_ordering_increment_hilo(ordering: &mut EnumOrdering, hiranks: &[i32], loranks: &[i32]) {
+pub fn enum_ordering_increment_hilo(ordering: &mut EnumOrdering, hiranks: &[i32], loranks: &[i32]) {
     let encoding = enum_ordering_encode_hilo(ordering.nplayers, hiranks, loranks);
     ordering.hist[encoding as usize] += 1;
 }
