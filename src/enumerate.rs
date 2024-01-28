@@ -1,8 +1,13 @@
 use crate::combinaison::*;
+use crate::enumdefs::SampleType;
 use crate::enumdefs::{EnumResult, ENUM_MAXPLAYERS};
 use crate::enumdefs::{Game, GameParams};
 use crate::enumord::EnumOrderingMode;
+use crate::eval_joker::EvalJoker;
+use crate::eval_joker_low::joker_lowball_eval;
+use crate::eval_joker_low8::joker_lowball8_eval;
 use crate::eval_low::std_deck_lowball_eval;
+use crate::eval_low27::std_deck_lowball27_eval;
 use crate::eval_low8::std_deck_lowball8_eval;
 use crate::eval_omaha::std_deck_omaha_hi_low8_eval;
 use crate::handval::HandVal;
@@ -13,6 +18,7 @@ use crate::t_jokercardmasks::JokerDeckCardMask;
 use crate::eval::Eval;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
+use std::error::Error;
 use std::ops::BitOr;
 
 // Trait pour gérer les masques de cartes
@@ -1368,5 +1374,254 @@ pub fn inner_loop_razz(
 
         // Évaluation de la main basse (A-5 lowball)
         loval[i] = std_deck_lowball_eval(&hand, 7);
+    }
+}
+
+pub fn inner_loop_5draw(
+    pockets: &[JokerDeckCardMask],
+    unshared_cards: &[JokerDeckCardMask],
+    hival: &mut [HandVal],
+    loval: &mut [LowHandVal],
+) {
+    for (i, pocket) in pockets.iter().enumerate() {
+        // Vérifiez si l'index est dans les limites des cartes non partagées
+        if i >= unshared_cards.len() {
+            eprintln!(
+                "Nombre insuffisant de cartes non partagées pour l'index {}",
+                i
+            );
+            continue;
+        }
+
+        // Fusionnez les cartes en main avec les cartes non partagées
+        let hand = pocket.clone() | unshared_cards[i].clone();
+
+        // Évaluez la main pour obtenir la valeur haute
+        hival[i] = EvalJoker::eval_n(hand, 5);
+
+        // Attribuez une valeur fixe pour la valeur basse, car il semble que la macro originale ne fasse pas d'évaluation basse
+        loval[i] = LowHandVal { value: 0 };
+    }
+}
+
+pub fn inner_loop_5draw8(
+    pockets: &[JokerDeckCardMask],
+    unshared_cards: &[JokerDeckCardMask],
+    hival: &mut [HandVal],
+    loval: &mut [LowHandVal],
+) {
+    for (i, pocket) in pockets.iter().enumerate() {
+        // Vérifiez si l'index est dans les limites des cartes non partagées
+        if i >= unshared_cards.len() {
+            eprintln!(
+                "Nombre insuffisant de cartes non partagées pour l'index {}",
+                i
+            );
+            continue;
+        }
+
+        // Fusionnez les cartes en main avec les cartes non partagées
+        let hand = *pocket | unshared_cards[i]; // Assume que l'opération '|' est surchargée pour `JokerDeckCardMask`
+
+        // Évaluez la main pour obtenir la valeur haute en utilisant les règles spécifiques aux jokers
+        hival[i] = EvalJoker::eval_n(hand, 5);
+
+        // Évaluez la main pour obtenir la valeur basse en utilisant les règles de lowball 8
+        loval[i] = joker_lowball8_eval(&hand, 5);
+    }
+}
+
+pub fn inner_loop_5drawnsq(
+    pockets: &[JokerDeckCardMask],
+    unshared_cards: &[JokerDeckCardMask],
+    hival: &mut [HandVal],
+    loval: &mut [LowHandVal],
+) {
+    for (i, pocket) in pockets.iter().enumerate() {
+        // Vérifiez si l'index est dans les limites des cartes non partagées
+        if i >= unshared_cards.len() {
+            eprintln!(
+                "Nombre insuffisant de cartes non partagées pour l'index {}",
+                i
+            );
+            continue;
+        }
+
+        // Fusionnez les cartes en main avec les cartes non partagées
+        let hand = *pocket | unshared_cards[i]; // Assume que l'opération '|' est implémentée pour `JokerDeckCardMask`
+
+        // Évaluez la main pour la valeur haute en utilisant les règles spécifiques aux jokers
+        hival[i] = EvalJoker::eval_n(hand, 5);
+
+        // Évaluez la main pour la valeur basse sans qualification spécifique
+        loval[i] = joker_lowball_eval(&hand, 5); // Fonction hypothétique d'évaluation basse
+    }
+}
+
+pub fn inner_loop_lowball(
+    pockets: &[JokerDeckCardMask],
+    unshared_cards: &[JokerDeckCardMask],
+    hival: &mut [HandVal],
+    loval: &mut [LowHandVal],
+) {
+    for (i, pocket) in pockets.iter().enumerate() {
+        // Vérifiez si l'index est dans les limites des cartes non partagées
+        if i >= unshared_cards.len() {
+            eprintln!(
+                "Nombre insuffisant de cartes non partagées pour l'index {}",
+                i
+            );
+            continue;
+        }
+
+        // Fusionnez les cartes en main avec les cartes non partagées
+        let hand = *pocket | unshared_cards[i]; // Assume que l'opération '|' est implémentée pour `JokerDeckCardMask`
+
+        // La valeur haute n'est pas pertinente dans ce contexte, attribuez HandVal_NOTHING
+        hival[i] = HandVal { value: 0 };
+
+        // Évaluez la main pour la valeur basse en utilisant la fonction d'évaluation lowball
+        loval[i] = joker_lowball_eval(&hand, 5); // Supposons que cette fonction retourne une `LowHandVal`
+    }
+}
+
+pub fn inner_loop_lowball27(
+    pockets: &[StdDeckCardMask],
+    unshared_cards: &[StdDeckCardMask],
+    hival: &mut [HandVal],
+    loval: &mut [LowHandVal],
+) {
+    for (i, pocket) in pockets.iter().enumerate() {
+        if i >= unshared_cards.len() {
+            eprintln!(
+                "Nombre insuffisant de cartes non partagées pour l'index {}",
+                i
+            );
+            continue;
+        }
+
+        // Fusionnez les cartes en main avec les cartes non partagées
+        let hand = pocket.clone() | unshared_cards[i].clone();
+
+        // La valeur haute n'est pas pertinente dans ce contexte, attribuez HandVal_NOTHING
+        hival[i] = HandVal { value: 0 };
+
+        // Évaluez la main pour la valeur basse en utilisant la fonction d'évaluation lowball 2-7
+        let hand_val_result = std_deck_lowball27_eval(&hand, 5);
+
+        // Convertissez HandVal en LowHandVal directement ici
+        loval[i] = LowHandVal {
+            value: hand_val_result.value,
+        };
+    }
+}
+
+// Fonction d'évaluation exhaustive
+// Définissez une erreur personnalisée pour gérer divers scénarios d'erreur dans la fonction
+#[derive(Debug)]
+pub enum EnumError {
+    TooManyPlayers,
+    UnsupportedGameType,
+    UnsupportedBoardConfiguration,
+    OtherError(String), // Pour gérer d'autres types d'erreurs
+}
+
+impl std::fmt::Display for EnumError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match *self {
+            EnumError::TooManyPlayers => write!(f, "Too many players"),
+            EnumError::UnsupportedGameType => write!(f, "Unsupported game type"),
+            EnumError::UnsupportedBoardConfiguration => {
+                write!(f, "Unsupported board configuration")
+            }
+            EnumError::OtherError(ref cause) => write!(f, "Error: {}", cause),
+        }
+    }
+}
+
+impl Error for EnumError {}
+
+// Fonction d'évaluation par échantillonnage adaptée pour Rust
+pub fn enum_sample(
+    game: Game,
+    pockets: &[StdDeckCardMask],
+    board: StdDeckCardMask,
+    dead: StdDeckCardMask,
+    npockets: usize,
+    nboard: usize,
+    niter: usize,
+    orderflag: bool,
+    result: &mut EnumResult,
+) -> Result<(), EnumError> {
+    if npockets > ENUM_MAXPLAYERS {
+        return Err(EnumError::TooManyPlayers);
+    }
+
+    // Réinitialisez les résultats
+    result.clear();
+
+    // Le mode d'ordonnancement est déterminé par le type de jeu
+    let mode = match game {
+        Game::Holdem | Game::Omaha | Game::Omaha5 | Game::Omaha6 | Game::Stud7 | Game::Draw5 => {
+            EnumOrderingMode::Hi
+        }
+        Game::Razz | Game::Lowball | Game::Lowball27 => EnumOrderingMode::Lo,
+        Game::Holdem8
+        | Game::Omaha8
+        | Game::Omaha85
+        | Game::Stud78
+        | Game::Stud7nsq
+        | Game::Draw58
+        | Game::Draw5nsq => EnumOrderingMode::Hilo,
+        _ => return Err(EnumError::UnsupportedGameType),
+    };
+
+    // Allocation des ressources pour le résultat en fonction du mode d'ordonnancement
+    if orderflag {
+        result.allocate_resources(npockets, mode)?;
+    }
+
+    // Implémentez la logique spécifique au jeu ici, y compris la sélection des cartes partagées et l'exécution de l'évaluation par échantillonnage
+    // La logique spécifique à chaque jeu et à chaque configuration de tableau doit être implémentée ici
+
+    Ok(())
+}
+
+impl EnumResult {
+    pub fn clear(&mut self) {
+        // Réinitialiser les champs simples à leur valeur par défaut
+        self.game = Game::Holdem;
+        self.sample_type = SampleType::Exhaustive; 
+        self.nsamples = 0;
+        self.nplayers = 0;
+
+        // Réinitialiser les tableaux à 0
+        self.nwinhi = [0; ENUM_MAXPLAYERS];
+        self.ntiehi = [0; ENUM_MAXPLAYERS];
+        self.nlosehi = [0; ENUM_MAXPLAYERS];
+        self.nwinlo = [0; ENUM_MAXPLAYERS];
+        self.ntielo = [0; ENUM_MAXPLAYERS];
+        self.nloselo = [0; ENUM_MAXPLAYERS];
+        self.nscoop = [0; ENUM_MAXPLAYERS];
+
+        // Réinitialiser les tableaux multi-dimensionnels à 0
+        self.nsharehi = [[0; ENUM_MAXPLAYERS + 1]; ENUM_MAXPLAYERS];
+        self.nsharelo = [[0; ENUM_MAXPLAYERS + 1]; ENUM_MAXPLAYERS];
+        self.nshare = [[[0; ENUM_MAXPLAYERS + 1]; ENUM_MAXPLAYERS + 1]; ENUM_MAXPLAYERS];
+
+        // Réinitialiser les valeurs d'équité à 0.0
+        self.ev = [0.0; ENUM_MAXPLAYERS];
+
+        // Réinitialiser le pointeur d'ordonnancement à None
+        self.ordering = None;
+    }
+
+    pub fn allocate_resources(
+        &mut self,
+        npockets: usize,
+        mode: EnumOrderingMode,
+    ) -> Result<(), EnumError> {
+        // Allouez et initialisez les ressources nécessaires selon le nombre de joueurs et le mode d'ordonnancement
+        Ok(())
     }
 }

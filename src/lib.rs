@@ -10,6 +10,7 @@ pub mod enumord;
 pub mod eval;
 pub mod eval_joker;
 pub mod eval_joker_low;
+pub mod eval_joker_low8;
 pub mod eval_low;
 pub mod eval_low27;
 pub mod eval_low8;
