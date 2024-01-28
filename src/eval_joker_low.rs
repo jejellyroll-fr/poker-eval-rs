@@ -32,7 +32,6 @@ pub fn joker_lowball_eval(cards: &JokerDeckCardMask, n_cards: usize) -> LowHandV
         }
     }
 
-
     let rank_u16 = rank as u16;
 
     if (sc & rank) == 0 {

@@ -1,41 +1,13 @@
-#![allow(dead_code)]
 // Importez les modules nécessaires
-pub mod combinaison;
-pub mod deck;
-pub mod deck_joker;
-pub mod deck_std;
-pub mod enumdefs;
-pub mod enumerate;
-pub mod enumord;
-pub mod eval;
-pub mod eval_joker;
-pub mod eval_joker_low;
-pub mod eval_low;
-pub mod eval_low27;
-pub mod eval_low8;
-pub mod eval_omaha;
-pub mod handval;
-pub mod handval_low;
-pub mod lowball;
-pub mod rules_joker;
-pub mod rules_std;
-pub mod t_botcard;
-pub mod t_botfivecards;
-pub mod t_cardmasks;
-pub mod t_jokercardmasks;
-pub mod t_jokerstraight;
-pub mod t_nbits;
-pub mod t_straight;
-pub mod t_topcard;
-pub mod t_topfivecards;
+use poker_eval_rs::eval::Eval;
+use poker_eval_rs::eval_low::std_deck_lowball_eval;
 
-use crate::enumerate::inner_loop_holdem;
-use crate::eval::Eval;
-use crate::eval_low::std_deck_lowball_eval;
-use crate::handval::HandVal;
-use crate::handval_low::LowHandVal;
-use crate::t_cardmasks::StdDeckCardMask;
-use deck_std::*;
+use poker_eval_rs::handval::HandVal;
+use poker_eval_rs::handval_low::LowHandVal;
+use poker_eval_rs::t_cardmasks::StdDeckCardMask;
+
+use poker_eval_rs::deck_std::StdDeck;
+use poker_eval_rs::enumerate::inner_loop_holdem;
 
 fn main() {
     let hands = vec![

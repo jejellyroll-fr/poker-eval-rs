@@ -1,19 +1,29 @@
 #![allow(dead_code)]
 // Importez les modules nécessaires
+pub mod combinaison;
 pub mod deck;
+pub mod deck_joker;
 pub mod deck_std;
+pub mod enumdefs;
+pub mod enumerate;
 pub mod enumord;
 pub mod eval;
+pub mod eval_joker;
+pub mod eval_joker_low;
 pub mod eval_low;
 pub mod eval_low27;
 pub mod eval_low8;
+pub mod eval_omaha;
 pub mod handval;
 pub mod handval_low;
 pub mod lowball;
+pub mod rules_joker;
 pub mod rules_std;
 pub mod t_botcard;
 pub mod t_botfivecards;
 pub mod t_cardmasks;
+pub mod t_jokercardmasks;
+pub mod t_jokerstraight;
 pub mod t_nbits;
 pub mod t_straight;
 pub mod t_topcard;

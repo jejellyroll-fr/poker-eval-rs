@@ -12,5 +12,8 @@ rand = "0.8.3"
 
 [lib]
 name = "poker_eval_rs"
-crate-type = ["cdylib"]
+crate-type = ["cdylib", "rlib"]
 
+[[bin]]
+name = "poker_eval_rs"
+path = "src/main.rs"
