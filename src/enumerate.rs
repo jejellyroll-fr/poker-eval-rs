@@ -1,8 +1,12 @@
 use crate::combinaison::*;
+use crate::deck_std::STD_DECK_N_CARDS;
 use crate::enumdefs::SampleType;
 use crate::enumdefs::{EnumResult, ENUM_MAXPLAYERS};
 use crate::enumdefs::{Game, GameParams};
+use crate::enumord::EnumOrdering;
 use crate::enumord::EnumOrderingMode;
+use crate::enumord::{enum_ordering_nentries, enum_ordering_nentries_hilo};
+use crate::enumord::{ENUM_ORDERING_MAXPLAYERS, ENUM_ORDERING_MAXPLAYERS_HILO};
 use crate::eval_joker::EvalJoker;
 use crate::eval_joker_low::joker_lowball_eval;
 use crate::eval_joker_low8::joker_lowball8_eval;
@@ -14,17 +18,13 @@ use crate::handval::HandVal;
 use crate::handval_low::{LowHandVal, LOW_HAND_VAL_NOTHING};
 use crate::t_cardmasks::StdDeckCardMask;
 use crate::t_jokercardmasks::JokerDeckCardMask;
-use crate::enumord::{ENUM_ORDERING_MAXPLAYERS, ENUM_ORDERING_MAXPLAYERS_HILO};
-use crate::enumord::{enum_ordering_nentries, enum_ordering_nentries_hilo};
-use crate::enumord::EnumOrdering;
-
 
 use crate::eval::Eval;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
 use std::error::Error;
-use std::ops::BitOr;
 use std::fmt;
+use std::ops::BitOr;
 use std::ptr::NonNull;
 
 // Trait pour gérer les masques de cartes
@@ -1547,9 +1547,6 @@ impl fmt::Display for EnumError {
 
 impl Error for EnumError {}
 
-
-
-
 // Fonction d'évaluation par échantillonnage adaptée pour Rust
 pub fn enum_sample(
     game: Game,
@@ -1570,9 +1567,17 @@ pub fn enum_sample(
 
     // Le mode d'ordonnancement est déterminé par le type de jeu
     let mode = match game {
-        Game::Holdem | Game::Omaha | Game::Omaha5 | Game::Omaha6 | Game::Stud7 | Game::Draw5 => EnumOrderingMode::Hi,
+        Game::Holdem | Game::Omaha | Game::Omaha5 | Game::Omaha6 | Game::Stud7 | Game::Draw5 => {
+            EnumOrderingMode::Hi
+        }
         Game::Razz | Game::Lowball | Game::Lowball27 => EnumOrderingMode::Lo,
-        Game::Holdem8 | Game::Omaha8 | Game::Omaha85 | Game::Stud78 | Game::Stud7nsq | Game::Draw58 | Game::Draw5nsq => EnumOrderingMode::Hilo,
+        Game::Holdem8
+        | Game::Omaha8
+        | Game::Omaha85
+        | Game::Stud78
+        | Game::Stud7nsq
+        | Game::Draw58
+        | Game::Draw5nsq => EnumOrderingMode::Hilo,
         _ => return Err(EnumError::UnsupportedGameType),
     };
 
@@ -1583,11 +1588,11 @@ pub fn enum_sample(
 
     match game {
         Game::Holdem => {
-            simulate_holdem_game(pockets, board, dead, npockets, nboard, niter, result)?;
-        },
+            result.simulate_holdem_game(pockets, board, dead, npockets, nboard, niter)?;
+        }
         Game::Omaha => {
             //simulate_omaha_game(pockets, board, dead, npockets, nboard, niter, result)?;
-        },
+        }
         // Ajoutez d'autres branches pour d'autres types de jeux ici...
         _ => return Err(EnumError::UnsupportedGameType),
     }
@@ -1598,7 +1603,7 @@ impl EnumResult {
     pub fn clear(&mut self) {
         // Réinitialiser les champs simples à leur valeur par défaut
         self.game = Game::Holdem;
-        self.sample_type = SampleType::Exhaustive; 
+        self.sample_type = SampleType::Exhaustive;
         self.nsamples = 0;
         self.nplayers = 0;
 
@@ -1623,20 +1628,30 @@ impl EnumResult {
         self.ordering = None;
     }
 
-    pub fn allocate_resources(&mut self, nplayers: usize, mode: EnumOrderingMode) -> Result<(), EnumError> {
+    pub fn allocate_resources(
+        &mut self,
+        nplayers: usize,
+        mode: EnumOrderingMode,
+    ) -> Result<(), EnumError> {
         if nplayers > ENUM_ORDERING_MAXPLAYERS && mode != EnumOrderingMode::Hilo {
-            return Err(EnumError::OtherError("Nombre de joueurs trop élevé pour le mode non-Hilo".to_string()));
+            return Err(EnumError::OtherError(
+                "Nombre de joueurs trop élevé pour le mode non-Hilo".to_string(),
+            ));
         } else if nplayers > ENUM_ORDERING_MAXPLAYERS_HILO && mode == EnumOrderingMode::Hilo {
-            return Err(EnumError::OtherError("Nombre de joueurs trop élevé pour le mode Hilo".to_string()));
+            return Err(EnumError::OtherError(
+                "Nombre de joueurs trop élevé pour le mode Hilo".to_string(),
+            ));
         }
-    
+
         let nentries = match mode {
             EnumOrderingMode::Hilo => enum_ordering_nentries_hilo(nplayers),
             _ => enum_ordering_nentries(nplayers),
         };
-    
+
         if nentries <= 0 {
-            return Err(EnumError::OtherError("Nombre d'entrées invalide".to_string()));
+            return Err(EnumError::OtherError(
+                "Nombre d'entrées invalide".to_string(),
+            ));
         }
 
         // Créez une instance de EnumOrdering
@@ -1647,7 +1662,7 @@ impl EnumResult {
             hist: vec![0; nentries as usize],
         };
         let ordering_non_null = NonNull::new(Box::leak(Box::new(ordering)))
-        .expect("Failed to convert EnumOrdering to NonNull<EnumOrdering>");
+            .expect("Failed to convert EnumOrdering to NonNull<EnumOrdering>");
 
         // Affectez la valeur NonNull à self.ordering
         self.ordering = Some(ordering_non_null);
@@ -1656,104 +1671,109 @@ impl EnumResult {
     }
 
     pub fn simulate_holdem_game(
+        &mut self,
         pockets: &[StdDeckCardMask],
-        board: &StdDeckCardMask,
-        dead: &StdDeckCardMask,
+        board: StdDeckCardMask,
+        dead: StdDeckCardMask,
         npockets: usize,
         nboard: usize,
         niter: usize,
-        result: &mut EnumResult,
     ) -> Result<(), EnumError> {
         let mut rng = thread_rng();
     
         // Création d'un deck complet moins les cartes déjà sur le board et les cartes mortes
         let mut deck = (0..STD_DECK_N_CARDS)
-            .filter_map(|i| {
-                let card_mask = StdDeckCardMask::get_mask(i);
-                if board.and(card_mask).is_empty() && dead.and(card_mask).is_empty() {
-                    Some(*card_mask)
-                } else {
-                    None
-                }
-            })
-            .collect::<Vec<StdDeckCardMask>>();
+        .filter_map(|i| {
+            let card_mask = StdDeckCardMask::get_mask(i);
+            if (board.mask & card_mask.mask) == 0 && (dead.mask & card_mask.mask) == 0 {
+                Some(card_mask)
+            } else {
+                None
+            }
+        })
+        .cloned() // Clone chaque référence StdDeckCardMask pour créer une valeur StdDeckCardMask
+        .collect::<Vec<StdDeckCardMask>>();
     
-        // Simulation des tirages Monte Carlo si nécessaire
-        if nboard < 5 {
+        let num_cards = 5 - nboard;
+        if num_cards > 0 {
+            // Simulation des tirages Monte Carlo
             for _ in 0..niter {
                 deck.shuffle(&mut rng);
     
-                let mut monte_carlo_board = *board;
-                for card in deck.iter().take(5 - nboard) {
-                    monte_carlo_board.or(card);
+                let mut monte_carlo_board = board.clone();
+                for card in deck.iter().take(num_cards) {
+                    monte_carlo_board = monte_carlo_board | card.clone();
                 }
     
                 // Évaluation des mains avec le tableau de simulation
-                evaluate_hands(pockets, &monte_carlo_board, npockets, result)?;
+                self.evaluate_hands(pockets, &monte_carlo_board, npockets)?;
             }
         } else {
             // Pas besoin de simulation, évaluer directement avec le tableau existant
-            evaluate_hands(pockets, board, npockets, result)?;
+            self.evaluate_hands(pockets, &board, npockets)?;
         }
     
         Ok(())
     }
     
     pub fn evaluate_hands(
+        &mut self,
         pockets: &[StdDeckCardMask],
         board: &StdDeckCardMask,
         npockets: usize,
-        result: &mut EnumResult,
     ) -> Result<(), EnumError> {
         for (i, pocket) in pockets.iter().enumerate().take(npockets) {
-            let hand = pocket.or(board);
-            let hand_value = Eval::eval_n(&hand, 7)?;
-            result.update_hand_value(i, hand_value);
+            let hand = pocket.clone() | board.clone(); // Combinez les cartes en main avec le tableau
+            let hand_value = Eval::eval_n(&hand, 7); // Évaluez la main
+            // Passez tous les arguments nécessaires à update_statistics
+            self.update_statistics(i, hand_value, pockets, board, npockets);
         }
     
         Ok(())
     }
-
-    // Méthode pour mettre à jour les valeurs des mains des joueurs
-    pub fn update_hand_value(&mut self, player_index: usize, hand_value: HandVal) {
-        // Assurez-vous que l'index du joueur est valide
-        if player_index >= self.nplayers {
-            eprintln!("Index du joueur invalide: {}", player_index);
-            return;
-        }
-
-        // Mise à jour de la valeur de la main pour le joueur spécifié
-        self.hival[player_index] = hand_value;
-
-        // Mise à jour des statistiques de victoire, égalité ou défaite
-        // Note: Cette logique simplifiée suppose que la mise à jour est appelée pour chaque main évaluée dans un tour de simulation
-        // Vous devrez peut-être ajuster cette logique en fonction de votre implémentation spécifique
-        for i in 0..self.nplayers {
-            if i == player_index {
-                continue; // Ignorer le joueur courant
-            }
-
-            // Comparaison avec les autres joueurs
-            if hand_value > self.hival[i] {
-                self.nwinhi[player_index] += 1;
-                self.nlosehi[i] += 1;
-            } else if hand_value < self.hival[i] {
-                self.nlosehi[player_index] += 1;
-                self.nwinhi[i] += 1;
-            } else {
-                self.ntiehi[player_index] += 1;
-                self.ntiehi[i] += 1;
+    
+    
+    // Supposons que vous avez une fonction pour mettre à jour les statistiques de jeu
+    pub fn update_statistics(&mut self, player_index: usize, hand_value: HandVal, pockets: &[StdDeckCardMask], board: &StdDeckCardMask, npockets: usize) {
+        // Initialiser les compteurs pour les victoires, égalités et défaites
+        let mut wins = 0;
+        let mut ties = 0;
+        let mut losses = 0;
+    
+        // Comparer la main du joueur actuel avec celles des autres joueurs
+        for (i, other_pocket) in pockets.iter().enumerate().take(npockets) {
+            if i != player_index { // S'assurer de ne pas comparer le joueur à lui-même
+                let other_hand = *other_pocket | *board;
+                let other_hand_value = Eval::eval_n(&other_hand, 7);
+    
+                // Mettre à jour les compteurs en fonction de la comparaison des valeurs des mains
+                if hand_value > other_hand_value {
+                    wins += 1;
+                } else if hand_value < other_hand_value {
+                    losses += 1;
+                } else {
+                    ties += 1;
+                }
             }
         }
-
-        // Mise à jour de l'équité (EV)
-        // Cette implémentation simplifiée attribue une part égale de l'équité pour les égalités et l'équité complète pour les victoires
-        let ties = self.ntiehi[player_index];
-        let wins = self.nwinhi[player_index];
-        let ev_increment = if ties > 0 { 1.0 / ties as f64 } else { 0.0 } + if wins > 0 { 1.0 } else { 0.0 };
-        self.ev[player_index] += ev_increment;
-
-        // Note: Vous devrez peut-être ajuster cette implémentation en fonction des règles spécifiques de votre jeu et de la façon dont vous souhaitez calculer l'équité
+    
+        // Mettre à jour les statistiques globales pour le joueur
+        self.nwinhi[player_index] += wins;
+        self.ntiehi[player_index] += ties;
+        self.nlosehi[player_index] += losses;
+    
+        // Calculer et mettre à jour l'équité (EV) pour le joueur
+        let total_opponents = (npockets - 1) as f64; // Nombre total d'opposants
+        let win_rate = wins as f64 / total_opponents;
+        let tie_rate = ties as f64 / total_opponents;
+    
+        // L'équité est la somme de la probabilité de gagner et la moitié de la probabilité d'égalité (puisque les égalités sont partagées)
+        let equity = win_rate + (tie_rate / 2.0);
+        self.ev[player_index] += equity;
     }
+    
+    
+
+
 
 }
