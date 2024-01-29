@@ -5,7 +5,7 @@ use crate::enumdefs::{EnumResult, ENUM_MAXPLAYERS};
 use crate::enumdefs::{Game, GameParams};
 use crate::enumord::EnumOrdering;
 use crate::enumord::EnumOrderingMode;
-use crate::enumord::{enum_ordering_nentries, enum_ordering_nentries_hilo};
+use crate::enumord::{enum_ordering_nentries, enum_ordering_nentries_hilo, enum_ordering_decode_k, enum_ordering_decode_hilo_k_hi, enum_ordering_decode_hilo_k_lo};
 use crate::enumord::{ENUM_ORDERING_MAXPLAYERS, ENUM_ORDERING_MAXPLAYERS_HILO};
 use crate::eval_joker::EvalJoker;
 use crate::eval_joker_low::joker_lowball_eval;
@@ -1680,31 +1680,31 @@ impl EnumResult {
         niter: usize,
     ) -> Result<(), EnumError> {
         let mut rng = thread_rng();
-    
+
         // Création d'un deck complet moins les cartes déjà sur le board et les cartes mortes
         let mut deck = (0..STD_DECK_N_CARDS)
-        .filter_map(|i| {
-            let card_mask = StdDeckCardMask::get_mask(i);
-            if (board.mask & card_mask.mask) == 0 && (dead.mask & card_mask.mask) == 0 {
-                Some(card_mask)
-            } else {
-                None
-            }
-        })
-        .cloned() // Clone chaque référence StdDeckCardMask pour créer une valeur StdDeckCardMask
-        .collect::<Vec<StdDeckCardMask>>();
-    
+            .filter_map(|i| {
+                let card_mask = StdDeckCardMask::get_mask(i);
+                if (board.mask & card_mask.mask) == 0 && (dead.mask & card_mask.mask) == 0 {
+                    Some(card_mask)
+                } else {
+                    None
+                }
+            })
+            .cloned() // Clone chaque référence StdDeckCardMask pour créer une valeur StdDeckCardMask
+            .collect::<Vec<StdDeckCardMask>>();
+
         let num_cards = 5 - nboard;
         if num_cards > 0 {
             // Simulation des tirages Monte Carlo
             for _ in 0..niter {
                 deck.shuffle(&mut rng);
-    
+
                 let mut monte_carlo_board = board.clone();
                 for card in deck.iter().take(num_cards) {
                     monte_carlo_board = monte_carlo_board | card.clone();
                 }
-    
+
                 // Évaluation des mains avec le tableau de simulation
                 self.evaluate_hands(pockets, &monte_carlo_board, npockets)?;
             }
@@ -1712,10 +1712,10 @@ impl EnumResult {
             // Pas besoin de simulation, évaluer directement avec le tableau existant
             self.evaluate_hands(pockets, &board, npockets)?;
         }
-    
+
         Ok(())
     }
-    
+
     pub fn evaluate_hands(
         &mut self,
         pockets: &[StdDeckCardMask],
@@ -1725,27 +1725,34 @@ impl EnumResult {
         for (i, pocket) in pockets.iter().enumerate().take(npockets) {
             let hand = pocket.clone() | board.clone(); // Combinez les cartes en main avec le tableau
             let hand_value = Eval::eval_n(&hand, 7); // Évaluez la main
-            // Passez tous les arguments nécessaires à update_statistics
+                                                     // Passez tous les arguments nécessaires à update_statistics
             self.update_statistics(i, hand_value, pockets, board, npockets);
         }
-    
+
         Ok(())
     }
-    
-    
+
     // Supposons que vous avez une fonction pour mettre à jour les statistiques de jeu
-    pub fn update_statistics(&mut self, player_index: usize, hand_value: HandVal, pockets: &[StdDeckCardMask], board: &StdDeckCardMask, npockets: usize) {
+    pub fn update_statistics(
+        &mut self,
+        player_index: usize,
+        hand_value: HandVal,
+        pockets: &[StdDeckCardMask],
+        board: &StdDeckCardMask,
+        npockets: usize,
+    ) {
         // Initialiser les compteurs pour les victoires, égalités et défaites
         let mut wins = 0;
         let mut ties = 0;
         let mut losses = 0;
-    
+
         // Comparer la main du joueur actuel avec celles des autres joueurs
         for (i, other_pocket) in pockets.iter().enumerate().take(npockets) {
-            if i != player_index { // S'assurer de ne pas comparer le joueur à lui-même
+            if i != player_index {
+                // S'assurer de ne pas comparer le joueur à lui-même
                 let other_hand = *other_pocket | *board;
                 let other_hand_value = Eval::eval_n(&other_hand, 7);
-    
+
                 // Mettre à jour les compteurs en fonction de la comparaison des valeurs des mains
                 if hand_value > other_hand_value {
                     wins += 1;
@@ -1756,24 +1763,346 @@ impl EnumResult {
                 }
             }
         }
-    
+
         // Mettre à jour les statistiques globales pour le joueur
         self.nwinhi[player_index] += wins;
         self.ntiehi[player_index] += ties;
         self.nlosehi[player_index] += losses;
-    
+
         // Calculer et mettre à jour l'équité (EV) pour le joueur
         let total_opponents = (npockets - 1) as f64; // Nombre total d'opposants
         let win_rate = wins as f64 / total_opponents;
         let tie_rate = ties as f64 / total_opponents;
-    
+
         // L'équité est la somme de la probabilité de gagner et la moitié de la probabilité d'égalité (puisque les égalités sont partagées)
         let equity = win_rate + (tie_rate / 2.0);
         self.ev[player_index] += equity;
     }
-    
-    
 
+    pub fn print_ordering(&self, terse: bool) {
+        if let Some(ordering_ptr) = self.ordering {
+            let ordering = unsafe { ordering_ptr.as_ref() }; // Utilisation sécurisée de unsafe pour déréférencer le pointeur NonNull
 
+            if !terse {
+                println!("Histogram of relative hand ranks:");
+            }
 
+            match ordering.mode {
+                EnumOrderingMode::Hi | EnumOrderingMode::Lo => {
+                    if !terse {
+                        for k in 0..ordering.nplayers {
+                            print!(" {:2}", (b'A' + k as u8) as char);
+                        }
+                        println!(" {:8}", "Freq");
+                    } else {
+                        print!("ORD {} {}:", ordering.mode as u32, ordering.nplayers);
+                    }
+
+                    for i in 0..ordering.nentries {
+                        if ordering.hist[i] > 0 {
+                            for k in 0..ordering.nplayers {
+                                let rank = enum_ordering_decode_k(i as i32, ordering.nplayers, k);
+                                if rank as usize == ordering.nplayers {
+                                    print!(" NQ");
+                                } else {
+                                    print!(" {:2}", rank + 1);
+                                }
+                            }
+                            print!(" {:8}", ordering.hist[i]);
+                            if terse {
+                                print!("|");
+                            } else {
+                                println!();
+                            }
+                        }
+                    }
+                },
+                EnumOrderingMode::Hilo => {
+                    if !terse {
+                        print!("HI:");
+                        for k in 0..ordering.nplayers {
+                            print!(" {:2}", (b'A' + k as u8) as char);
+                        }
+                        print!("  LO:");
+                        for k in 0..ordering.nplayers {
+                            print!(" {:2}", (b'A' + k as u8) as char);
+                        }
+                        println!(" {:8}", "Freq");
+                    } else {
+                        print!("ORD HILO {}:", ordering.nplayers);
+                    }
+                
+                    for i in 0..ordering.nentries {
+                        if ordering.hist[i] > 0 {
+                            if !terse {
+                                print!("   ");
+                            }
+                
+                            for k in 0..ordering.nplayers {
+                                let rank_hi = enum_ordering_decode_hilo_k_hi(i as i32, ordering.nplayers, k);
+                                if rank_hi as usize == ordering.nplayers {
+                                    print!(" NQ");
+                                } else {
+                                    print!(" {:2}", rank_hi + 1);
+                                }
+                            }
+                
+                            if !terse {
+                                print!("     ");
+                            }
+                
+                            for k in 0..ordering.nplayers {
+                                let rank_lo = enum_ordering_decode_hilo_k_lo(i as i32, ordering.nplayers, k);
+                                if rank_lo as usize == ordering.nplayers {
+                                    print!(" NQ");
+                                } else {
+                                    print!(" {:2}", rank_lo + 1);
+                                }
+                            }
+                
+                            print!(" {:8}", ordering.hist[i]);
+                            if terse {
+                                print!("|");
+                            } else {
+                                println!();
+                            }
+                        }
+                    }
+                },
+                
+                EnumOrderingMode::None => {
+                    println!("No ordering mode set.");
+                },
+            }
+            
+            if terse {
+                println!();
+            }
+        }
+    }
+
+    // Méthode pour afficher les résultats d'une manière détaillée
+    pub fn enum_result_print(&self, pockets: &[StdDeckCardMask], board: StdDeckCardMask) {
+        let gp = self.game.game_params(); // Assumant que Game implémente une méthode game_params qui retourne Option<GameParams>
+        if let Some(gp) = gp {
+            let width = gp.maxpocket * 3 - 1;
+            println!(
+                "{}: {} {} {}{}",
+                gp.name,
+                self.nsamples,
+                match self.sample_type {
+                    SampleType::Sample => "sampled",
+                    SampleType::Exhaustive => "enumerated",
+                },
+                if gp.maxboard > 0 { "board" } else { "outcome" },
+                if self.nsamples == 1 { "" } else { "s" }
+            );
+
+            // Affichage des résultats pour chaque joueur
+            for i in 0..self.nplayers as usize {
+                println!(
+                    "{:width$} {:7} {:6.2}   {:7} {:6.2}   {:7} {:6.2}     {:5.3}",
+                    "cards", // Remplacer par la représentation des cartes
+                    self.nwinhi[i],
+                    100.0 * self.nwinhi[i] as f64 / self.nsamples as f64,
+                    self.nlosehi[i],
+                    100.0 * self.nlosehi[i] as f64 / self.nsamples as f64,
+                    self.ntiehi[i],
+                    100.0 * self.ntiehi[i] as f64 / self.nsamples as f64,
+                    self.ev[i] / self.nsamples as f64,
+                    width = width as usize
+                );
+            }
+        } else {
+            println!("enumResultPrint: invalid game type");
+        }
+    }
+
+    // Méthode pour afficher les résultats de manière concise
+    pub fn enum_result_print_terse(&self, _pockets: &[StdDeckCardMask], _board: StdDeckCardMask) {
+        print!("EV {}: ", self.nplayers);
+        for &ev in &self.ev[0..self.nplayers as usize] {
+            print!("{:8.6} ", ev / self.nsamples as f64);
+        }
+        println!();
+    }
 }
+
+// so you might need to define a conversion method or use a match statement
+impl EnumOrderingMode {
+    fn as_u32(&self) -> u32 {
+        match self {
+            EnumOrderingMode::Hi => 1,
+            EnumOrderingMode::Lo => 2,
+            EnumOrderingMode::Hilo => 3,
+            EnumOrderingMode::None => 0, // Ajoutez cette ligne pour gérer le cas `None`
+        }
+    }
+}
+impl Game {
+    pub fn game_params(self) -> Option<GameParams> {
+        match self {
+            Game::Holdem => Some(GameParams {
+                game: Game::Holdem,
+                minpocket: 2,
+                maxpocket: 2,
+                maxboard: 5,
+                haslopot: 0,
+                hashipot: 1,
+                name: "Holdem Hi".to_string(),
+            }),
+            Game::Holdem8 => Some(GameParams {
+                game: Game::Holdem8,
+                minpocket: 2,
+                maxpocket: 2,
+                maxboard: 5,
+                haslopot: 1,  // Holdem Hi/Lo a un pot bas
+                hashipot: 1,  // et un pot haut
+                name: "Holdem Hi/Low 8-or-better".to_string(),
+            }),
+            Game::Omaha => Some(GameParams {
+                game: Game::Omaha,
+                minpocket: 4,  // Omaha a 4 cartes de poche
+                maxpocket: 4,
+                maxboard: 5,  // et un tableau de 5 cartes
+                haslopot: 0,  // Omaha Hi n'a pas de pot bas
+                hashipot: 1,  // mais a un pot haut
+                name: "Omaha Hi".to_string(),
+            }),
+            // Ajoutez d'autres variantes de jeu ici, si nécessaire
+            // omaha 5 cards hi
+            Game::Omaha5 => Some(GameParams {
+                game: Game::Omaha5,
+                minpocket: 5,
+                maxpocket: 5,
+                maxboard: 5,
+                haslopot: 0,
+                hashipot: 1,
+                name: "Omaha 5cards Hi".to_string(),
+            }),
+            // omaha 6 cards hi
+            Game::Omaha6 => Some(GameParams {
+                game: Game::Omaha6,
+                minpocket: 6,
+                maxpocket: 6,
+                maxboard: 5,
+                haslopot: 0,
+                hashipot: 1,
+                name: "Omaha 6cards Hi".to_string(),
+            }),
+            // Exemple pour Omaha Hi/Lo
+            Game::Omaha8 => Some(GameParams {
+                game: Game::Omaha8,
+                minpocket: 4,
+                maxpocket: 4,
+                maxboard: 5,
+                haslopot: 1,  // Omaha Hi/Lo a un pot bas
+                hashipot: 1,  // et un pot haut
+                name: "Omaha Hi/Low 8-or-better".to_string(),
+            }),
+            // omaha 5 cards hilow
+            Game::Omaha85 => Some(GameParams {
+                game: Game::Omaha85,
+                minpocket: 5,
+                maxpocket: 5,
+                maxboard: 5,
+                haslopot: 1,
+                hashipot: 1,
+                name: "Omaha 5cards Hi/Low".to_string(),
+            }),
+            // stud 7 cards hi
+            Game::Stud7 => Some(GameParams {
+                game: Game::Stud7,
+                minpocket: 3,
+                maxpocket: 7,
+                maxboard: 0,
+                haslopot: 0,
+                hashipot: 1,
+                name: "Stud 7cards Hi".to_string(),
+            }),
+            // stud 7 cards hilow
+            Game::Stud78 => Some(GameParams {
+                game: Game::Stud78,
+                minpocket: 3,
+                maxpocket: 7,
+                maxboard: 0,
+                haslopot: 1,
+                hashipot: 1,
+                name: "Stud 7cards Hi/Low".to_string(),
+            }),
+            // stud 7 cards hi/lo no qualifier
+            Game::Stud7nsq => Some(GameParams {
+                game: Game::Stud7nsq,
+                minpocket: 3,
+                maxpocket: 7,
+                maxboard: 0,
+                haslopot: 1,
+                hashipot: 1,
+                name: "Stud 7cards Hi/Low no qualifier".to_string(),
+            }),
+            // Razz
+            Game::Razz => Some(GameParams {
+                game: Game::Razz,
+                minpocket: 3,
+                maxpocket: 7,
+                maxboard: 0,
+                haslopot: 1,
+                hashipot: 0,
+                name: "Razz (7-card Stud A-5 Low)".to_string(),
+            }),
+            // Draw 5 cards
+            Game::Draw5 => Some(GameParams {
+                game: Game::Draw5,
+                minpocket: 0,
+                maxpocket: 5,
+                maxboard: 0,
+                haslopot: 0,
+                hashipot: 1,
+                name: "5-card Draw Hi with joker".to_string(),
+            }),
+            // Draw 5 cards hi/lo
+            Game::Draw58 => Some(GameParams {
+                game: Game::Draw58,
+                minpocket: 0,
+                maxpocket: 5,
+                maxboard: 0,
+                haslopot: 1,
+                hashipot: 1,
+                name: "5-card Draw Hi/Low 8-or-better with joker".to_string(),
+            }),
+            // Draw 5 cards no qualifier
+            Game::Draw5nsq => Some(GameParams {
+                game: Game::Draw5nsq,
+                minpocket: 0,
+                maxpocket: 5,
+                maxboard: 0,
+                haslopot: 1,
+                hashipot: 1,
+                name: "5-card Draw Hi/Low no qualifier with joker".to_string(),
+            }),
+            // Lowball
+            Game::Lowball => Some(GameParams {
+                game: Game::Lowball,
+                minpocket: 0,
+                maxpocket: 5,
+                maxboard: 0,
+                haslopot: 1,
+                hashipot: 0,
+                name: "5-card Draw A-5 Lowball with joker".to_string(),
+            }),
+            // Lowball 27
+            Game::Lowball27 => Some(GameParams {
+                game: Game::Lowball27,
+                minpocket: 0,
+                maxpocket: 5,
+                maxboard: 0,
+                haslopot: 1,
+                hashipot: 0,
+                name: "5-card Draw 2-7 Lowball".to_string(),
+            }),
+            // Gérer les cas non spécifiés ou non supportés
+            _ => None,
+        }
+    }
+}
+

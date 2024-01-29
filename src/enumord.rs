@@ -121,6 +121,29 @@ pub fn enum_ordering_decode_k(encoding: i32, nplayers: usize, k: usize) -> i32 {
     (encoding >> shift) & ((1 << nbits) - 1)
 }
 
+pub fn enum_ordering_decode_hilo_k_hi(encoding: i32, nplayers: usize, k: usize) -> i32 {
+    let nbits_per_rank = ENUM_NBITS[nplayers] as usize;
+    let total_bits = nbits_per_rank * nplayers * 2; // Multiplié par 2 pour les rangs high et low
+    let high_bits_offset = total_bits / 2; // La moitié des bits pour les rangs high
+
+    // Calculer le décalage pour le rang high du joueur k
+    let shift = high_bits_offset - (k + 1) * nbits_per_rank;
+
+    // Extraire le rang high du joueur k
+    (encoding >> shift) & ((1 << nbits_per_rank) - 1)
+}
+
+
+pub fn enum_ordering_decode_hilo_k_lo(encoding: i32, nplayers: usize, k: usize) -> i32 {
+    let nbits_per_rank = ENUM_NBITS[nplayers] as usize;
+    // Aucun décalage additionnel nécessaire pour les rangs low, car ils suivent immédiatement les rangs high
+    let shift = (nplayers - k - 1) * nbits_per_rank;
+
+    // Extraire le rang low du joueur k
+    (encoding >> shift) & ((1 << nbits_per_rank) - 1)
+}
+
+
 // Fonction pour calculer le nombre d'entrées dans l'histogramme
 pub fn enum_ordering_nentries(nplayers: usize) -> i32 {
     if nplayers > ENUM_ORDERING_MAXPLAYERS || ENUM_NBITS[nplayers] < 0 {
