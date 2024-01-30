@@ -1,11 +1,11 @@
 // Importez les modules nécessaires
-use poker_eval_rs::eval::Eval;
-use poker_eval_rs::eval_low::std_deck_lowball_eval;
 use poker_eval_rs::deck_std::StdDeck;
 use poker_eval_rs::enumdefs::{EnumResult, Game, SampleType, ENUM_MAXPLAYERS};
 use poker_eval_rs::enumerate::enum_sample;
 use poker_eval_rs::enumerate::inner_loop_holdem;
 use poker_eval_rs::enumord::EnumOrdering;
+use poker_eval_rs::eval::Eval;
+use poker_eval_rs::eval_low::std_deck_lowball_eval;
 use poker_eval_rs::handval::HandVal;
 use poker_eval_rs::handval_low::LowHandVal;
 use poker_eval_rs::t_cardmasks::StdDeckCardMask;
@@ -147,39 +147,285 @@ use std::str::FromStr;
 //     //println!("Représentation de la main basse pour le Joueur 2: {}", loval2[0].to_string());
 // }
 
-fn main() -> io::Result<()> {
-    let args: Vec<String> = std::env::args().collect();
-    let stdin = io::stdin();
-    let mut input_lines = stdin.lock().lines();
+// fn main() -> io::Result<()> {
+//     let args: Vec<String> = std::env::args().collect();
+//     let stdin = io::stdin();
+//     let mut input_lines = stdin.lock().lines();
 
-    // Déterminer si le programme doit lire depuis stdin
-    let from_stdin = args.len() == 2 && args[1] == "-i";
+//     // Déterminer si le programme doit lire depuis stdin
+//     let from_stdin = args.len() == 2 && args[1] == "-i";
 
-    if from_stdin {
-        // Lire chaque ligne depuis stdin et traiter comme des arguments
-        while let Some(Ok(line)) = input_lines.next() {
-            let line_args: Vec<String> = line.split_whitespace().map(String::from).collect();
-            if let Err(e) = process_args(&line_args) {
-                eprintln!("Erreur lors du traitement des arguments: {}", e);
-                return Err(io::Error::new(io::ErrorKind::Other, e));
-            }
-        }
-    } else {
-        // Traiter les arguments de la ligne de commande
-        if let Err(e) = process_args(&args[1..]) {
-            eprintln!("Erreur lors du traitement des arguments: {}", e);
-            return Err(io::Error::new(io::ErrorKind::Other, e));
-        }
-    }
+//     if from_stdin {
+//         // Lire chaque ligne depuis stdin et traiter comme des arguments
+//         while let Some(Ok(line)) = input_lines.next() {
+//             let line_args: Vec<String> = line.split_whitespace().map(String::from).collect();
+//             if let Err(e) = process_args(&line_args) {
+//                 eprintln!("Erreur lors du traitement des arguments: {}", e);
+//                 return Err(io::Error::new(io::ErrorKind::Other, e));
+//             }
+//         }
+//     } else {
+//         // Traiter les arguments de la ligne de commande
+//         if let Err(e) = process_args(&args[1..]) {
+//             eprintln!("Erreur lors du traitement des arguments: {}", e);
+//             return Err(io::Error::new(io::ErrorKind::Other, e));
+//         }
+//     }
 
-    Ok(())
-}
+//     Ok(())
+// }
 
+// fn process_args(args: &[String]) -> Result<(), String> {
+//     let (game, enum_type, niter, pockets, board, dead, npockets, nboard, orderflag, terse) =
+//         parse_args(args.to_vec())?;
 
-fn process_args(args: &[String]) -> Result<(), String> {
-    let (game, enum_type, niter, pockets, board, dead, npockets, nboard, orderflag, terse) =
-        parse_args(args.to_vec())?;
+//     let mut result = EnumResult {
+//         game,
+//         sample_type: enum_type,
+//         nsamples: 0,
+//         nplayers: npockets as u32,
+//         nwinhi: [0; ENUM_MAXPLAYERS],
+//         ntiehi: [0; ENUM_MAXPLAYERS],
+//         nlosehi: [0; ENUM_MAXPLAYERS],
+//         nwinlo: [0; ENUM_MAXPLAYERS],
+//         ntielo: [0; ENUM_MAXPLAYERS],
+//         nloselo: [0; ENUM_MAXPLAYERS],
+//         nscoop: [0; ENUM_MAXPLAYERS],
+//         nsharehi: [[0; ENUM_MAXPLAYERS + 1]; ENUM_MAXPLAYERS],
+//         nsharelo: [[0; ENUM_MAXPLAYERS + 1]; ENUM_MAXPLAYERS],
+//         nshare: [[[0; ENUM_MAXPLAYERS + 1]; ENUM_MAXPLAYERS + 1]; ENUM_MAXPLAYERS],
+//         ev: [0.0; ENUM_MAXPLAYERS],
+//         ordering: None,
+//     };
 
+//     let sample_result = match enum_type {
+//         SampleType::Sample => enum_sample(
+//             game,
+//             &pockets,
+//             board.clone(),
+//             dead.clone(),
+//             npockets,
+//             nboard,
+//             niter,
+//             orderflag,
+//             &mut result,
+//         ),
+//         SampleType::Exhaustive => {
+//             // Implémentez ou gérez le cas SampleType::Exhaustive si nécessaire
+//             todo!()
+//         } // Ajoutez d'autres cas pour SampleType::Exhaustive ou d'autres types si nécessaire
+//     };
+
+//     // Gérez le résultat de l'énumération
+//     sample_result.map_err(|e| format!("Erreur lors de l'énumération: {}", e))?;
+
+//     if terse {
+//         result.enum_result_print_terse(&pockets, board);
+//     } else {
+//         result.enum_result_print(&pockets, board);
+//     }
+
+//     Ok(())
+// }
+
+// // Définition de la fonction parse_args
+// fn parse_args(
+//     args: Vec<String>,
+// ) -> Result<
+//     (
+//         Game,
+//         SampleType,
+//         usize,
+//         Vec<StdDeckCardMask>,
+//         StdDeckCardMask,
+//         StdDeckCardMask,
+//         usize,
+//         usize,
+//         bool,
+//         bool,
+//     ),
+//     String,
+// > {
+//     let mut game = Game::Holdem; // Valeur par défaut
+//     let mut sample_type = SampleType::Sample; // Valeur par défaut
+//     let mut niter = 0; // Utilisé seulement pour SampleType::Sample
+//     let mut pockets = Vec::new();
+//     let mut board = StdDeckCardMask::new();
+//     let mut dead = StdDeckCardMask::new();
+//     let mut npockets = 0;
+//     let nboard = 0;
+//     let mut orderflag = false;
+//     let mut terse = false;
+
+//     let mut current_pocket = Vec::new();
+//     let mut parsing_section = "pockets"; // Commencez par analyser les poches des joueurs
+
+//     for arg in args.into_iter().skip(1) {
+//         // Skip le nom du programme
+//         match arg.as_str() {
+//             "-mc" => {
+//                 sample_type = SampleType::Sample;
+//                 parsing_section = "niter"; // Prochain argument doit être le nombre d'itérations
+//             }
+//             "-t" => terse = true,
+//             "-O" => orderflag = true,
+//             "-h" => game = Game::Holdem,
+//             "-h8" => game = Game::Holdem8,
+//             // Ajoutez d'autres options ici...
+//             "--" => {
+//                 // Terminez de traiter la poche actuelle et commencez à traiter le tableau
+//                 if !current_pocket.is_empty() {
+//                     let (mask, _) = StdDeck::string_to_mask(&current_pocket.join(""))?;
+//                     pockets.push(mask);
+//                     current_pocket.clear();
+//                 }
+//                 parsing_section = "board";
+//             }
+//             "/" => {
+//                 // Terminez de traiter la section actuelle et commencez à traiter les cartes mortes
+//                 parsing_section = "dead";
+//             }
+//             "-" => {
+//                 // Terminez de traiter la poche actuelle et commencez une nouvelle poche
+//                 if !current_pocket.is_empty() {
+//                     let (mask, _) = StdDeck::string_to_mask(&current_pocket.join(""))?;
+//                     pockets.push(mask);
+//                     current_pocket.clear();
+//                 }
+//                 npockets += 1; // Augmentez le compteur de poches
+//             }
+//             _ => match parsing_section {
+//                 "niter" => niter = arg.parse().map_err(|_| "Nombre d'itérations invalide")?,
+//                 "pockets" | "board" | "dead" => current_pocket.push(arg.to_string()), // Ajoutez la carte à la poche, au tableau ou aux cartes mortes actuels
+//                 _ => return Err("Section d'analyse inconnue".to_string()),
+//             },
+//         }
+//     }
+
+//     // Assurez-vous de traiter la dernière poche ou le dernier tableau
+//     if !current_pocket.is_empty() {
+//         let (mask, _) = StdDeck::string_to_mask(&current_pocket.join(""))?;
+//         match parsing_section {
+//             "pockets" => {
+//                 pockets.push(mask);
+//                 npockets += 1;
+//             }
+//             "board" => board = mask,
+//             "dead" => dead = mask,
+//             _ => (),
+//         }
+//     }
+
+//     Ok((
+//         game,
+//         sample_type,
+//         niter,
+//         pockets,
+//         board,
+//         dead,
+//         npockets,
+//         nboard,
+//         orderflag,
+//         terse,
+//     ))
+// }
+
+// #[cfg(test)]
+// mod tests {
+//     use super::*;
+
+//     #[test]
+//     fn test_parsing_holdem() {
+//         let args = vec![
+//             "-h".to_string(), // spécifie le jeu de Hold'em
+//             "-".to_string(), // séparateur de main
+//             "AsAd".to_string(), // première main
+//             "-".to_string(), // séparateur de main
+//             "QsQh".to_string(), // deuxième main
+//             "-mc".to_string(), // spécifie le type d'échantillonnage
+//             "1000".to_string(), // nombre d'itérations
+//         ];
+
+//         let (game, sample_type, niter, pockets, _, _, npockets, _, _, _) =
+//             parse_args(args).expect("Le parsing des arguments a échoué");
+
+//         assert_eq!(game, Game::Holdem);
+//         println!("game? {:?}", game); // Utilisez {:?} au lieu de {}
+
+//     }
+//     #[test]
+//     fn test_parsing_holdem_asad() {
+//         let args = vec![
+//             "-h".to_string(), // spécifie le jeu de Hold'em
+//             "-".to_string(), // séparateur de main
+//             "AsAd".to_string(), // première main
+//             "-".to_string(), // séparateur de main
+//             "QsQh".to_string(), // deuxième main
+//             "-mc".to_string(), // spécifie le type d'échantillonnage
+//             "1000".to_string(), // nombre d'itérations
+//         ];
+
+//         let (game, sample_type, niter, pockets, _, _, npockets, _, _, _) =
+//             parse_args(args).expect("Le parsing des arguments a échoué");
+
+//         assert_eq!(sample_type, SampleType::Sample);
+//         println!("sample_type? {:?}", sample_type); // Utilisez {:?} au lieu de {}
+
+//     }
+//     #[test]
+//     fn test_parsing_holdem_asad_vs_qsqh() {
+//         let args = vec![
+//             "-h".to_string(), // spécifie le jeu de Hold'em
+//             "-".to_string(), // séparateur de main
+//             "AsAd".to_string(), // première main
+//             "-".to_string(), // séparateur de main
+//             "QsQh".to_string(), // deuxième main
+//             "-mc".to_string(), // spécifie le type d'échantillonnage
+//             "1000".to_string(), // nombre d'itérations
+//         ];
+
+//         let (game, sample_type, niter, pockets, _, _, npockets, _, _, _) =
+//             parse_args(args).expect("Le parsing des arguments a échoué");
+
+//         assert_eq!(niter, 1000);
+//         println!("niter? {:?}", niter); // Utilisez {:?} au lieu de {}
+
+//     }
+//     #[test]
+//     fn test_parsing_holdem_asad_vs_qsqh_1000_iterations() {
+//         let args = vec![
+//             "-h".to_string(), // spécifie le jeu de Hold'em
+//             "-".to_string(), // séparateur de main
+//             "AsAd".to_string(), // première main
+//             "-".to_string(), // séparateur de main
+//             "QsQh".to_string(), // deuxième main
+//             "-mc".to_string(), // spécifie le type d'échantillonnage
+//             "1000".to_string(), // nombre d'itérations
+//         ];
+
+//         let (game, sample_type, niter, pockets, _, _, npockets, _, _, _) =
+//             parse_args(args).expect("Le parsing des arguments a échoué");
+
+//         assert_eq!(npockets, 2);
+//         println!("npockets? {:?}", npockets); // Utilisez {:?} au lieu de {}
+
+//     }
+// }
+fn main() {
+    // Initialiser les mains et le tableau
+    let pocket_str1 = "Ac7c";
+    let pocket_str2 = "5s4s";
+    let hand1 = StdDeck::string_to_mask(pocket_str1).unwrap().0;
+    let hand2 = StdDeck::string_to_mask(pocket_str2).unwrap().0;
+    let board = StdDeckCardMask::new(); // Commencez avec un tableau vide
+    let dead = StdDeckCardMask::new(); // Aucune carte morte pour commencer
+
+    // Définissez les valeurs manquantes de `game`, `enum_type`, et `npockets`
+    let game = Game::Holdem; // Exemple, utilisez la valeur appropriée pour votre cas
+    let enum_type = SampleType::Exhaustive; // Exemple, utilisez la valeur appropriée pour votre cas
+    let npockets = 2; // Puisque vous avez deux mains
+
+    // Initialiser les résultats
     let mut result = EnumResult {
         game,
         sample_type: enum_type,
@@ -199,138 +445,18 @@ fn process_args(args: &[String]) -> Result<(), String> {
         ordering: None,
     };
 
-    let sample_result = match enum_type {
-        SampleType::Sample => {
-            enum_sample(
-                game,
-                &pockets,
-                board.clone(),
-                dead.clone(),
-                npockets,
-                nboard,
-                niter,
-                orderflag,
-                &mut result,
-            )
-        }
-        SampleType::Exhaustive => {
-            // Implémentez ou gérez le cas SampleType::Exhaustive si nécessaire
-            todo!()
-        }
-        // Ajoutez d'autres cas pour SampleType::Exhaustive ou d'autres types si nécessaire
-    };
+    // Simuler les 10000 itérations
+    const N_ITER: usize = 10000;
+    let nboard = 0; // Nombre de cartes déjà présentes sur le tableau (0 dans ce cas)
 
-    // Gérez le résultat de l'énumération
-    sample_result.map_err(|e| format!("Erreur lors de l'énumération: {}", e))?;
+    // Corrigez l'appel à `simulate_holdem_game` avec tous les arguments nécessaires
+    result.simulate_holdem_game(&[hand1, hand2], board, dead, npockets, nboard, N_ITER);
 
-    if terse {
-        result.enum_result_print_terse(&pockets, board);
-    } else {
-        result.enum_result_print(&pockets, board);
-    }
-
-    Ok(())
-}
-
-
-// Définition de la fonction parse_args
-fn parse_args(
-    args: Vec<String>,
-) -> Result<
-    (
-        Game,
-        SampleType,
-        usize,
-        Vec<StdDeckCardMask>,
-        StdDeckCardMask,
-        StdDeckCardMask,
-        usize,
-        usize,
-        bool,
-        bool,
-    ),
-    String,
-> {
-    let mut game = Game::Holdem; // Valeur par défaut
-    let mut sample_type = SampleType::Sample; // Valeur par défaut
-    let mut niter = 0; // Utilisé seulement pour SampleType::Sample
-    let mut pockets = Vec::new();
-    let mut board = StdDeckCardMask::new();
-    let mut dead = StdDeckCardMask::new();
-    let mut npockets = 0;
-    let nboard = 0;
-    let mut orderflag = false;
-    let mut terse = false;
-
-    let mut current_pocket = Vec::new();
-    let mut parsing_section = "pockets"; // Commencez par analyser les poches des joueurs
-
-    for arg in args.into_iter().skip(1) {
-        // Skip le nom du programme
-        match arg.as_str() {
-            "-mc" => {
-                sample_type = SampleType::Sample;
-                parsing_section = "niter"; // Prochain argument doit être le nombre d'itérations
-            }
-            "-t" => terse = true,
-            "-O" => orderflag = true,
-            "-h" => game = Game::Holdem,
-            "-h8" => game = Game::Holdem8,
-            // Ajoutez d'autres options ici...
-            "--" => {
-                // Terminez de traiter la poche actuelle et commencez à traiter le tableau
-                if !current_pocket.is_empty() {
-                    let (mask, _) = StdDeck::string_to_mask(&current_pocket.join(""))?;
-                    pockets.push(mask);
-                    current_pocket.clear();
-                }
-                parsing_section = "board";
-            }
-            "/" => {
-                // Terminez de traiter la section actuelle et commencez à traiter les cartes mortes
-                parsing_section = "dead";
-            }
-            "-" => {
-                // Terminez de traiter la poche actuelle et commencez une nouvelle poche
-                if !current_pocket.is_empty() {
-                    let (mask, _) = StdDeck::string_to_mask(&current_pocket.join(""))?;
-                    pockets.push(mask);
-                    current_pocket.clear();
-                }
-                npockets += 1; // Augmentez le compteur de poches
-            }
-            _ => match parsing_section {
-                "niter" => niter = arg.parse().map_err(|_| "Nombre d'itérations invalide")?,
-                "pockets" | "board" | "dead" => current_pocket.push(arg.to_string()), // Ajoutez la carte à la poche, au tableau ou aux cartes mortes actuels
-                _ => return Err("Section d'analyse inconnue".to_string()),
-            },
-        }
-    }
-
-    // Assurez-vous de traiter la dernière poche ou le dernier tableau
-    if !current_pocket.is_empty() {
-        let (mask, _) = StdDeck::string_to_mask(&current_pocket.join(""))?;
-        match parsing_section {
-            "pockets" => {
-                pockets.push(mask);
-                npockets += 1;
-            }
-            "board" => board = mask,
-            "dead" => dead = mask,
-            _ => (),
-        }
-    }
-
-    Ok((
-        game,
-        sample_type,
-        niter,
-        pockets,
-        board,
-        dead,
-        npockets,
-        nboard,
-        orderflag,
-        terse,
-    ))
+    // Afficher les résultats
+    let pockets = [hand1, hand2]; // Créez un tableau de poches pour passer à la fonction
+    result.enum_result_print(&pockets, board); // Passez les poches et le tableau à la fonction
+    println!(
+        "Résultat: victoires hand1={}, victoires hand2={}, égalités={}",
+        result.nwinhi[0], result.nwinhi[1], result.ntiehi[0]
+    ); // ajustez selon les champs pertinents
 }

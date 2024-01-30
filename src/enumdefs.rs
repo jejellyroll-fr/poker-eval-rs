@@ -43,6 +43,7 @@ pub enum SampleType {
     Sample,     // Évaluation basée sur un échantillon de mains
 }
 // Structure stockant les résultats de l'évaluation d'un jeu
+#[derive(Debug)]
 pub struct EnumResult {
     pub game: Game,              // Type de jeu évalué
     pub sample_type: SampleType, // Type d'échantillonnage utilisé

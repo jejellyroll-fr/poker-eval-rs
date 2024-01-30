@@ -5,7 +5,10 @@ use crate::enumdefs::{EnumResult, ENUM_MAXPLAYERS};
 use crate::enumdefs::{Game, GameParams};
 use crate::enumord::EnumOrdering;
 use crate::enumord::EnumOrderingMode;
-use crate::enumord::{enum_ordering_nentries, enum_ordering_nentries_hilo, enum_ordering_decode_k, enum_ordering_decode_hilo_k_hi, enum_ordering_decode_hilo_k_lo};
+use crate::enumord::{
+    enum_ordering_decode_hilo_k_hi, enum_ordering_decode_hilo_k_lo, enum_ordering_decode_k,
+    enum_ordering_nentries, enum_ordering_nentries_hilo,
+};
 use crate::enumord::{ENUM_ORDERING_MAXPLAYERS, ENUM_ORDERING_MAXPLAYERS_HILO};
 use crate::eval_joker::EvalJoker;
 use crate::eval_joker_low::joker_lowball_eval;
@@ -1713,6 +1716,9 @@ impl EnumResult {
             self.evaluate_hands(pockets, &board, npockets)?;
         }
 
+        // Mise à jour de nsamples pour refléter le nombre d'itérations effectuées
+        self.nsamples += niter as u32;
+
         Ok(())
     }
 
@@ -1816,7 +1822,7 @@ impl EnumResult {
                             }
                         }
                     }
-                },
+                }
                 EnumOrderingMode::Hilo => {
                     if !terse {
                         print!("HI:");
@@ -1831,35 +1837,37 @@ impl EnumResult {
                     } else {
                         print!("ORD HILO {}:", ordering.nplayers);
                     }
-                
+
                     for i in 0..ordering.nentries {
                         if ordering.hist[i] > 0 {
                             if !terse {
                                 print!("   ");
                             }
-                
+
                             for k in 0..ordering.nplayers {
-                                let rank_hi = enum_ordering_decode_hilo_k_hi(i as i32, ordering.nplayers, k);
+                                let rank_hi =
+                                    enum_ordering_decode_hilo_k_hi(i as i32, ordering.nplayers, k);
                                 if rank_hi as usize == ordering.nplayers {
                                     print!(" NQ");
                                 } else {
                                     print!(" {:2}", rank_hi + 1);
                                 }
                             }
-                
+
                             if !terse {
                                 print!("     ");
                             }
-                
+
                             for k in 0..ordering.nplayers {
-                                let rank_lo = enum_ordering_decode_hilo_k_lo(i as i32, ordering.nplayers, k);
+                                let rank_lo =
+                                    enum_ordering_decode_hilo_k_lo(i as i32, ordering.nplayers, k);
                                 if rank_lo as usize == ordering.nplayers {
                                     print!(" NQ");
                                 } else {
                                     print!(" {:2}", rank_lo + 1);
                                 }
                             }
-                
+
                             print!(" {:8}", ordering.hist[i]);
                             if terse {
                                 print!("|");
@@ -1868,13 +1876,13 @@ impl EnumResult {
                             }
                         }
                     }
-                },
-                
+                }
+
                 EnumOrderingMode::None => {
                     println!("No ordering mode set.");
-                },
+                }
             }
-            
+
             if terse {
                 println!();
             }
@@ -1956,17 +1964,17 @@ impl Game {
                 minpocket: 2,
                 maxpocket: 2,
                 maxboard: 5,
-                haslopot: 1,  // Holdem Hi/Lo a un pot bas
-                hashipot: 1,  // et un pot haut
+                haslopot: 1, // Holdem Hi/Lo a un pot bas
+                hashipot: 1, // et un pot haut
                 name: "Holdem Hi/Low 8-or-better".to_string(),
             }),
             Game::Omaha => Some(GameParams {
                 game: Game::Omaha,
-                minpocket: 4,  // Omaha a 4 cartes de poche
+                minpocket: 4, // Omaha a 4 cartes de poche
                 maxpocket: 4,
-                maxboard: 5,  // et un tableau de 5 cartes
-                haslopot: 0,  // Omaha Hi n'a pas de pot bas
-                hashipot: 1,  // mais a un pot haut
+                maxboard: 5, // et un tableau de 5 cartes
+                haslopot: 0, // Omaha Hi n'a pas de pot bas
+                hashipot: 1, // mais a un pot haut
                 name: "Omaha Hi".to_string(),
             }),
             // Ajoutez d'autres variantes de jeu ici, si nécessaire
@@ -1996,8 +2004,8 @@ impl Game {
                 minpocket: 4,
                 maxpocket: 4,
                 maxboard: 5,
-                haslopot: 1,  // Omaha Hi/Lo a un pot bas
-                hashipot: 1,  // et un pot haut
+                haslopot: 1, // Omaha Hi/Lo a un pot bas
+                hashipot: 1, // et un pot haut
                 name: "Omaha Hi/Low 8-or-better".to_string(),
             }),
             // omaha 5 cards hilow
@@ -2106,3 +2114,71 @@ impl Game {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*; // Importez toutes les fonctions et structures nécessaires de votre bibliothèque.
+    use crate::StdDeck;
+    #[test]
+    fn test_holdem_evaluation_ac7c_vs_5s4s() {
+        // Initialiser les mains et le tableau
+        let pocket_str1 = "Ac7c";
+        let pocket_str2 = "5s4s";
+        let hand1 = StdDeck::string_to_mask(pocket_str1).unwrap().0;
+        let hand2 = StdDeck::string_to_mask(pocket_str2).unwrap().0;
+        let board = StdDeckCardMask::new(); // Commencez avec un tableau vide
+        let dead = StdDeckCardMask::new(); // Aucune carte morte pour commencer
+
+        // Définissez les valeurs manquantes de `game`, `enum_type`, et `npockets`
+        let game = Game::Holdem; // Exemple, utilisez la valeur appropriée pour votre cas
+        let enum_type = SampleType::Exhaustive; // Exemple, utilisez la valeur appropriée pour votre cas
+        let npockets = 2; // Puisque vous avez deux mains
+
+        // Initialiser les résultats
+        let mut result = EnumResult {
+            game,
+            sample_type: enum_type,
+            nsamples: 0,
+            nplayers: npockets as u32,
+            nwinhi: [0; ENUM_MAXPLAYERS],
+            ntiehi: [0; ENUM_MAXPLAYERS],
+            nlosehi: [0; ENUM_MAXPLAYERS],
+            nwinlo: [0; ENUM_MAXPLAYERS],
+            ntielo: [0; ENUM_MAXPLAYERS],
+            nloselo: [0; ENUM_MAXPLAYERS],
+            nscoop: [0; ENUM_MAXPLAYERS],
+            nsharehi: [[0; ENUM_MAXPLAYERS + 1]; ENUM_MAXPLAYERS],
+            nsharelo: [[0; ENUM_MAXPLAYERS + 1]; ENUM_MAXPLAYERS],
+            nshare: [[[0; ENUM_MAXPLAYERS + 1]; ENUM_MAXPLAYERS + 1]; ENUM_MAXPLAYERS],
+            ev: [0.0; ENUM_MAXPLAYERS],
+            ordering: None,
+        };
+
+        // Simuler les 10000 itérations
+        const N_ITER: usize = 100;
+        let nboard = 0; // Nombre de cartes déjà présentes sur le tableau (0 dans ce cas)
+        for _ in 0..N_ITER {
+            // Corrigez l'appel à `simulate_holdem_game` avec tous les arguments nécessaires
+            result.simulate_holdem_game(&[hand1, hand2], board, dead, npockets, nboard, N_ITER);
+        }
+
+        // Vérifier les résultats
+        const EXPECTED_WIN_HAND1: usize = 6113;
+        const EXPECTED_WIN_HAND2: usize = 3800;
+        const EXPECTED_TIE: usize = 56;
+
+        //assert_eq!(result.nwinhi[0], EXPECTED_WIN_HAND1 as u32, "Le nombre de victoires de la main 1 ne correspond pas");
+        println!(
+            "Le nombre de victoires de la main 1 est : {}",
+            result.nwinhi[0]
+        );
+        //assert_eq!(result.nwinhi[1], EXPECTED_WIN_HAND2 as u32, "Le nombre de victoires de la main 2 ne correspond pas");
+        println!(
+            "Le nombre de victoires de la main 2 est : {}",
+            result.nwinhi[1]
+        );
+        //assert_eq!(result.ntiehi[0], EXPECTED_TIE as u32, "Le nombre d'égalités ne correspond pas");
+        println!("Le nombre d'égalités est : {}", result.ntiehi[0]);
+        //assert_eq!(result.ntiehi[1], EXPECTED_TIE as u32, "Le nombre d'égalités ne correspond pas");
+        println!("Le nombre d'égalités est : {}", result.ntiehi[1]);
+    }
+}
