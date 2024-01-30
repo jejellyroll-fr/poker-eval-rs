@@ -29,6 +29,8 @@ use std::error::Error;
 use std::fmt;
 use std::ops::BitOr;
 use std::ptr::NonNull;
+use std::collections::HashSet;
+use rand::prelude::*;
 
 // Trait pour gérer les masques de cartes
 pub trait CardMask: BitOr<Output = Self> + Clone + PartialEq {
@@ -765,34 +767,74 @@ fn enumerate_permutations_d<T, F>(
     }
 }
 // Fonction pour simuler des tirages de cartes aléatoires à partir d'un deck, en excluant certaines cartes, et appliquer une action donnée sur chaque tirage
+// fn deck_montecarlo_n_cards_d<T, F>(
+//     deck: &[T],
+//     dead_cards: &[T],
+//     num_cards: usize,
+//     num_iter: usize,
+//     mut action: F,
+// ) where
+//     T: CardMask + Clone,
+//     F: FnMut(Vec<&T>),
+// {
+//     let mut rng = rand::thread_rng();
+
+//     for _ in 0..num_iter {
+//         let mut used = dead_cards.to_vec();
+//         let mut cards_var = Vec::with_capacity(num_cards);
+
+//         while cards_var.len() < num_cards {
+//             let card = deck.choose(&mut rng).unwrap();
+
+//             if !used.contains(card) {
+//                 used.push(card.clone());
+//                 cards_var.push(card);
+//             }
+//         }
+
+//         action(cards_var.clone());
+//     }
+// }
+
 fn deck_montecarlo_n_cards_d<T, F>(
     deck: &[T],
     dead_cards: &[T],
     num_cards: usize,
     num_iter: usize,
     mut action: F,
-) where
-    T: CardMask + Clone,
-    F: FnMut(Vec<&T>),
+) -> Result<(), String>
+where
+    T: CardMask + Clone + PartialEq,
+    F: FnMut(&[&T]),
 {
-    let mut rng = rand::thread_rng();
+    if deck.is_empty() {
+        return Err("Le deck ne peut pas être vide".to_string());
+    }
+
+    let mut rng = thread_rng();
 
     for _ in 0..num_iter {
-        let mut used = dead_cards.to_vec();
+        let mut used: HashSet<usize> = dead_cards.iter().map(|card| {
+            deck.iter().position(|x| x == card).expect("Carte morte non trouvée dans le deck")
+        }).collect();
         let mut cards_var = Vec::with_capacity(num_cards);
 
         while cards_var.len() < num_cards {
-            let card = deck.choose(&mut rng).unwrap();
-
-            if !used.contains(card) {
-                used.push(card.clone());
-                cards_var.push(card);
+            let card_index = rng.gen_range(0..deck.len());
+            if !used.contains(&card_index) {
+                used.insert(card_index);
+                cards_var.push(&deck[card_index]);
             }
         }
 
-        action(cards_var.clone());
+        action(&cards_var);
     }
+
+    Ok(())
 }
+
+
+
 // Fonction pour simuler des tirages aléatoires de plusieurs sets de cartes à partir de plusieurs decks, en excluant certaines cartes
 fn montecarlo_permutations_d<T, F>(
     decks: &[Vec<T>],
@@ -1602,6 +1644,57 @@ pub fn enum_sample(
     Ok(())
 }
 
+
+
+// La fonction enum_exhaustive adaptée à Rust
+pub fn enum_exhaustive(
+    game: Game,
+    pockets: &[StdDeckCardMask],
+    board: StdDeckCardMask,
+    dead: StdDeckCardMask,
+    npockets: usize,
+    _nboard: usize,
+    orderflag: bool,
+    result: &mut EnumResult,
+) -> Result<(), EnumError> {
+    result.clear();
+    if npockets > ENUM_MAXPLAYERS {
+        return Err(EnumError::TooManyPlayers);
+    }
+
+    let mode = match game {
+        Game::Holdem | Game::Omaha | Game::Omaha5 | Game::Omaha6 | Game::Stud7 | Game::Draw5 => {
+            EnumOrderingMode::Hi
+        }
+        Game::Razz | Game::Lowball | Game::Lowball27 => EnumOrderingMode::Lo,
+        Game::Holdem8 | Game::Omaha8 | Game::Omaha85 | Game::Stud78 | Game::Stud7nsq | Game::Draw58 | Game::Draw5nsq => {
+            EnumOrderingMode::Hilo
+        }
+        _ => return Err(EnumError::UnsupportedGameType),
+    };
+
+    if orderflag {
+        result.allocate_resources(npockets, mode)?;
+    }
+
+    match game {
+        Game::Holdem => {
+            result.exhaustive_holdem_evaluation(pockets, board, dead, npockets)?;
+        },
+        Game::Omaha => {
+            //exhaustive_omaha_evaluation(result, pockets, board, dead, npockets, nboard)?;
+        },
+        // Ajoutez d'autres jeux et leurs évaluations exhaustives ici...
+        _ => return Err(EnumError::UnsupportedGameType),
+    }
+
+    Ok(())
+}
+
+
+
+
+
 impl EnumResult {
     pub fn clear(&mut self) {
         // Réinitialiser les champs simples à leur valeur par défaut
@@ -1673,6 +1766,55 @@ impl EnumResult {
         Ok(())
     }
 
+    // pub fn simulate_holdem_game(
+    //     &mut self,
+    //     pockets: &[StdDeckCardMask],
+    //     board: StdDeckCardMask,
+    //     dead: StdDeckCardMask,
+    //     npockets: usize,
+    //     nboard: usize,
+    //     niter: usize,
+    // ) -> Result<(), EnumError> {
+    //     let mut rng = thread_rng();
+
+    //     // Création d'un deck complet moins les cartes déjà sur le board et les cartes mortes
+    //     let mut deck = (0..STD_DECK_N_CARDS)
+    //         .filter_map(|i| {
+    //             let card_mask = StdDeckCardMask::get_mask(i);
+    //             if (board.mask & card_mask.mask) == 0 && (dead.mask & card_mask.mask) == 0 {
+    //                 Some(card_mask)
+    //             } else {
+    //                 None
+    //             }
+    //         })
+    //         .cloned() // Clone chaque référence StdDeckCardMask pour créer une valeur StdDeckCardMask
+    //         .collect::<Vec<StdDeckCardMask>>();
+
+    //     let num_cards = 5 - nboard;
+    //     if num_cards > 0 {
+    //         // Simulation des tirages Monte Carlo
+    //         for _ in 0..niter {
+    //             deck.shuffle(&mut rng);
+
+    //             let mut monte_carlo_board = board.clone();
+    //             for card in deck.iter().take(num_cards) {
+    //                 monte_carlo_board = monte_carlo_board | card.clone();
+    //             }
+
+    //             // Évaluation des mains avec le tableau de simulation
+    //             self.evaluate_hands(pockets, &monte_carlo_board, npockets)?;
+    //         }
+    //     } else {
+    //         // Pas besoin de simulation, évaluer directement avec le tableau existant
+    //         self.evaluate_hands(pockets, &board, npockets)?;
+    //     }
+
+    //     // Mise à jour de nsamples pour refléter le nombre d'itérations effectuées
+    //     self.nsamples += niter as u32;
+
+    //     Ok(())
+    // }
+
     pub fn simulate_holdem_game(
         &mut self,
         pockets: &[StdDeckCardMask],
@@ -1682,45 +1824,112 @@ impl EnumResult {
         nboard: usize,
         niter: usize,
     ) -> Result<(), EnumError> {
-        let mut rng = thread_rng();
-
-        // Création d'un deck complet moins les cartes déjà sur le board et les cartes mortes
-        let mut deck = (0..STD_DECK_N_CARDS)
-            .filter_map(|i| {
-                let card_mask = StdDeckCardMask::get_mask(i);
-                if (board.mask & card_mask.mask) == 0 && (dead.mask & card_mask.mask) == 0 {
-                    Some(card_mask)
-                } else {
-                    None
-                }
-            })
-            .cloned() // Clone chaque référence StdDeckCardMask pour créer une valeur StdDeckCardMask
-            .collect::<Vec<StdDeckCardMask>>();
-
-        let num_cards = 5 - nboard;
-        if num_cards > 0 {
-            // Simulation des tirages Monte Carlo
-            for _ in 0..niter {
-                deck.shuffle(&mut rng);
-
-                let mut monte_carlo_board = board.clone();
-                for card in deck.iter().take(num_cards) {
-                    monte_carlo_board = monte_carlo_board | card.clone();
-                }
-
-                // Évaluation des mains avec le tableau de simulation
-                self.evaluate_hands(pockets, &monte_carlo_board, npockets)?;
-            }
-        } else {
-            // Pas besoin de simulation, évaluer directement avec le tableau existant
-            self.evaluate_hands(pockets, &board, npockets)?;
+        if npockets > ENUM_MAXPLAYERS {
+            return Err(EnumError::TooManyPlayers);
         }
+        // Initialiser les tableaux pour stocker les évaluations de mains hautes et basses
+        let mut hival: Vec<HandVal> = vec![HandVal::new(0, 0, 0, 0, 0, 0); npockets];
+        let mut loval: Vec<LowHandVal> = vec![LowHandVal::new(0, 0, 0, 0, 0, 0); npockets];
 
+        // Création d'un deck complet moins les cartes déjà sur le board, les cartes mortes et les cartes dans les mains des joueurs
+        let deck = (0..STD_DECK_N_CARDS)
+        .filter_map(|i| {
+            let card_mask = StdDeckCardMask::get_mask(i);
+            if (board.mask & card_mask.mask) == 0 && (dead.mask & card_mask.mask) == 0 && !pockets.iter().any(|p| p.mask & card_mask.mask != 0) {
+                Some(*card_mask)
+            } else {
+                None
+            }
+        })
+        .collect::<Vec<StdDeckCardMask>>();
+
+        let num_cards_to_draw = 5 - nboard;
+
+        let mut valid_iterations = 0;
+    
+        // Effectuer la simulation Monte Carlo
+
+        let _ = deck_montecarlo_n_cards_d(&deck, &[], num_cards_to_draw, niter, |combo| {
+            let mut complete_board = board;
+            for &card in combo.iter() {
+                complete_board = complete_board | *card; // Assurez-vous que cette opération ajoute correctement les cartes
+            }
+        
+            // Vérifier que le tableau contient exactement 5 cartes
+            if complete_board.num_cards() == 5 {
+                // Appeler inner_loop_holdem pour chaque main seulement si le tableau est valide
+                inner_loop_holdem(pockets, &complete_board, &StdDeckCardMask::new(), &mut hival, &mut loval);
+                
+                // Afficher les mains, le tableau et les résultats
+                println!("Simulation:");
+                for (i, pocket) in pockets.iter().enumerate() {
+                    println!("Joueur {}: {}", i + 1, pocket.mask_to_string());
+                }
+                println!("Tableau: {}", complete_board.mask_to_string());    
+        
+                // Mettre à jour les statistiques pour chaque main
+                for i in 0..npockets {
+                    self.update_statistics(i, hival[i], pockets, &complete_board, npockets);
+                    println!("Résultat pour Joueur {}: {}", i + 1, if hival[i] > hival[1 - i] { "Gagne" } else if hival[i] < hival[1 - i] { "Perd" } else { "Égalité" });
+                }
+                valid_iterations += 1;
+            } else {
+                println!("Erreur: Le tableau ne contient pas 5 cartes après la combinaison. Nombre de cartes: {}", complete_board.num_cards());
+                // Ne pas mettre à jour nsamples pour cette itération
+            }
+        });
+        
         // Mise à jour de nsamples pour refléter le nombre d'itérations effectuées
-        self.nsamples += niter as u32;
-
+        self.nsamples += valid_iterations as u32;
         Ok(())
     }
+    
+    
+    
+
+    pub fn exhaustive_holdem_evaluation(
+        &mut self,
+        pockets: &[StdDeckCardMask],
+        board: StdDeckCardMask,
+        dead: StdDeckCardMask,
+        npockets: usize,
+    ) -> Result<(), EnumError> {
+        // Préparation du deck en excluant les cartes du board et les cartes mortes
+        let deck = (0..STD_DECK_N_CARDS)
+        .filter_map(|i| {
+            let card_mask = StdDeckCardMask::get_mask(i);
+            if (board.mask & card_mask.mask) == 0 && (dead.mask & card_mask.mask) == 0 && !pockets.iter().any(|p| p.mask & card_mask.mask != 0) {
+                Some(card_mask.clone())
+            } else {
+                None
+            }
+        })
+        .collect::<Vec<StdDeckCardMask>>();
+    
+    
+        let num_cards_to_draw = 5 - board.num_cards(); // Assurez-vous que la méthode num_cards existe et fait ce que vous attendez
+
+    
+        // Si le tableau est déjà complet, évaluez directement les mains
+        if num_cards_to_draw == 0 {
+            self.evaluate_hands(pockets, &board, npockets)?;
+        } else {
+            // Énumération de toutes les combinaisons possibles de cartes pour compléter le tableau
+            enumerate_n_cards_d(&deck, &[], num_cards_to_draw, |combo| {
+                let mut complete_board = board;
+                for &card in combo.iter() {
+                    complete_board = complete_board | *card; // Assurez-vous que l'opérateur | est implémenté pour StdDeckCardMask et que card est déréférencé si nécessaire
+                }
+    
+                // Évaluation des mains pour le tableau complet
+                self.evaluate_hands(pockets, &complete_board, npockets).unwrap();
+            });
+        }
+    
+        Ok(())
+    }
+    
+
 
     pub fn evaluate_hands(
         &mut self,

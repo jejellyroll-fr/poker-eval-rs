@@ -1,4 +1,4 @@
-#[derive(Clone, PartialEq, Copy)]
+#[derive(Clone, PartialEq, Copy, Debug)]
 pub struct StdDeckCardMask {
     pub mask: u64,
 }

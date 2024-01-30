@@ -45,6 +45,23 @@ impl StdDeckCardMask {
     pub fn new() -> Self {
         StdDeckCardMask { mask: 0 }
     }
+
+
+    // Convertit un masque de cartes en une chaîne de caractères représentant les cartes
+    pub fn mask_to_string(&self) -> String {
+        let mut card_strings = Vec::new();
+
+        for card_index in 0..STD_DECK_N_CARDS {
+            if self.card_is_set(card_index) {
+                // Utilisez card_to_string pour obtenir la représentation en chaîne de la carte
+                let card_str = StdDeck::card_to_string(card_index);
+                card_strings.push(card_str);
+            }
+        }
+
+        // Joignez les chaînes de cartes avec un espace
+        card_strings.join(" ")
+    }
     // masque piques
     pub fn spades(&self) -> u16 {
         let mask_13_bits = 0x1FFF; // Masque pour conserver les 13 bits

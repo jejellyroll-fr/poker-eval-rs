@@ -411,7 +411,30 @@ use poker_eval_rs::t_cardmasks::StdDeckCardMask;
 
 //     }
 // }
+
 fn main() {
+    holdem_sample();
+    //holdem_exhaustive();
+    //testfonction();
+}
+
+//fonction qui transforme "AsAd" en stdcardmask et puis qui retransforme le stdcardmask en "AsAd"
+fn testfonction() {
+    let pocket_str = "AsAd";
+    let pocket = StdDeck::string_to_mask(pocket_str).unwrap().0;
+
+    // Si StdDeckCardMask implémente Debug
+    println!("{:?}", pocket);
+
+    // Ou, si StdDeckCardMask n'implémente pas Debug, vous pourriez vouloir afficher une propriété spécifique de pocket ou simplement confirmer que la conversion a réussi.
+    // Par exemple: println!("Conversion réussie!");
+
+    let pocket_str2 = StdDeckCardMask::mask_to_string(&pocket); // Pas besoin d'utiliser unwrap() ici
+    println!("{}", pocket_str2);
+}
+
+
+fn holdem_sample() {
     // Initialiser les mains et le tableau
     let pocket_str1 = "Ac7c";
     let pocket_str2 = "5s4s";
@@ -420,15 +443,12 @@ fn main() {
     let board = StdDeckCardMask::new(); // Commencez avec un tableau vide
     let dead = StdDeckCardMask::new(); // Aucune carte morte pour commencer
 
-    // Définissez les valeurs manquantes de `game`, `enum_type`, et `npockets`
-    let game = Game::Holdem; // Exemple, utilisez la valeur appropriée pour votre cas
-    let enum_type = SampleType::Exhaustive; // Exemple, utilisez la valeur appropriée pour votre cas
     let npockets = 2; // Puisque vous avez deux mains
 
-    // Initialiser les résultats
-    let mut result = EnumResult {
-        game,
-        sample_type: enum_type,
+    // Initialiser les résultats pour la simulation Monte Carlo
+    let mut result_monte_carlo = EnumResult {
+        game: Game::Holdem,
+        sample_type: SampleType::Sample,
         nsamples: 0,
         nplayers: npockets as u32,
         nwinhi: [0; ENUM_MAXPLAYERS],
@@ -445,18 +465,62 @@ fn main() {
         ordering: None,
     };
 
-    // Simuler les 10000 itérations
-    const N_ITER: usize = 10000;
+    // Simuler les 10000 itérations Monte Carlo
+    const N_ITER_MONTE_CARLO: usize = 100;
     let nboard = 0; // Nombre de cartes déjà présentes sur le tableau (0 dans ce cas)
+    let _ = result_monte_carlo.simulate_holdem_game(&[hand1, hand2], board, dead, npockets, nboard, N_ITER_MONTE_CARLO);
 
-    // Corrigez l'appel à `simulate_holdem_game` avec tous les arguments nécessaires
-    let _ = result.simulate_holdem_game(&[hand1, hand2], board, dead, npockets, nboard, N_ITER);
 
-    // Afficher les résultats
-    let pockets = [hand1, hand2]; // Créez un tableau de poches pour passer à la fonction
-    result.enum_result_print(&pockets, board); // Passez les poches et le tableau à la fonction
-    println!(
-        "Résultat: victoires hand1={}, victoires hand2={}, égalités={}",
-        result.nwinhi[0], result.nwinhi[1], result.ntiehi[0]
-    ); // ajustez selon les champs pertinents
+    // Afficher les résultats pour la simulation Monte Carlo
+    println!("Résultats Monte Carlo:");
+    let pockets = [hand1, hand2]; // Créez un tableau de poches pour passer à la fonction d'affichage
+    result_monte_carlo.enum_result_print(&pockets, board); // Affichez les résultats Monte Carlo
+
+
+}
+
+fn holdem_exhaustive() {
+    // Initialiser les mains et le tableau
+    let pocket_str1 = "Ac7c";
+    let pocket_str2 = "5s4s";
+    let hand1 = StdDeck::string_to_mask(pocket_str1).unwrap().0;
+    let hand2 = StdDeck::string_to_mask(pocket_str2).unwrap().0;
+    let board = StdDeckCardMask::new(); // Commencez avec un tableau vide
+    let dead = StdDeckCardMask::new(); // Aucune carte morte pour commencer
+
+    let npockets = 2; // Puisque vous avez deux mains
+
+
+
+    // Initialiser les résultats pour l'évaluation exhaustive
+    let mut result_exhaustive = EnumResult {
+        game: Game::Holdem,
+        sample_type: SampleType::Exhaustive,
+        nsamples: 0,
+        nplayers: npockets as u32,
+        nwinhi: [0; ENUM_MAXPLAYERS],
+        ntiehi: [0; ENUM_MAXPLAYERS],
+        nlosehi: [0; ENUM_MAXPLAYERS],
+        nwinlo: [0; ENUM_MAXPLAYERS],
+        ntielo: [0; ENUM_MAXPLAYERS],
+        nloselo: [0; ENUM_MAXPLAYERS],
+        nscoop: [0; ENUM_MAXPLAYERS],
+        nsharehi: [[0; ENUM_MAXPLAYERS + 1]; ENUM_MAXPLAYERS],
+        nsharelo: [[0; ENUM_MAXPLAYERS + 1]; ENUM_MAXPLAYERS],
+        nshare: [[[0; ENUM_MAXPLAYERS + 1]; ENUM_MAXPLAYERS + 1]; ENUM_MAXPLAYERS],
+        ev: [0.0; ENUM_MAXPLAYERS],
+        ordering: None,
+    };
+
+    // Effectuer l'évaluation exhaustive
+    match result_exhaustive.exhaustive_holdem_evaluation(&[hand1, hand2], board, dead, npockets) {
+        Ok(()) => println!("Évaluation exhaustive terminée."),
+        Err(e) => eprintln!("Erreur lors de l'évaluation exhaustive: {:?}", e),
+    }
+
+
+    let pockets = [hand1, hand2]; // Créez un tableau de poches pour passer à la fonction d'affichage
+    // Afficher les résultats pour l'évaluation exhaustive
+    println!("\nRésultats Exhaustifs:");
+    result_exhaustive.enum_result_print(&pockets, board); // Affichez les résultats exhaustifs
 }
