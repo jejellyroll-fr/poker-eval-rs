@@ -1,17 +1,17 @@
 // Importez les modules nécessaires
 use poker_eval_rs::deck_std::StdDeck;
 use poker_eval_rs::enumdefs::{EnumResult, Game, SampleType, ENUM_MAXPLAYERS};
-use poker_eval_rs::enumerate::enum_sample;
-use poker_eval_rs::enumerate::inner_loop_holdem;
-use poker_eval_rs::enumord::EnumOrdering;
-use poker_eval_rs::eval::Eval;
-use poker_eval_rs::eval_low::std_deck_lowball_eval;
-use poker_eval_rs::handval::HandVal;
-use poker_eval_rs::handval_low::LowHandVal;
+//use poker_eval_rs::enumerate::enum_sample;
+//use poker_eval_rs::enumerate::inner_loop_holdem;
+//use poker_eval_rs::enumord::EnumOrdering;
+//use poker_eval_rs::eval::Eval;
+//use poker_eval_rs::eval_low::std_deck_lowball_eval;
+//use poker_eval_rs::handval::HandVal;
+//use poker_eval_rs::handval_low::LowHandVal;
 use poker_eval_rs::t_cardmasks::StdDeckCardMask;
-use std::env;
-use std::io::{self, BufRead};
-use std::str::FromStr;
+//use std::env;
+//use std::io::{self, BufRead};
+//use std::str::FromStr;
 
 // fn main() {
 //     let hands = vec![
@@ -450,7 +450,7 @@ fn main() {
     let nboard = 0; // Nombre de cartes déjà présentes sur le tableau (0 dans ce cas)
 
     // Corrigez l'appel à `simulate_holdem_game` avec tous les arguments nécessaires
-    result.simulate_holdem_game(&[hand1, hand2], board, dead, npockets, nboard, N_ITER);
+    let _ = result.simulate_holdem_game(&[hand1, hand2], board, dead, npockets, nboard, N_ITER);
 
     // Afficher les résultats
     let pockets = [hand1, hand2]; // Créez un tableau de poches pour passer à la fonction

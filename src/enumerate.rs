@@ -1890,7 +1890,7 @@ impl EnumResult {
     }
 
     // Méthode pour afficher les résultats d'une manière détaillée
-    pub fn enum_result_print(&self, pockets: &[StdDeckCardMask], board: StdDeckCardMask) {
+    pub fn enum_result_print(&self, _pockets: &[StdDeckCardMask], _board: StdDeckCardMask) {
         let gp = self.game.game_params(); // Assumant que Game implémente une méthode game_params qui retourne Option<GameParams>
         if let Some(gp) = gp {
             let width = gp.maxpocket * 3 - 1;
