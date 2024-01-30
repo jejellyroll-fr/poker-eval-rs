@@ -415,23 +415,36 @@ use poker_eval_rs::t_cardmasks::StdDeckCardMask;
 fn main() {
     holdem_sample();
     //holdem_exhaustive();
-    //testfonction();
+    //test_all_deck_cards()
 }
 
 //fonction qui transforme "AsAd" en stdcardmask et puis qui retransforme le stdcardmask en "AsAd"
-fn testfonction() {
-    let pocket_str = "AsAd";
-    let pocket = StdDeck::string_to_mask(pocket_str).unwrap().0;
+fn test_all_deck_cards() {
+    // Définition des valeurs de cartes et des enseignes
+    let values = ["2", "3", "4", "5", "6", "7", "8", "9", "T", "J", "Q", "K", "A"];
+    let suits = ["s", "h", "d", "c"]; // s = pique, h = coeur, d = carreau, c = trèfle
 
-    // Si StdDeckCardMask implémente Debug
-    println!("{:?}", pocket);
+    // Itérer sur chaque combinaison de valeur et d'enseigne
+    for value in values.iter() {
+        for suit in suits.iter() {
+            let card_str = format!("{}{}", value, suit); // Crée la chaîne de caractères de la carte
+            let card_mask = StdDeck::string_to_mask(&card_str).unwrap().0; // Convertit la chaîne en masque de carte
 
-    // Ou, si StdDeckCardMask n'implémente pas Debug, vous pourriez vouloir afficher une propriété spécifique de pocket ou simplement confirmer que la conversion a réussi.
-    // Par exemple: println!("Conversion réussie!");
+            // Affiche le Debug du masque de carte si possible, sinon confirme la conversion
+            println!("{:?}", card_mask); // Remplacer par une confirmation si Debug n'est pas implémenté
 
-    let pocket_str2 = StdDeckCardMask::mask_to_string(&pocket); // Pas besoin d'utiliser unwrap() ici
-    println!("{}", pocket_str2);
+            // Convertit le masque de carte de retour en chaîne de caractères
+            let card_str2 = StdDeckCardMask::mask_to_string(&card_mask);
+            println!("{} -> {}", card_str, card_str2);
+
+            // Vérifie que la chaîne de caractères originale et la chaîne convertie sont les mêmes
+            assert_eq!(card_str, card_str2, "Erreur de conversion pour la carte {}", card_str);
+        }
+    }
+
+    println!("Toutes les cartes ont été testées avec succès.");
 }
+
 
 
 fn holdem_sample() {
@@ -466,7 +479,7 @@ fn holdem_sample() {
     };
 
     // Simuler les 10000 itérations Monte Carlo
-    const N_ITER_MONTE_CARLO: usize = 100;
+    const N_ITER_MONTE_CARLO: usize = 1000000;
     let nboard = 0; // Nombre de cartes déjà présentes sur le tableau (0 dans ce cas)
     let _ = result_monte_carlo.simulate_holdem_game(&[hand1, hand2], board, dead, npockets, nboard, N_ITER_MONTE_CARLO);
 
