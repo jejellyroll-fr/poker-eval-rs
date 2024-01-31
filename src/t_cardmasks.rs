@@ -1,4 +1,4 @@
-#[derive(Clone, PartialEq, Copy, Debug)]
+#[derive(Clone, PartialEq, Copy, Debug, Hash, Eq)]
 pub struct StdDeckCardMask {
     pub mask: u64,
 }
@@ -175,7 +175,10 @@ mod tests {
             assert!(mask_set.insert(mask.mask));
         }
         assert_eq!(mask_set.len(), STD_DECK_CARD_MASKS_TABLE.len());
+        println!("{} {}", mask_set.len(), STD_DECK_CARD_MASKS_TABLE.len());
     }
 
     // Vous pouvez ajouter ici des tests supplémentaires si nécessaire
+    // test chaque masque en les convertissant en cartes
+
 }

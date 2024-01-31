@@ -12,6 +12,8 @@ use poker_eval_rs::t_cardmasks::StdDeckCardMask;
 //use std::env;
 //use std::io::{self, BufRead};
 //use std::str::FromStr;
+use poker_eval_rs::deck_joker::JokerDeck;
+use poker_eval_rs::t_jokercardmasks::JokerDeckCardMask;
 
 // fn main() {
 //     let hands = vec![
@@ -416,6 +418,7 @@ fn main() {
     holdem_sample();
     //holdem_exhaustive();
     //test_all_deck_cards()
+    //test_all_deck_cards_with_joker()
 }
 
 //fonction qui transforme "AsAd" en stdcardmask et puis qui retransforme le stdcardmask en "AsAd"
@@ -431,7 +434,7 @@ fn test_all_deck_cards() {
             let card_mask = StdDeck::string_to_mask(&card_str).unwrap().0; // Convertit la chaîne en masque de carte
 
             // Affiche le Debug du masque de carte si possible, sinon confirme la conversion
-            println!("{:?}", card_mask); // Remplacer par une confirmation si Debug n'est pas implémenté
+            println!("entrée: {:?}", card_mask); // Remplacer par une confirmation si Debug n'est pas implémenté
 
             // Convertit le masque de carte de retour en chaîne de caractères
             let card_str2 = StdDeckCardMask::mask_to_string(&card_mask);
@@ -445,6 +448,48 @@ fn test_all_deck_cards() {
     println!("Toutes les cartes ont été testées avec succès.");
 }
 
+fn test_all_deck_cards_with_joker() {
+    // Définition des valeurs de cartes et des enseignes
+    let values = ["2", "3", "4", "5", "6", "7", "8", "9", "T", "J", "Q", "K", "A"];
+    let suits = ["s", "h", "d", "c"]; // s = pique, h = coeur, d = carreau, c = trèfle
+
+    // Itérer sur chaque combinaison de valeur et d'enseigne pour les cartes standards
+    for value in values.iter() {
+        for suit in suits.iter() {
+            let card_str = format!("{}{}", value, suit); // Crée la chaîne de caractères de la carte
+            let card_result = JokerDeck::string_to_card(&card_str); // Convertit la chaîne en indice de carte
+
+            if let Some(card_index) = card_result {
+                let card_mask = JokerDeckCardMask::get_mask(card_index); // Convertit l'indice en masque de carte
+
+                // Affiche le Debug du masque de carte si possible, sinon confirme la conversion
+                println!("{:?}", card_mask); // Remplacer par une confirmation si Debug n'est pas implémenté
+
+                // Convertit le masque de carte de retour en chaîne de caractères
+                let card_str2 = JokerDeck::card_to_string(card_index);
+                println!("{} -> {}", card_str, card_str2);
+
+                // Vérifie que la chaîne de caractères originale et la chaîne convertie sont les mêmes
+                assert_eq!(card_str, card_str2, "Erreur de conversion pour la carte {}", card_str);
+            }
+        }
+    }
+
+    // Test pour le joker
+    let joker_str = "Xx"; // Représentation du joker
+    let joker_result = JokerDeck::string_to_card(joker_str);
+    if let Some(joker_index) = joker_result {
+        let joker_mask = JokerDeckCardMask::get_mask(joker_index);
+        println!("{:?}", joker_mask);
+
+        let joker_str2 = JokerDeck::card_to_string(joker_index);
+        println!("{} -> {}", joker_str, joker_str2);
+
+        assert_eq!(joker_str.to_lowercase(), joker_str2.to_lowercase(), "Erreur de conversion pour le joker");
+    }
+
+    println!("Toutes les cartes, y compris le joker, ont été testées avec succès.");
+}
 
 
 fn holdem_sample() {
@@ -479,7 +524,7 @@ fn holdem_sample() {
     };
 
     // Simuler les 10000 itérations Monte Carlo
-    const N_ITER_MONTE_CARLO: usize = 1000000;
+    const N_ITER_MONTE_CARLO: usize = 20;
     let nboard = 0; // Nombre de cartes déjà présentes sur le tableau (0 dans ce cas)
     let _ = result_monte_carlo.simulate_holdem_game(&[hand1, hand2], board, dead, npockets, nboard, N_ITER_MONTE_CARLO);
 

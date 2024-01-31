@@ -158,6 +158,16 @@ impl JokerDeckCardMask {
     pub fn set(&mut self, card_index: usize) {
         self.cards_n |= 1 << card_index;
     }
+    pub fn mask_to_string(&self) -> String {
+        let mut card_strings = Vec::new();
+        for card_index in 0..JOKER_DECK_N_CARDS {
+            if self.card_is_set(card_index) {
+                let card_str = JokerDeck::card_to_string(card_index);
+                card_strings.push(card_str);
+            }
+        }
+        card_strings.join(" ")
+    }
 }
 
 pub struct JokerDeck;

@@ -272,3 +272,80 @@ impl StdDeck {
         Ok((out_mask, n))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_card_is_set() {
+        // Créez un masque de carte avec une carte spécifique définie.
+        // Par exemple, définissons la 3ème carte (index 2 si on commence à 0).
+        let mut card_mask = StdDeckCardMask::new();
+        let card_index_to_set = 2; // Index de la carte que vous voulez définir.
+        card_mask.set(card_index_to_set); // Utilisez la méthode `set` pour définir la carte.
+
+        // Vérifiez que `card_is_set` retourne `true` pour cette carte.
+        assert!(card_mask.card_is_set(card_index_to_set), "La carte à l'index {} devrait être définie.", card_index_to_set);
+
+        // Vérifiez également que `card_is_set` retourne `false` pour une carte non définie.
+        // Par exemple, vérifions la 10ème carte (index 9).
+        assert!(!card_mask.card_is_set(9), "La carte à l'index 9 ne devrait pas être définie.");
+    }
+
+
+    #[test]
+    fn test_card_is_set_for_all_cards() {
+        let mut card_mask = StdDeckCardMask::new();
+
+        // Parcourez chaque carte possible dans le deck et définissez-la dans le masque
+        for card_index in 0..STD_DECK_N_CARDS {
+            // Réinitialisez le masque pour chaque carte pour éviter les interférences
+            card_mask.reset();
+
+            // Définissez la carte actuelle dans le masque
+            card_mask.set(card_index);
+            println!("Masque pour la carte {}: {:b}", card_index, card_mask.mask);
+
+            // Vérifiez que `card_is_set` indique que cette carte est bien définie
+            assert!(
+                card_mask.card_is_set(card_index),
+                "La carte à l'index {} devrait être définie.",
+                card_index
+            );
+            println!("La carte à l'index {} est définie.", card_index);
+
+            // Vérifiez que `card_is_set` retourne `false` pour toutes les autres cartes
+            for other_card_index in 0..STD_DECK_N_CARDS {
+                if other_card_index != card_index {
+                    assert!(
+                        !card_mask.card_is_set(other_card_index),
+                        "La carte à l'index {} ne devrait pas être définie.",
+                        other_card_index
+                    );
+                }
+            }
+        }
+    }    
+
+
+    #[test]
+    fn test_card_to_string_for_all_cards() {
+        // Définissez les représentations attendues pour toutes les cartes dans le deck
+        // L'ordre des cartes et leur représentation dépendent de la manière dont vous avez implémenté la fonction `card_to_string`
+        // L'exemple suivant suppose un ordre de couleurs cœurs, diamants, trèfles, puis piques, et un ordre de valeurs de 2 à As
+        let expected_card_strings = vec![
+            "2h", "3h", "4h", "5h", "6h", "7h", "8h", "9h", "Th", "Jh", "Qh", "Kh", "Ah",
+            "2d", "3d", "4d", "5d", "6d", "7d", "8d", "9d", "Td", "Jd", "Qd", "Kd", "Ad",
+            "2c", "3c", "4c", "5c", "6c", "7c", "8c", "9c", "Tc", "Jc", "Qc", "Kc", "Ac",
+            "2s", "3s", "4s", "5s", "6s", "7s", "8s", "9s", "Ts", "Js", "Qs", "Ks", "As",
+        ];
+
+        for (card_index, &expected_str) in expected_card_strings.iter().enumerate() {
+            let card_str = StdDeck::card_to_string(card_index);
+            println!("La conversion de l'indice {} devrait donner '{}', mais a donné '{}'.", card_index, expected_str, card_str);
+            assert_eq!(card_str, expected_str, "La conversion de l'indice {} devrait donner '{}', mais a donné '{}'.", card_index, expected_str, card_str);
+        }
+    }
+
+}

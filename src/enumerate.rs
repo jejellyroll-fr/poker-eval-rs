@@ -1,5 +1,6 @@
 use crate::combinaison::*;
 use crate::deck_std::STD_DECK_N_CARDS;
+use crate::deck_std::StdDeck;
 use crate::enumdefs::SampleType;
 use crate::enumdefs::{EnumResult, ENUM_MAXPLAYERS};
 use crate::enumdefs::{Game, GameParams};
@@ -31,12 +32,15 @@ use std::ptr::NonNull;
 use rand::prelude::*;
 use std::collections::HashSet;
 use rand::{thread_rng, Rng};
+use std::any::Any;
 
 
 // Trait pour gérer les masques de cartes
-pub trait CardMask: BitOr<Output = Self> + Clone + PartialEq {
+pub trait CardMask: BitOr<Output = Self> + Clone + PartialEq + std::fmt::Debug {
     fn mask(&self) -> u64;
     fn overlaps(&self, other: &Self) -> bool;
+    fn to_debug_string(&self) -> String;  // Ajout de la nouvelle méthode
+    fn to_string_representation(&self) -> String;
 }
 
 impl CardMask for StdDeckCardMask {
@@ -47,6 +51,15 @@ impl CardMask for StdDeckCardMask {
     fn overlaps(&self, other: &Self) -> bool {
         (self.mask & other.mask) != 0
     }
+    fn to_debug_string(&self) -> String {
+        // Exemple d'implémentation, à adapter selon votre besoin
+        format!("StdDeckCardMask: mask={:#066b}", self.mask)
+    }
+    fn to_string_representation(&self) -> String {
+        // Convertissez le masque de carte en sa représentation en chaîne
+        // Ceci est juste un exemple, ajustez selon votre logique de conversion
+        self.mask_to_string() 
+    }
 }
 
 impl CardMask for JokerDeckCardMask {
@@ -56,6 +69,15 @@ impl CardMask for JokerDeckCardMask {
 
     fn overlaps(&self, other: &Self) -> bool {
         (self.cards_n & other.cards_n) != 0
+    }
+    fn to_debug_string(&self) -> String {
+        // Exemple d'implémentation, à adapter selon votre besoin
+        format!("JokerDeckCardMask: cards_n={:#066b}", self.cards_n)
+    }
+    fn to_string_representation(&self) -> String {
+        // Convertissez le masque de carte en sa représentation en chaîne
+        // Ceci est juste un exemple, ajustez selon votre logique de conversion
+        self.mask_to_string() 
     }
 }
 
@@ -770,6 +792,52 @@ fn enumerate_permutations_d<T, F>(
 // Fonction pour simuler des tirages de cartes aléatoires à partir d'un deck, en excluant certaines cartes, et appliquer une action donnée sur chaque tirage
 
 
+// fn deck_montecarlo_n_cards_d<T, F>(
+//     deck: &[T],
+//     dead_cards: &[T],
+//     num_cards: usize,
+//     num_iter: usize,
+//     mut action: F,
+// ) 
+// where
+//     T: CardMask + Clone,
+//     F: FnMut(Vec<&T>),
+// {
+//     let mut rng = rand::thread_rng();
+
+//     // Vérifie si le deck contient suffisamment de cartes pour la simulation
+//     if deck.len() < num_cards {
+//         println!("Erreur: Le deck ne contient pas suffisamment de cartes pour la simulation.");
+//         return;
+//     }
+
+//     for _ in 0..num_iter {
+//         let mut used = dead_cards.to_vec();
+//         let mut cards_var = Vec::with_capacity(num_cards);
+
+//         while cards_var.len() < num_cards {
+//             if let Some(card) = deck.choose(&mut rng) {
+//                 if !used.contains(&card) {
+//                     used.push(card.clone());
+//                     cards_var.push(card);
+//                 }
+//             } else {
+//                 // Cette branche ne devrait jamais être atteinte si le deck contient des cartes
+//                 println!("Erreur inattendue: échec de la sélection d'une carte du deck.");
+//                 break;
+//             }
+//         }
+
+//         // Vérifie si le nombre correct de cartes a été tiré avant d'exécuter l'action
+//         if cards_var.len() == num_cards {
+//             action(cards_var.clone());
+//         } else {
+//             println!("Erreur: Le nombre de cartes tirées est incorrect.");
+//         }
+//     }
+// }
+
+
 fn deck_montecarlo_n_cards_d<T, F>(
     deck: &[T],
     dead_cards: &[T],
@@ -778,80 +846,65 @@ fn deck_montecarlo_n_cards_d<T, F>(
     mut action: F,
 ) 
 where
-    T: CardMask + Clone,
+    T: CardMask + Clone + std::hash::Hash + Eq + std::fmt::Debug, // Assurez-vous que T implémente Debug
     F: FnMut(Vec<&T>),
 {
-    let mut rng = rand::thread_rng();
+    let mut rng = thread_rng();
 
-    // Vérifie si le deck contient suffisamment de cartes pour la simulation
+    println!("Début de la simulation Monte Carlo");
+    println!("Taille du deck: {}", deck.len());
+    println!("Cartes mortes: {:?}", dead_cards);
+    println!("Nombre de cartes à tirer: {}", num_cards);
+    println!("Nombre d'itérations: {}", num_iter);
+
+    // Imprimez la représentation de chaque carte dans le deck
+    for card in deck {
+        let card_representation = card.to_string_representation(); // Assurez-vous que cette méthode est définie dans le trait `CardMask`
+        println!("Carte dans le deck: {}", card_representation);
+    }
+    
     if deck.len() < num_cards {
         println!("Erreur: Le deck ne contient pas suffisamment de cartes pour la simulation.");
         return;
     }
-
-    for _ in 0..num_iter {
-        let mut used = dead_cards.to_vec();
+    println!("Deck initial: {:?}", deck);
+    for iteration in 0..num_iter {
+        println!("Itération: {}", iteration + 1);
+        let mut used: HashSet<&T> = dead_cards.iter().collect();
         let mut cards_var = Vec::with_capacity(num_cards);
-
+    
         while cards_var.len() < num_cards {
             if let Some(card) = deck.choose(&mut rng) {
+                println!("Carte choisie: {:?}", card);
                 if !used.contains(&card) {
-                    used.push(card.clone());
+                    used.insert(card);
                     cards_var.push(card);
+                    println!("Carte ajoutée: {:?}", card);
+                    // Utilisation de `mask_to_string` pour obtenir la représentation en chaîne de la carte
+                    let card_str = card.to_string_representation();
+                    println!("Représentation de la carte: {}", card_str);
+            
+                    // Vous pouvez ensuite utiliser `card_str` pour vos opérations spécifiques
+                    // Par exemple, si vous avez besoin de convertir cette chaîne en un masque ou une autre structure, 
+                    // assurez-vous d'avoir une fonction ou une méthode appropriée pour le faire.
                 }
             } else {
-                // Cette branche ne devrait jamais être atteinte si le deck contient des cartes
                 println!("Erreur inattendue: échec de la sélection d'une carte du deck.");
                 break;
             }
         }
-
-        // Vérifie si le nombre correct de cartes a été tiré avant d'exécuter l'action
+        
         if cards_var.len() == num_cards {
+            println!("Tirage réussi: {:?}", cards_var); // Imprime le tirage réussi
             action(cards_var.clone());
         } else {
             println!("Erreur: Le nombre de cartes tirées est incorrect.");
         }
     }
+    
+    println!("Fin de la simulation Monte Carlo");
 }
 
-
-// fn deck_montecarlo_n_cards_d<T, F>(
-//     deck: &[T],
-//     dead_cards: &[T],
-//     num_cards: usize,
-//     num_iter: usize,
-//     mut action: F,
-// ) -> Result<(), String>
-// where
-//     T: CardMask + Clone + PartialEq,
-//     F: FnMut(&[&T]),
-// {
-//     if deck.is_empty() {
-//         return Err("Le deck ne peut pas être vide".to_string());
-//     }
-
-//     let mut rng = thread_rng();
-
-//     for _ in 0..num_iter {
-//         let mut used: HashSet<usize> = dead_cards.iter().map(|card| {
-//             deck.iter().position(|x| x == card).expect("Carte morte non trouvée dans le deck")
-//         }).collect();
-//         let mut cards_var = Vec::with_capacity(num_cards);
-
-//         while cards_var.len() < num_cards {
-//             let card_index = rng.gen_range(0..deck.len());
-//             if !used.contains(&card_index) {
-//                 used.insert(card_index);
-//                 cards_var.push(&deck[card_index]);
-//             }
-//         }
-
-//         action(&cards_var);
-//     }
-
-//     Ok(())
-// }
 
 
 
@@ -1854,17 +1907,64 @@ pub fn simulate_holdem_game(
     let mut hival: Vec<HandVal> = vec![HandVal::new(0, 0, 0, 0, 0, 0); npockets];
     let mut loval: Vec<LowHandVal> = vec![LowHandVal::new(0, 0, 0, 0, 0, 0); npockets];
 
+    //test un deck complet
+    let full_deck = (0..STD_DECK_N_CARDS)
+        .map(|i| StdDeckCardMask::get_mask(i).clone())
+        .collect::<Vec<StdDeckCardMask>>();
+    println!("Longueur du deck complet: {}", full_deck.len());
+
+    println!("Masque des cartes mortes: {:?}", dead.mask);
+    println!("Masque des cartes sur le tableau: {:?}", board.mask);
+    println!("Masques des poches des joueurs:");
+    for (index, pocket) in pockets.iter().enumerate() {
+        println!("  Joueur {}: {:?}", index, pocket.mask); 
+        println!("  Joueur {}: {:?}", index, pocket.mask_to_string());       
+    }
+
+    for card_index in 0..STD_DECK_N_CARDS {
+        let card_mask = StdDeckCardMask::get_mask(card_index);
+        println!("Masque pour la carte à l'indice {}: {:?}", card_index, card_mask.mask);
+    
+        let card_str = StdDeck::card_to_string(card_index); // Convertit l'indice de la carte en sa représentation sous forme de chaîne de caractères
+        let is_excluded_by_any_pocket = pockets.iter().any(|p| (p.mask & card_mask.mask) != 0);
+    
+        if is_excluded_by_any_pocket {
+            println!("{} exclue par au moins une poche des joueurs", card_str);
+        } else {
+            println!("{} n'est exclue par aucune poche des joueurs", card_str);
+        }
+    }
+    
+    
+    
+
     // Construisez un nouveau deck en excluant les cartes mortes, celles sur la table et dans les mains des joueurs.
     let deck = (0..STD_DECK_N_CARDS)
-        .filter_map(|i| {
-            let card_mask = StdDeckCardMask::get_mask(i);
-            if (board.mask & card_mask.mask) == 0 && (dead.mask & card_mask.mask) == 0 && !pockets.iter().any(|p| p.mask & card_mask.mask != 0) {
-                Some(*card_mask)
-            } else {
-                None
-            }
-        })
-        .collect::<Vec<StdDeckCardMask>>();
+    .filter_map(|i| {
+        let card_mask = StdDeckCardMask::get_mask(i);
+        let excluded_by_board = (board.mask & card_mask.mask) != 0;
+        let excluded_by_dead = (dead.mask & card_mask.mask) != 0;
+        let excluded_by_pockets = pockets.iter().any(|p| (p.mask & card_mask.mask) != 0);
+    
+        if excluded_by_board {
+            println!("Carte {} exclue par le tableau", i);
+        }
+        if excluded_by_dead {
+            println!("Carte {} exclue par les cartes mortes", i);
+        }
+        if excluded_by_pockets {
+            println!("Carte {} exclue par les poches des joueurs", i);
+        }
+    
+        if !excluded_by_board && !excluded_by_dead && !excluded_by_pockets {
+            Some(card_mask.clone())
+        } else {
+            None
+        }
+    })
+    .collect::<Vec<StdDeckCardMask>>();
+
+    println!("Nombre de cartes dans le jeu: {}", deck.len());
 
     let num_cards_to_draw = 5 - nboard; // Calculer le nombre de cartes à tirer pour compléter le tableau à 5 cartes.
     println!("Nombre de cartes à tirer: {}", num_cards_to_draw);
@@ -2395,7 +2495,7 @@ mod tests {
         let nboard = 0; // Nombre de cartes déjà présentes sur le tableau (0 dans ce cas)
         for _ in 0..N_ITER {
             // Corrigez l'appel à `simulate_holdem_game` avec tous les arguments nécessaires
-            result.simulate_holdem_game(&[hand1, hand2], board, dead, npockets, nboard, N_ITER);
+            let _ = result.simulate_holdem_game(&[hand1, hand2], board, dead, npockets, nboard, N_ITER);
         }
 
         // Vérifier les résultats
@@ -2418,4 +2518,21 @@ mod tests {
         //assert_eq!(result.ntiehi[1], EXPECTED_TIE as u32, "Le nombre d'égalités ne correspond pas");
         println!("Le nombre d'égalités est : {}", result.ntiehi[1]);
     }
+
+    #[test]
+    fn test_mask_to_string() {
+        let card_masks = vec![
+            StdDeckCardMask { mask: 65536 }, // Exemple de masque
+            // Ajoutez d'autres masques ici avec leur représentation attendue
+        ];
+    
+        for card_mask in card_masks {
+            let card_str = card_mask.mask_to_string();
+            assert!(!card_str.is_empty(), "La représentation de la carte ne devrait pas être vide.");
+            // Vous pouvez ajouter des assertions plus spécifiques ici, par exemple :
+            // assert_eq!(card_str, "As de cœur", "La conversion de masque en chaîne est incorrecte.");
+            println!("Masque: {:?}, Chaîne: {}", card_mask, card_str);
+        }
+    }
+    
 }
