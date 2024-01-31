@@ -29,10 +29,10 @@ use std::error::Error;
 use std::fmt;
 use std::ops::BitOr;
 use std::ptr::NonNull;
-use rand::prelude::*;
-use std::collections::HashSet;
-use rand::{thread_rng, Rng};
-use std::any::Any;
+//use rand::prelude::*;
+//use std::collections::HashSet;
+use rand::thread_rng;
+//use std::any::Any;
 
 
 // Trait pour gérer les masques de cartes
@@ -851,22 +851,22 @@ fn deck_montecarlo_n_cards_d<F>(
 
     for _ in 0..num_iter {
         let mut used = dead_cards; // Utilisez directement le masque des cartes mortes
-        println!("Masque des cartes utilisées avec les dead_cards : {}", used.mask_to_string());
+        //println!("Masque des cartes utilisées avec les dead_cards : {}", used.mask_to_string());
         let mut cards_var = Vec::new(); // Vec pour stocker les cartes sélectionnées
-        println!("creation de cards_var : {:?}", cards_var);
+        //println!("creation de cards_var : {:?}", cards_var);
         while cards_var.len() < num_cards {
             if let Some(card) = deck.choose(&mut rng) {
                 if !card.mask_to_string().is_empty() && !used.overlaps(card) {
                     // Vérifiez si la carte n'est pas dans le masque des cartes utilisées
-                    println!("Carte tirée : {}", card.mask_to_string());
+                    //println!("Carte tirée : {}", card.mask_to_string());
                     used = used | card.clone(); // Utilisez l'opérateur BitOr pour ajouter la carte au masque des cartes utilisées
-                    println!("Masque des cartes utilisées : {}", used.mask_to_string());
-                    println!("Masque des cartes mortes : {}", dead_cards.mask_to_string());
+                    //println!("Masque des cartes utilisées : {}", used.mask_to_string());
+                    //println!("Masque des cartes mortes : {}", dead_cards.mask_to_string());
                     cards_var.push(card.clone());
                 }
             }
         }
-        println!("Cartes tirées : {:?}", cards_var);
+        //println!("Cartes tirées : {:?}", cards_var);
         action(cards_var);
     }
 }
@@ -1967,13 +1967,13 @@ pub fn simulate_holdem_game(
             });
 
             if excluded_by_board {
-                println!("Carte {} exclue par le tableau", current_card_str);
+                //println!("Carte {} exclue par le tableau", current_card_str);
             }
             if excluded_by_dead {
-                println!("Carte {} exclue par les cartes mortes", current_card_str);
+                //println!("Carte {} exclue par les cartes mortes", current_card_str);
             }
             if excluded_by_pockets {
-                println!("Carte {} exclue par les poches des joueurs", current_card_str);
+                //println!("Carte {} exclue par les poches des joueurs", current_card_str);
             }
 
             if !excluded_by_board && !excluded_by_dead && !excluded_by_pockets {
@@ -1984,12 +1984,12 @@ pub fn simulate_holdem_game(
         })
         .collect::<Vec<StdDeckCardMask>>();
 
-    println!("Nombre de cartes dans le jeu: {}", deck.len());
+    //println!("Nombre de cartes dans le jeu: {}", deck.len());
 
 
 
     let num_cards_to_draw = 5 - nboard; // Calculer le nombre de cartes à tirer pour compléter le tableau à 5 cartes.
-    println!("Nombre de cartes à tirer: {}", num_cards_to_draw);
+    //println!("Nombre de cartes à tirer: {}", num_cards_to_draw);
     let mut valid_iterations = 0;
 
     // Exécutez la simulation Monte Carlo pour un nombre défini d'itérations.
@@ -1997,15 +1997,15 @@ pub fn simulate_holdem_game(
     let _ = deck_montecarlo_n_cards_d(&deck, no_dead_cards, num_cards_to_draw, niter, |combo| {
     
         let mut complete_board = board;
-        println!("complete_board : {:?}", complete_board);
-        println!("Tirage : {:?}", combo);
+        //println!("complete_board : {:?}", complete_board);
+        //println!("Tirage : {:?}", combo);
         // Ajoutez les cartes tirées au tableau existant.
         for &card in combo.iter() {
             //complete_board = complete_board | *card;
             complete_board = complete_board | card.clone();
 
 
-            println!("Carte : {}", card.mask_to_string());
+            //println!("Carte : {}", card.mask_to_string());
         }
 
         // Assurez-vous que le tableau final contient exactement 5 cartes.
@@ -2014,21 +2014,21 @@ pub fn simulate_holdem_game(
             inner_loop_holdem(pockets, &complete_board, &StdDeckCardMask::new(), &mut hival, &mut loval);
 
             // Affichez les résultats de la simulation pour le débogage ou l'analyse.
-            println!("Simulation:");
-            for (i, pocket) in pockets.iter().enumerate() {
-                println!("Joueur {}: {}", i + 1, pocket.mask_to_string());
+            //println!("Simulation:");
+            for (_i, _pocket) in pockets.iter().enumerate() {
+                //println!("Joueur {}: {}", i + 1, pocket.mask_to_string());
             }
-            println!("Tableau: {}", complete_board.mask_to_string());
+            //println!("Tableau: {}", complete_board.mask_to_string());
 
             // Mettez à jour les statistiques pour chaque main et affichez le résultat.
             for i in 0..npockets {
                 self.update_statistics(i, hival[i], pockets, &complete_board, npockets);
-                println!("Résultat pour Joueur {}: {}", i + 1, if hival[i] > hival[1 - i] { "Gagne" } else if hival[i] < hival[1 - i] { "Perd" } else { "Égalité" });
+                //println!("Résultat pour Joueur {}: {}", i + 1, if hival[i] > hival[1 - i] { "Gagne" } else if hival[i] < hival[1 - i] { "Perd" } else { "Égalité" });
             }
             valid_iterations += 1;
         } else {
             // Si le tableau n'a pas exactement 5 cartes, signalez une erreur.
-            println!("Erreur: Le tableau ne contient pas 5 cartes après la combinaison. Nombre de cartes: {}", complete_board.num_cards());
+            //println!("Erreur: Le tableau ne contient pas 5 cartes après la combinaison. Nombre de cartes: {}", complete_board.num_cards());
             // Cette itération n'est pas valide; ne mettez pas à jour nsamples.
         }
     });

@@ -524,7 +524,7 @@ fn holdem_sample() {
     };
 
     // Simuler les 10000 itérations Monte Carlo
-    const N_ITER_MONTE_CARLO: usize = 100000;
+    const N_ITER_MONTE_CARLO: usize = 1700000;
     let nboard = 0; // Nombre de cartes déjà présentes sur le tableau (0 dans ce cas)
     let _ = result_monte_carlo.simulate_holdem_game(&[hand1, hand2], board, dead, npockets, nboard, N_ITER_MONTE_CARLO);
 
