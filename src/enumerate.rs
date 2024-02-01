@@ -1806,54 +1806,7 @@ impl EnumResult {
         Ok(())
     }
 
-    // pub fn simulate_holdem_game(
-    //     &mut self,
-    //     pockets: &[StdDeckCardMask],
-    //     board: StdDeckCardMask,
-    //     dead: StdDeckCardMask,
-    //     npockets: usize,
-    //     nboard: usize,
-    //     niter: usize,
-    // ) -> Result<(), EnumError> {
-    //     let mut rng = thread_rng();
 
-    //     // Création d'un deck complet moins les cartes déjà sur le board et les cartes mortes
-    //     let mut deck = (0..STD_DECK_N_CARDS)
-    //         .filter_map(|i| {
-    //             let card_mask = StdDeckCardMask::get_mask(i);
-    //             if (board.mask & card_mask.mask) == 0 && (dead.mask & card_mask.mask) == 0 {
-    //                 Some(card_mask)
-    //             } else {
-    //                 None
-    //             }
-    //         })
-    //         .cloned() // Clone chaque référence StdDeckCardMask pour créer une valeur StdDeckCardMask
-    //         .collect::<Vec<StdDeckCardMask>>();
-
-    //     let num_cards = 5 - nboard;
-    //     if num_cards > 0 {
-    //         // Simulation des tirages Monte Carlo
-    //         for _ in 0..niter {
-    //             deck.shuffle(&mut rng);
-
-    //             let mut monte_carlo_board = board.clone();
-    //             for card in deck.iter().take(num_cards) {
-    //                 monte_carlo_board = monte_carlo_board | card.clone();
-    //             }
-
-    //             // Évaluation des mains avec le tableau de simulation
-    //             self.evaluate_hands(pockets, &monte_carlo_board, npockets)?;
-    //         }
-    //     } else {
-    //         // Pas besoin de simulation, évaluer directement avec le tableau existant
-    //         self.evaluate_hands(pockets, &board, npockets)?;
-    //     }
-
-    //     // Mise à jour de nsamples pour refléter le nombre d'itérations effectuées
-    //     self.nsamples += niter as u32;
-
-    //     Ok(())
-    // }
 
 // Définissez une fonction pour simuler une partie de Hold'em Poker.
     pub fn simulate_holdem_game(
@@ -1874,83 +1827,6 @@ impl EnumResult {
         let mut hival: Vec<HandVal> = vec![HandVal::new(0, 0, 0, 0, 0, 0); npockets];
         let mut loval: Vec<LowHandVal> = vec![LowHandVal::new(0, 0, 0, 0, 0, 0); npockets];
 
-        // //test un deck complet
-        // let full_deck = (0..STD_DECK_N_CARDS)
-        //     .map(|i| StdDeckCardMask::get_mask(i).clone())
-        //     .collect::<Vec<StdDeckCardMask>>();
-        // println!("Longueur du deck complet: {}", full_deck.len());
-
-        // println!("Masque des cartes mortes: {:?}", dead.mask);
-        // println!("Masque des cartes sur le tableau: {:?}", board.mask);
-        // println!("Masques des poches des joueurs:");
-        // for (index, pocket) in pockets.iter().enumerate() {
-        //     println!("  Joueur {}: {:?}", index, pocket.mask); 
-        //     println!("  Joueur {}: {:?}", index, pocket.mask_to_string());       
-        // }
-        // pockets.iter().enumerate().for_each(|(index, p)| {
-        //     println!("Cartes de la poche du joueur {}: {}", index, p.mask_to_string());
-        // });
-        
-
-        // for card_index in 0..STD_DECK_N_CARDS {
-        //     let card_mask = StdDeckCardMask::get_mask(card_index);
-        //     println!("Masque pour la carte à l'indice {}: {:?}", card_index, card_mask.mask);
-        
-        //     let card_str = StdDeck::card_to_string(card_index); // Convertit l'indice de la carte en sa représentation sous forme de chaîne de caractères
-        //     //let is_excluded_by_any_pocket = pockets.iter().any(|p| (p.mask & card_mask.mask) != 0);
-        //     // let is_excluded_by_any_pocket = pockets.iter().any(|pocket| {
-        //     //     pocket.iter().any(|&pocket_card_mask| pocket_card_mask.mask == card_mask.mask)
-        //     // });   
-        //     // let is_excluded_by_any_pocket = pockets.iter().any(|pocket| {
-        //     //     // Décomposez le masque de la poche en cartes individuelles et vérifiez chacune
-        //     //     (0..STD_DECK_N_CARDS).any(|i| {
-        //     //         let pocket_card_mask = StdDeckCardMask::get_mask(i);
-        //     //         // Vérifiez si la carte actuelle est présente dans le masque de la poche
-        //     //         (pocket.mask & pocket_card_mask.mask) != 0 && (card_mask.mask & pocket_card_mask.mask) != 0
-        //     //     })
-        //     // });
-        //     // let is_excluded_by_any_pocket = pockets.iter().any(|pocket| {
-        //     //     let pocket_cards_str = pocket.mask_to_string(); // Convertit le masque de poche en chaîne de caractères
-        //     //     let card_str = card_mask.mask_to_string(); // Convertit le masque de la carte actuelle en chaîne de caractères
-        //     //     pocket_cards_str.contains(&card_str) // Vérifie si la chaîne de caractères de la poche contient la chaîne de caractères de la carte
-        //     // });
-        //     // let is_excluded_by_any_pocket = pockets.iter().any(|pocket| {
-        //     //     // Convertit le masque de la poche en une liste de chaînes représentant chaque carte
-        //     //     let pocket_cards_strs: Vec<String> = (0..STD_DECK_N_CARDS)
-        //     //         .filter_map(|i| {
-        //     //             let pocket_card_mask = StdDeckCardMask::get_mask(i);
-        //     //             if pocket.mask & pocket_card_mask.mask != 0 {
-        //     //                 Some(StdDeck::card_to_string(i))
-        //     //             } else {
-        //     //                 None
-        //     //             }
-        //     //         })
-        //     //         .collect();
-            
-        //     //     // Convertit le masque de la carte actuelle en sa représentation sous forme de chaîne
-        //     //     let card_str = StdDeck::card_to_string(card_index);
-            
-        //     //     // Vérifie si la représentation de la carte actuelle est contenue dans la liste des cartes de la poche
-        //     //     pocket_cards_strs.contains(&card_str)
-        //     // });
-        //     let is_excluded_by_any_pocket = pockets.iter().any(|pocket| {
-        //         let pocket_cards = pocket.mask_to_string(); // Obtenez la représentation en chaîne des cartes dans la poche
-        //         let current_card = StdDeck::card_to_string(card_index); // Obtenez la représentation en chaîne de la carte actuelle
-        //         pocket_cards.contains(&current_card) // Vérifiez si la poche contient la carte actuelle
-        //     });
-            
-        //     if is_excluded_by_any_pocket {
-        //         println!("{} exclue par au moins une poche des joueurs", card_str);
-        //     } else {
-        //         println!("{} n'est exclue par aucune poche des joueurs", card_str);
-        //     }
-        // }
-
-        
-        
-        
-
-        // Construisez un nouveau deck en excluant les cartes mortes, celles sur la table et dans les mains des joueurs.
         // Construisez un nouveau deck en excluant les cartes mortes, celles sur la table et dans les mains des joueurs.
         let deck = (0..STD_DECK_N_CARDS)
             .filter_map(|i| {
@@ -2025,8 +1901,8 @@ impl EnumResult {
                 // Mettez à jour les statistiques pour chaque main et affichez le résultat.
                 for i in 0..npockets {
                     self.update_statistics(i, hival[i], pockets, &complete_board, npockets);
-                    //println!("Statistiques pour le Joueur {}: {:#?}", i , hival[i]);
-                    //println!("Résultat pour Joueur {}: {}", i + 1, if hival[i] > hival[1 - i] { "Gagne" } else if hival[i] < hival[1 - i] { "Perd" } else { "Égalité" });
+                    println!("Statistiques pour le Joueur {}: {:#?}", i , hival[i]);
+                    println!("Résultat pour Joueur {}: {}", i + 1, if hival[i] > hival[1 - i] { "Gagne" } else if hival[i] < hival[1 - i] { "Perd" } else { "Égalité" });
                 }
                 valid_iterations += 1;
             } else {
@@ -2087,51 +1963,134 @@ impl EnumResult {
             })
             .collect::<Vec<StdDeckCardMask>>();
 
-        println!("Nombre de cartes dans le jeu: {}", deck.len());
+        //println!("Nombre de cartes dans le jeu: {}", deck.len());
     
     
         let num_cards_to_draw = 5 - board.num_cards(); // Assurez-vous que la méthode num_cards existe et fait ce que vous attendez
-
-        let mut enumerated_boards_count = 0;
+        //println!("Nombre de cartes à tirer: {}", num_cards_to_draw);
+        //let self.nsamples = 0;
         // Si le tableau est déjà complet, évaluez directement les mains
         if num_cards_to_draw == 0 {
             self.evaluate_hands(pockets, &board, npockets)?;
-            enumerated_boards_count = 1; 
+            self.nsamples = 1; 
         } else {
-            // Énumération de toutes les combinaisons possibles de cartes pour compléter le tableau
             enumerate_n_cards_d(&deck, &[], num_cards_to_draw, |combo| {
                 let mut complete_board = board;
                 for &card in combo.iter() {
-                    complete_board = complete_board | *card; // Assurez-vous que l'opérateur | est implémenté pour StdDeckCardMask et que card est déréférencé si nécessaire
+                    // Convertir le masque de carte en index de carte, en s'attendant à ce qu'une carte valide soit toujours présente
+                    let card_index = StdDeck::mask_to_index(card).expect("Card mask does not correspond to a valid card index");
+                    // Convertir l'index de la carte en sa représentation sous forme de chaîne de caractères
+                    let current_card_str = StdDeck::card_to_string(card_index);
+            
+                    if !board.mask_to_string().contains(&current_card_str) 
+                        && !dead.mask_to_string().contains(&current_card_str) 
+                        && !pockets.iter().any(|pocket| pocket.mask_to_string().contains(&current_card_str)) {
+                            complete_board = complete_board | *card;
+                    }
                 }
-    
-                // Évaluation des mains pour le tableau complet
+            
                 self.evaluate_hands(pockets, &complete_board, npockets).unwrap();
-                enumerated_boards_count += 1; 
+                self.nsamples += 1; 
             });
-        }
+            
+            
+            // Énumération de toutes les combinaisons possibles de cartes pour compléter le tableau
+    //         enumerate_n_cards_d(&deck, &[], num_cards_to_draw, |combo| {
+    //             let mut complete_board = board;
+    //             for &card in combo.iter() {
+    //                 complete_board = complete_board | *card; // Assurez-vous que l'opérateur | est implémenté pour StdDeckCardMask et que card est déréférencé si nécessaire
+    //             }
+    
+    //             // Évaluation des mains pour le tableau complet
+    //             self.evaluate_hands(pockets, &complete_board, npockets).unwrap();
+    //             self.nsamples += 1; 
+    //         });
+         }
         println!("Résultats Exhaustifs :");
-        println!(" {} enumerated boards",  enumerated_boards_count); // Affichage mis à jour    
+        println!(" {} enumerated boards",  self.nsamples); // Affichage mis à jour    
         Ok(())
     }
+// Énumération de toutes les combinaisons possibles de cartes pour compléter le tableau
+
+ 
     
 
 
+    // pub fn evaluate_hands(
+    //     &mut self,
+    //     pockets: &[StdDeckCardMask],
+    //     board: &StdDeckCardMask,
+    //     npockets: usize,
+    // ) -> Result<(), EnumError> {
+    //     // Initialisez le vecteur hival avec une taille égale au nombre de poches et des valeurs par défaut.
+    //     let mut hival: Vec<HandVal> = vec![HandVal::new(0, 0, 0, 0, 0, 0); npockets];
+    
+    //     for (i, pocket) in pockets.iter().enumerate().take(npockets) {
+    //         let hand = pocket.clone() | board.clone(); // Combinez les cartes en main avec le tableau
+    //         hival[i] = Eval::eval_n(&hand, 7); // Stockez la valeur évaluée à la position i du vecteur hival
+    
+    //         // Passez tous les arguments nécessaires à update_statistics
+    //         self.update_statistics(i, hival[i], pockets, board, npockets);
+    //         println!("Statistiques pour le Joueur {}: {:#?}", i + 1, hival[i]); // Ajoutez +1 pour ajuster l'affichage
+    //         println!("Résultat pour Joueur {}: {}", i + 2, if hival[i] > hival[1 - i] { "Gagne" } else if hival[i] < hival[1 - i] { "Perd" } else { "Égalité" }); // i + 2 semble incorrect, cela devrait être i + 1 si vous voulez ajuster l'indice pour l'affichage
+            
+    //     }
+    
+    //     Ok(())
+    // }
+   
     pub fn evaluate_hands(
         &mut self,
         pockets: &[StdDeckCardMask],
         board: &StdDeckCardMask,
         npockets: usize,
     ) -> Result<(), EnumError> {
-        for (i, pocket) in pockets.iter().enumerate().take(npockets) {
-            let hand = pocket.clone() | board.clone(); // Combinez les cartes en main avec le tableau
-            let hand_value = Eval::eval_n(&hand, 7); // Évaluez la main
-                                                     // Passez tous les arguments nécessaires à update_statistics
-            self.update_statistics(i, hand_value, pockets, board, npockets);
+        // Vérifiez que le nombre de poches correspond au nombre de joueurs.
+        if pockets.len() != npockets {
+            println!("Nombre de poches invalide"); //return Err(EnumError::InvalidInput); // Assurez-vous que EnumError::InvalidInput existe ou utilisez une erreur appropriée.
         }
+    
+        // Itérer sur chaque joueur et évaluer sa main.
+        for (i, pocket) in pockets.iter().enumerate() {
+            let hand = pocket.clone() | board.clone(); // Combinez les cartes en main avec le tableau.
+            let hand_value = Eval::eval_n(&hand, 7); // Évaluez la main.
+    
+            // Mettre à jour les statistiques pour chaque joueur.
+            self.update_statistics(i, hand_value, pockets, board, npockets);
+    
+            // Afficher les statistiques pour chaque joueur.
+            println!("Statistiques pour le Joueur {}: {:#?}", i + 1, hand_value.std_rules_hand_val_to_string());
+        }
+    
+        // Comparer les résultats des joueurs et déterminer le gagnant.
+        for i in 0..npockets {
+            let mut result = "Perd";
+            // Comparez la main de ce joueur à celle de tous les autres joueurs.
+            for j in 0..npockets {
+                if i != j {
+                    let hand_i = pockets[i].clone() | board.clone();
+                    println!("Joueur {}: {} - {}", i + 1, pockets[i].clone().mask_to_string(),board.clone().mask_to_string());
+                    let hand_j = pockets[j].clone() | board.clone();
 
+                    println!("Joueur {}: {} - {}", j + 1, pockets[j].clone().mask_to_string(),board.clone().mask_to_string());
+                    let value_i = Eval::eval_n(&hand_i, 7);
+                    let value_j = Eval::eval_n(&hand_j, 7);
+    
+                    if value_i > value_j {
+                        result = "Gagne";
+                        break; // Si le joueur actuel gagne contre n'importe quel joueur, arrêtez la comparaison.
+                    } else if value_i == value_j {
+                        result = "Égalité"; // Continuez la boucle pour s'assurer qu'il n'y a pas de perdants.
+                    }
+                }
+            }
+            println!("Résultat pour Joueur {}: {}", i + 1, result);
+        }
+    
         Ok(())
     }
+    
+    
 
     // Supposons que vous avez une fonction pour mettre à jour les statistiques de jeu
     pub fn update_statistics(
@@ -2284,47 +2243,7 @@ impl EnumResult {
         }
     }
 
-    // Méthode pour afficher les résultats d'une manière détaillée
-    // pub fn enum_result_print(&self, _pockets: &[StdDeckCardMask], _board: StdDeckCardMask) {
-    //     let gp = self.game.game_params(); // Assumant que Game implémente une méthode game_params qui retourne Option<GameParams>
-    //     if let Some(gp) = gp {
-    //         let width = gp.maxpocket * 3 - 1;
-    //         println!(
-    //             "{}: {} {} {}{}",
-    //             gp.name,
-    //             self.nsamples,
-    //             match self.sample_type {
-    //                 SampleType::Sample => "sampled",
-    //                 SampleType::Exhaustive => "enumerated",
-    //             },
-    //             if gp.maxboard > 0 { "board" } else { "outcome" },
-    //             if self.nsamples == 1 { "" } else { "s" }
-    //         );
 
-    //         // Affichage des résultats pour chaque joueur
-    //         for i in 0..self.nplayers as usize {
-    //             println!(
-    //                 "{:width$} {:7} {:6.2}   {:7} {:6.2}   {:7} {:6.2}     {:5.3}",
-    //                 "cards", // Remplacer par la représentation des cartes
-    //                 self.nwinhi[i],
-    //                 100.0 * self.nwinhi[i] as f64 / self.nsamples as f64,
-    //                 self.nlosehi[i],
-    //                 100.0 * self.nlosehi[i] as f64 / self.nsamples as f64,
-    //                 self.ntiehi[i],
-    //                 100.0 * self.ntiehi[i] as f64 / self.nsamples as f64,
-    //                 self.ev[i] / self.nsamples as f64,
-    //                 width = width as usize
-    //             );
-    //         }
-    //     } else {
-    //         println!("enumResultPrint: invalid game type");
-    //     }
-    // }
-    // Assumons l'existence d'une fonction pour convertir StdDeckCardMask en String.
-    // Cette fonction pourrait ressembler à quelque chose comme ceci :
-    // fn card_mask_to_string(mask: StdDeckCardMask) -> String {
-    //     // Convertir le masque de cartes en chaîne de caractères
-    // }
 
     pub fn enum_result_print(&self, pockets: &[StdDeckCardMask], board: StdDeckCardMask) {
         let gp = self.game.game_params(); // Supposons que `game_params` retourne `Option<GameParams>`
@@ -2343,10 +2262,11 @@ impl EnumResult {
                 if self.nsamples == 1 { "" } else { "s" }
             );
     
-            if !board.overlaps(&board) { 
+            if board.num_cards() > 0 {
                 print!(" containing {}", board.to_string_representation());
             }
             println!();
+            
     
             // Gestion des cas où il y a des pots high ou low séparément
             if gp.haslopot == 1 || gp.hashipot == 1 {

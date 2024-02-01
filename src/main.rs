@@ -415,7 +415,7 @@ use poker_eval_rs::t_jokercardmasks::JokerDeckCardMask;
 // }
 
 fn main() {
-    holdem_sample();
+    //holdem_sample();
     holdem_exhaustive();
     //test_all_deck_cards()
     //test_all_deck_cards_with_joker()

@@ -190,6 +190,16 @@ impl StdDeckCardMask {
 pub struct StdDeck;
 
 impl StdDeck {
+
+    // Convertit un masque de carte unique en un index de carte
+    pub fn mask_to_index(card_mask: &StdDeckCardMask) -> Option<usize> {
+        for (index, &mask) in STD_DECK_CARD_MASKS_TABLE.iter().enumerate() {
+            if mask.mask == card_mask.mask {
+                return Some(index);
+            }
+        }
+        None
+    }
     // Méthode pour obtenir le rang d'une carte
     pub fn rank(index: usize) -> usize {
         index % STD_DECK_RANK_COUNT
