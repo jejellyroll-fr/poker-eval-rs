@@ -416,7 +416,7 @@ use poker_eval_rs::t_jokercardmasks::JokerDeckCardMask;
 
 fn main() {
     holdem_sample();
-    //holdem_exhaustive();
+    holdem_exhaustive();
     //test_all_deck_cards()
     //test_all_deck_cards_with_joker()
 }
@@ -524,7 +524,7 @@ fn holdem_sample() {
     };
 
     // Simuler les 10000 itérations Monte Carlo
-    const N_ITER_MONTE_CARLO: usize = 1700000;
+    const N_ITER_MONTE_CARLO: usize = 44;
     let nboard = 0; // Nombre de cartes déjà présentes sur le tableau (0 dans ce cas)
     let _ = result_monte_carlo.simulate_holdem_game(&[hand1, hand2], board, dead, npockets, nboard, N_ITER_MONTE_CARLO);
 
@@ -541,9 +541,11 @@ fn holdem_exhaustive() {
     // Initialiser les mains et le tableau
     let pocket_str1 = "Ac7c";
     let pocket_str2 = "5s4s";
+    let board_r = "2cKdAsTd";
     let hand1 = StdDeck::string_to_mask(pocket_str1).unwrap().0;
     let hand2 = StdDeck::string_to_mask(pocket_str2).unwrap().0;
-    let board = StdDeckCardMask::new(); // Commencez avec un tableau vide
+    //let board = StdDeckCardMask::new(); // Commencez avec un tableau vide
+    let board = StdDeck::string_to_mask(board_r).unwrap().0;
     let dead = StdDeckCardMask::new(); // Aucune carte morte pour commencer
 
     let npockets = 2; // Puisque vous avez deux mains
