@@ -22,6 +22,7 @@ use crate::handval::HandVal;
 use crate::handval_low::{LowHandVal, LOW_HAND_VAL_NOTHING};
 use crate::t_cardmasks::StdDeckCardMask;
 use crate::t_jokercardmasks::JokerDeckCardMask;
+use crate::t_cardmasks::STD_DECK_CARD_MASKS_TABLE;
 
 use crate::eval::Eval;
 use rand::seq::SliceRandom;
@@ -585,38 +586,99 @@ where
         }
     }
 }
-// Fonction pour énumérer toutes les combinaisons possibles de `n_cards` cartes dans un deck, en excluant les dead card,
-// et appliquer une action donnée sur chaque combinaison valide
+// // Fonction pour énumérer toutes les combinaisons possibles de `n_cards` cartes dans un deck, en excluant les dead card,
+// // et appliquer une action donnée sur chaque combinaison valide
+// fn enumerate_n_cards_d<T, F>(deck: &[T], dead_cards: &[T], n_cards: usize, mut action: F)
+// where
+//     T: CardMask,
+//     F: FnMut(Vec<&T>),
+// {
+//     let mut indices = (0..n_cards).collect::<Vec<_>>();
+
+//     while !indices.is_empty() {
+//         if indices.last().unwrap() < &deck.len() {
+//             if indices.iter().all(|&i| {
+//                 !dead_cards
+//                     .iter()
+//                     .any(|dead_card| dead_card.mask() == deck[i].mask())
+//             }) {
+//                 let current_combination = indices.iter().map(|&i| &deck[i]).collect::<Vec<_>>();
+//                 println!("current_combination : {:?}", current_combination);
+//                 action(current_combination);
+//             }
+
+//             *indices.last_mut().unwrap() += 1;
+//         } else {
+//             indices.pop();
+//             if let Some(last) = indices.last_mut() {
+//                 *last += 1;
+//                 while indices.len() < n_cards {
+//                     indices.push(indices.last().unwrap() + 1);
+//                 }
+//             }
+//         }
+//     }
+// }
+
+// Énumère toutes les combinaisons de `n_cards` cartes dans un deck, excluant les dead cards, 
+// et applique une action donnée sur chaque combinaison valide.
 fn enumerate_n_cards_d<T, F>(deck: &[T], dead_cards: &[T], n_cards: usize, mut action: F)
 where
-    T: CardMask,
-    F: FnMut(Vec<&T>),
+    T: CardMask, // Les éléments du deck et des dead cards doivent implémenter `CardMask`.
+    F: FnMut(&[&T]), // `action` est une closure qui prend une référence vers une combinaison de cartes.
 {
-    let mut indices = (0..n_cards).collect::<Vec<_>>();
+    // Pré-calcul du masque de dead cards pour optimiser les vérifications d'exclusion
+    let dead_mask = dead_cards.iter().fold(0, |acc, card| acc | card.mask());
+    println!("deck : {:?}", deck);
+    println!("n_cards : {:?}", n_cards);
+    println!("deck number of cards : {:?}", deck.len());
+    println!("dead_mask : {:?}", dead_mask);
+    //println!("dead_mask number of cards : {:?}", dead_mask.len());
+    println!("dead_cards : {:?}", dead_cards);
+    println!("dead_cards number of cards : {:?}", dead_cards.len());
 
-    while !indices.is_empty() {
-        if indices.last().unwrap() < &deck.len() {
-            if indices.iter().all(|&i| {
-                !dead_cards
-                    .iter()
-                    .any(|dead_card| dead_card.mask() == deck[i].mask())
-            }) {
-                let current_combination = indices.iter().map(|&i| &deck[i]).collect::<Vec<_>>();
-                action(current_combination);
+
+    let mut indices = Vec::with_capacity(n_cards);
+    for i in 0..n_cards {
+        indices.push(i); // Initialise les indices pour la première combinaison
+    }
+
+    // Vérifie que la demande de combinaison est possible
+    if deck.len() - dead_cards.len() < n_cards {
+        println!("Erreur : demande de combinaison impossible avec les dead cards fournies.");
+        return;
+    }
+
+    // Utilise un vecteur pour stocker la combinaison actuelle et le réutilise pour chaque itération
+    let mut current_combination = Vec::with_capacity(n_cards);
+
+    while let Some(&last_index) = indices.last() {
+        if last_index < deck.len() {
+            current_combination.clear();
+            current_combination.extend(indices.iter().map(|&i| &deck[i]));
+
+            // Vérifie si la combinaison actuelle ne contient aucune dead card en utilisant le masque pré-calculé
+            if current_combination.iter().all(|&card| card.mask() & dead_mask == 0) {
+                action(&current_combination); // Applique `action` sur la combinaison valide
             }
 
-            *indices.last_mut().unwrap() += 1;
+            *indices.last_mut().unwrap() += 1; // Incrémente le dernier indice
         } else {
+            // Réajuste les indices pour la prochaine combinaison
             indices.pop();
-            if let Some(last) = indices.last_mut() {
-                *last += 1;
+            if !indices.is_empty() {
+                *indices.last_mut().unwrap() += 1;
                 while indices.len() < n_cards {
-                    indices.push(indices.last().unwrap() + 1);
+                    indices.push(*indices.last().unwrap() + 1);
                 }
             }
         }
+        println!("current_combination : {:?}", current_combination);
     }
+    println!("Fin de l'enumeration des combinaisons.");
+    
 }
+
 
 // Fonction pour énumérer toutes les combinaisons possibles de `n_cards` cartes dans un deck
 // et appliquer une action donnée sur chaque combinaison
@@ -1928,42 +1990,26 @@ impl EnumResult {
         dead: StdDeckCardMask,
         npockets: usize,
     ) -> Result<(), EnumError> {
-        // Construisez un nouveau deck en excluant les cartes mortes, celles sur la table et dans les mains des joueurs.
-        let deck = (0..STD_DECK_N_CARDS)
-            .filter_map(|i| {
-                let card_mask = StdDeckCardMask::get_mask(i);
-                let current_card_str = StdDeck::card_to_string(i); // Convertit l'indice de la carte actuelle en sa représentation sous forme de chaîne de caractères
+            // Initialisation du masque total d'exclusion
+            let mut exclusion_mask = StdDeckCardMask::new();
+            println!("exclusion_mask = {:b}", exclusion_mask.mask);
+            exclusion_mask.or(&board); // Inclure les cartes du tableau dans le masque d'exclusion
+            println!("exclusion_mask = {:b}", exclusion_mask.mask);
+            println!("excluded_cards = {}",  exclusion_mask.mask_to_string());
+            exclusion_mask.or(&dead); // Inclure les cartes mortes dans le masque d'exclusion
+            for pocket in pockets {
+                exclusion_mask.or(pocket); // Inclure les cartes dans les poches des joueurs dans le masque d'exclusion
+            }
 
-                // Utilisez la représentation en chaîne pour vérifier l'exclusion par le tableau
-                let excluded_by_board = board.mask_to_string().contains(&current_card_str);
+            // Construire le deck en filtrant les cartes non exclues
+            let deck = STD_DECK_CARD_MASKS_TABLE.iter()
+                .filter(|&card_mask| !exclusion_mask.card_is_set(StdDeck::mask_to_index(card_mask).unwrap()))
+                .cloned()
+                .collect::<Vec<StdDeckCardMask>>();
+            println!("deck_mask = {:b}", deck.iter().map(|card_mask| card_mask.mask).sum::<u64>());
+            println!("deck = {:?}", deck.iter().map(|card_mask| card_mask.mask_to_string()).collect::<Vec<String>>());
+            println!("Nombre de cartes dans le jeu: {}", deck.len());
 
-                // Utilisez la représentation en chaîne pour vérifier l'exclusion par les cartes mortes
-                let excluded_by_dead = dead.mask_to_string().contains(&current_card_str);
-
-                // Utilisez la représentation en chaîne pour vérifier l'exclusion par les poches des joueurs
-                let excluded_by_pockets = pockets.iter().any(|pocket| {
-                    pocket.mask_to_string().contains(&current_card_str) // Vérifie si la chaîne représentant les cartes de la poche contient la chaîne représentant la carte actuelle
-                });
-
-                if excluded_by_board {
-                    //println!("Carte {} exclue par le tableau", current_card_str);
-                }
-                if excluded_by_dead {
-                    //println!("Carte {} exclue par les cartes mortes", current_card_str);
-                }
-                if excluded_by_pockets {
-                    //println!("Carte {} exclue par les poches des joueurs", current_card_str);
-                }
-
-                if !excluded_by_board && !excluded_by_dead && !excluded_by_pockets {
-                    Some(card_mask.clone())
-                } else {
-                    None
-                }
-            })
-            .collect::<Vec<StdDeckCardMask>>();
-
-        //println!("Nombre de cartes dans le jeu: {}", deck.len());
     
     
         let num_cards_to_draw = 5 - board.num_cards(); // Assurez-vous que la méthode num_cards existe et fait ce que vous attendez

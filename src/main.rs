@@ -15,6 +15,7 @@ use poker_eval_rs::t_cardmasks::StdDeckCardMask;
 use poker_eval_rs::deck_joker::JokerDeck;
 use poker_eval_rs::t_jokercardmasks::JokerDeckCardMask;
 
+
 // fn main() {
 //     let hands = vec![
 //         "2h4d5s6h7d",
@@ -542,12 +543,27 @@ fn holdem_exhaustive() {
     let pocket_str1 = "Ac7c";
     let pocket_str2 = "5s4s";
     let board_r = "2cKdAsTd";
+
+
+  
     let hand1 = StdDeck::string_to_mask(pocket_str1).unwrap().0;
+    println!("hand1 = {:b}", hand1.mask);
+    let hand1_string = hand1.mask_to_string();
+    println!("hand1_string = {}", hand1_string);
+
     let hand2 = StdDeck::string_to_mask(pocket_str2).unwrap().0;
+    println!("hand2 = {:b}", hand2.mask);
+    let hand2_string = hand2.mask_to_string();
+    println!("hand2_string = {}", hand2_string);
     //let board = StdDeckCardMask::new(); // Commencez avec un tableau vide
     let board = StdDeck::string_to_mask(board_r).unwrap().0;
+    println!("board = {:b}", board.mask);
+    let board_string = board.mask_to_string();
+    println!("board_string = {}", board_string);
     let dead = StdDeckCardMask::new(); // Aucune carte morte pour commencer
-
+    println!("dead = {:b}", dead.mask);
+    let dead_string = dead.mask_to_string();
+    println!("dead_string = {}", dead_string);
     let npockets = 2; // Puisque vous avez deux mains
 
 

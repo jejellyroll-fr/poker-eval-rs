@@ -1,0 +1,414 @@
+Nombre de cartes dans le jeu: 44
+deck : [StdDeckCardMask { mask: 281474976710656 }, StdDeckCardMask { mask: 562949953421312 }, StdDeckCardMask { mask: 1125899906842624 }, StdDeckCardMask { mask: 2251799813685248 }, StdDeckCardMask { mask: 4503599627370496 }, StdDeckCardMask { mask: 9007199254740992 }, StdDeckCardMask { mask: 18014398509481984 }, StdDeckCardMask { mask: 36028797018963968 }, StdDeckCardMask { mask: 72057594037927936 }, StdDeckCardMask { mask: 144115188075855872 }, StdDeckCardMask { mask: 288230376151711744 }, StdDeckCardMask { mask: 576460752303423488 }, StdDeckCardMask { mask: 1152921504606846976 }, StdDeckCardMask { mask: 4294967296 }, StdDeckCardMask { mask: 8589934592 }, StdDeckCardMask { mask: 17179869184 }, StdDeckCardMask { mask: 34359738368 }, StdDeckCardMask { mask: 68719476736 }, StdDeckCardMask { mask: 137438953472 }, StdDeckCardMask { mask: 274877906944 }, StdDeckCardMask { mask: 549755813888 }, StdDeckCardMask { mask: 2199023255552 }, StdDeckCardMask { mask: 4398046511104 }, StdDeckCardMask { mask: 17592186044416 }, StdDeckCardMask { mask: 131072 }, StdDeckCardMask { mask: 262144 }, StdDeckCardMask { mask: 524288 }, StdDeckCardMask { mask: 1048576 }, StdDeckCardMask { mask: 4194304 }, StdDeckCardMask { mask: 8388608 }, StdDeckCardMask { mask: 16777216 }, StdDeckCardMask { mask: 33554432 }, StdDeckCardMask { mask: 67108864 }, StdDeckCardMask { mask: 134217728 }, StdDeckCardMask { mask: 1 }, StdDeckCardMask { mask: 2 }, StdDeckCardMask { mask: 16 }, StdDeckCardMask { mask: 32 }, StdDeckCardMask { mask: 64 }, StdDeckCardMask { mask: 128 }, StdDeckCardMask { mask: 256 }, StdDeckCardMask { mask: 512 }, StdDeckCardMask { mask: 1024 }, StdDeckCardMask { mask: 2048 }]
+n_cards : 1
+deck number of cards : 44
+dead_mask : 0
+dead_cards : []
+dead_cards number of cards : 0
+Statistiques pour le Joueur 1: "OnePair ( A K J T)"
+Statistiques pour le Joueur 2: "NoPair ( A K J T 5)"
+Joueur 1: 7c Ac - Td Kd 2c Js As
+Joueur 2: 4s 5s - Td Kd 2c Js As
+Résultat pour Joueur 1: Gagne
+Joueur 2: 4s 5s - Td Kd 2c Js As
+Joueur 1: 7c Ac - Td Kd 2c Js As
+Résultat pour Joueur 2: Perd
+current_combination : [StdDeckCardMask { mask: 281474976710656 }]
+Statistiques pour le Joueur 1: "OnePair ( A K Q T)"
+Statistiques pour le Joueur 2: "NoPair ( A K Q T 5)"
+Joueur 1: 7c Ac - Td Kd 2c Qs As
+Joueur 2: 4s 5s - Td Kd 2c Qs As
+Résultat pour Joueur 1: Gagne
+Joueur 2: 4s 5s - Td Kd 2c Qs As
+Joueur 1: 7c Ac - Td Kd 2c Qs As
+Résultat pour Joueur 2: Perd
+current_combination : [StdDeckCardMask { mask: 562949953421312 }]
+Statistiques pour le Joueur 1: "TwoPair ( A K T)"
+Statistiques pour le Joueur 2: "OnePair ( K A T 5)"
+Joueur 1: 7c Ac - Td Kd 2c Ks As
+Joueur 2: 4s 5s - Td Kd 2c Ks As
+Résultat pour Joueur 1: Gagne
+Joueur 2: 4s 5s - Td Kd 2c Ks As
+Joueur 1: 7c Ac - Td Kd 2c Ks As
+Résultat pour Joueur 2: Perd
+current_combination : [StdDeckCardMask { mask: 1125899906842624 }]
+Statistiques pour le Joueur 1: "TwoPair ( A 2 K)"
+Statistiques pour le Joueur 2: "OnePair ( 2 A K T)"
+Joueur 1: 7c Ac - Td Kd 2c As
+Joueur 2: 4s 5s - Td Kd 2c As
+Résultat pour Joueur 1: Gagne
+Joueur 2: 4s 5s - Td Kd 2c As
+Joueur 1: 7c Ac - Td Kd 2c As
+Résultat pour Joueur 2: Perd
+current_combination : [StdDeckCardMask { mask: 2251799813685248 }]
+Statistiques pour le Joueur 1: "TwoPair ( A 2 K)"
+Statistiques pour le Joueur 2: "OnePair ( 2 A K T)"
+Joueur 1: 7c Ac - Td Kd 2c As
+Joueur 2: 4s 5s - Td Kd 2c As
+Résultat pour Joueur 1: Gagne
+Joueur 2: 4s 5s - Td Kd 2c As
+Joueur 1: 7c Ac - Td Kd 2c As
+Résultat pour Joueur 2: Perd
+current_combination : [StdDeckCardMask { mask: 4503599627370496 }]
+Statistiques pour le Joueur 1: "TwoPair ( A 2 K)"
+Statistiques pour le Joueur 2: "OnePair ( 2 A K T)"
+Joueur 1: 7c Ac - Td Kd 2c As
+Joueur 2: 4s 5s - Td Kd 2c As
+Résultat pour Joueur 1: Gagne
+Joueur 2: 4s 5s - Td Kd 2c As
+Joueur 1: 7c Ac - Td Kd 2c As
+Résultat pour Joueur 2: Perd
+current_combination : [StdDeckCardMask { mask: 9007199254740992 }]
+Statistiques pour le Joueur 1: "TwoPair ( A 2 K)"
+Statistiques pour le Joueur 2: "OnePair ( 2 A K T)"
+Joueur 1: 7c Ac - Td Kd 2c As
+Joueur 2: 4s 5s - Td Kd 2c As
+Résultat pour Joueur 1: Gagne
+Joueur 2: 4s 5s - Td Kd 2c As
+Joueur 1: 7c Ac - Td Kd 2c As
+Résultat pour Joueur 2: Perd
+current_combination : [StdDeckCardMask { mask: 18014398509481984 }]
+Statistiques pour le Joueur 1: "TwoPair ( A 2 K)"
+Statistiques pour le Joueur 2: "OnePair ( 2 A K T)"
+Joueur 1: 7c Ac - Td Kd 2c As
+Joueur 2: 4s 5s - Td Kd 2c As
+Résultat pour Joueur 1: Gagne
+Joueur 2: 4s 5s - Td Kd 2c As
+Joueur 1: 7c Ac - Td Kd 2c As
+Résultat pour Joueur 2: Perd
+current_combination : [StdDeckCardMask { mask: 36028797018963968 }]
+Statistiques pour le Joueur 1: "TwoPair ( A 2 K)"
+Statistiques pour le Joueur 2: "OnePair ( 2 A K T)"
+Joueur 1: 7c Ac - Td Kd 2c As
+Joueur 2: 4s 5s - Td Kd 2c As
+Résultat pour Joueur 1: Gagne
+Joueur 2: 4s 5s - Td Kd 2c As
+Joueur 1: 7c Ac - Td Kd 2c As
+Résultat pour Joueur 2: Perd
+current_combination : [StdDeckCardMask { mask: 72057594037927936 }]
+Statistiques pour le Joueur 1: "TwoPair ( A 2 K)"
+Statistiques pour le Joueur 2: "OnePair ( 2 A K T)"
+Joueur 1: 7c Ac - Td Kd 2c As
+Joueur 2: 4s 5s - Td Kd 2c As
+Résultat pour Joueur 1: Gagne
+Joueur 2: 4s 5s - Td Kd 2c As
+Joueur 1: 7c Ac - Td Kd 2c As
+Résultat pour Joueur 2: Perd
+current_combination : [StdDeckCardMask { mask: 144115188075855872 }]
+Statistiques pour le Joueur 1: "TwoPair ( A 2 K)"
+Statistiques pour le Joueur 2: "OnePair ( 2 A K T)"
+Joueur 1: 7c Ac - Td Kd 2c As
+Joueur 2: 4s 5s - Td Kd 2c As
+Résultat pour Joueur 1: Gagne
+Joueur 2: 4s 5s - Td Kd 2c As
+Joueur 1: 7c Ac - Td Kd 2c As
+Résultat pour Joueur 2: Perd
+current_combination : [StdDeckCardMask { mask: 288230376151711744 }]
+Statistiques pour le Joueur 1: "TwoPair ( A 2 K)"
+Statistiques pour le Joueur 2: "OnePair ( 2 A K T)"
+Joueur 1: 7c Ac - Td Kd 2c As
+Joueur 2: 4s 5s - Td Kd 2c As
+Résultat pour Joueur 1: Gagne
+Joueur 2: 4s 5s - Td Kd 2c As
+Joueur 1: 7c Ac - Td Kd 2c As
+Résultat pour Joueur 2: Perd
+current_combination : [StdDeckCardMask { mask: 576460752303423488 }]
+Statistiques pour le Joueur 1: "TwoPair ( A 2 K)"
+Statistiques pour le Joueur 2: "OnePair ( 2 A K T)"
+Joueur 1: 7c Ac - Td Kd 2c As
+Joueur 2: 4s 5s - Td Kd 2c As
+Résultat pour Joueur 1: Gagne
+Joueur 2: 4s 5s - Td Kd 2c As
+Joueur 1: 7c Ac - Td Kd 2c As
+Résultat pour Joueur 2: Perd
+current_combination : [StdDeckCardMask { mask: 1152921504606846976 }]
+Statistiques pour le Joueur 1: "OnePair ( A K T 8)"
+Statistiques pour le Joueur 2: "NoPair ( A K T 8 5)"
+Joueur 1: 7c Ac - Td Kd 2c 8c As
+Joueur 2: 4s 5s - Td Kd 2c 8c As
+Résultat pour Joueur 1: Gagne
+Joueur 2: 4s 5s - Td Kd 2c 8c As
+Joueur 1: 7c Ac - Td Kd 2c 8c As
+Résultat pour Joueur 2: Perd
+current_combination : [StdDeckCardMask { mask: 4294967296 }]
+Statistiques pour le Joueur 1: "OnePair ( A K T 9)"
+Statistiques pour le Joueur 2: "NoPair ( A K T 9 5)"
+Joueur 1: 7c Ac - Td Kd 2c 9c As
+Joueur 2: 4s 5s - Td Kd 2c 9c As
+Résultat pour Joueur 1: Gagne
+Joueur 2: 4s 5s - Td Kd 2c 9c As
+Joueur 1: 7c Ac - Td Kd 2c 9c As
+Résultat pour Joueur 2: Perd
+current_combination : [StdDeckCardMask { mask: 8589934592 }]
+Statistiques pour le Joueur 1: "TwoPair ( A T K)"
+Statistiques pour le Joueur 2: "OnePair ( T A K 5)"
+Joueur 1: 7c Ac - Td Kd 2c Tc As
+Joueur 2: 4s 5s - Td Kd 2c Tc As
+Résultat pour Joueur 1: Gagne
+Joueur 2: 4s 5s - Td Kd 2c Tc As
+Joueur 1: 7c Ac - Td Kd 2c Tc As
+Résultat pour Joueur 2: Perd
+current_combination : [StdDeckCardMask { mask: 17179869184 }]
+Statistiques pour le Joueur 1: "OnePair ( A K J T)"
+Statistiques pour le Joueur 2: "NoPair ( A K J T 5)"
+Joueur 1: 7c Ac - Td Kd 2c Jc As
+Joueur 2: 4s 5s - Td Kd 2c Jc As
+Résultat pour Joueur 1: Gagne
+Joueur 2: 4s 5s - Td Kd 2c Jc As
+Joueur 1: 7c Ac - Td Kd 2c Jc As
+Résultat pour Joueur 2: Perd
+current_combination : [StdDeckCardMask { mask: 34359738368 }]
+Statistiques pour le Joueur 1: "OnePair ( A K Q T)"
+Statistiques pour le Joueur 2: "NoPair ( A K Q T 5)"
+Joueur 1: 7c Ac - Td Kd 2c Qc As
+Joueur 2: 4s 5s - Td Kd 2c Qc As
+Résultat pour Joueur 1: Gagne
+Joueur 2: 4s 5s - Td Kd 2c Qc As
+Joueur 1: 7c Ac - Td Kd 2c Qc As
+Résultat pour Joueur 2: Perd
+current_combination : [StdDeckCardMask { mask: 68719476736 }]
+Statistiques pour le Joueur 1: "TwoPair ( A K T)"
+Statistiques pour le Joueur 2: "OnePair ( K A T 5)"
+Joueur 1: 7c Ac - Td Kd 2c Kc As
+Joueur 2: 4s 5s - Td Kd 2c Kc As
+Résultat pour Joueur 1: Gagne
+Joueur 2: 4s 5s - Td Kd 2c Kc As
+Joueur 1: 7c Ac - Td Kd 2c Kc As
+Résultat pour Joueur 2: Perd
+current_combination : [StdDeckCardMask { mask: 137438953472 }]
+Statistiques pour le Joueur 1: "TwoPair ( A 2 K)"
+Statistiques pour le Joueur 2: "OnePair ( A K T 5)"
+Joueur 1: 7c Ac - Td Kd 2c Ac As
+Joueur 2: 4s 5s - Td Kd 2c Ac As
+Résultat pour Joueur 1: Gagne
+Joueur 2: 4s 5s - Td Kd 2c Ac As
+Joueur 1: 7c Ac - Td Kd 2c Ac As
+Résultat pour Joueur 2: Perd
+current_combination : [StdDeckCardMask { mask: 274877906944 }]
+Statistiques pour le Joueur 1: "TwoPair ( A 2 K)"
+Statistiques pour le Joueur 2: "OnePair ( 2 A K T)"
+Joueur 1: 7c Ac - Td Kd 2c 2s As
+Joueur 2: 4s 5s - Td Kd 2c 2s As
+Résultat pour Joueur 1: Gagne
+Joueur 2: 4s 5s - Td Kd 2c 2s As
+Joueur 1: 7c Ac - Td Kd 2c 2s As
+Résultat pour Joueur 2: Perd
+current_combination : [StdDeckCardMask { mask: 549755813888 }]
+Statistiques pour le Joueur 1: "OnePair ( A K T 7)"
+Statistiques pour le Joueur 2: "OnePair ( 2 A K T)"
+Joueur 1: 7c Ac - Td Kd 2c 4s As
+Joueur 2: 4s 5s - Td Kd 2c 4s As
+Résultat pour Joueur 1: Gagne
+Joueur 2: 4s 5s - Td Kd 2c 4s As
+Joueur 1: 7c Ac - Td Kd 2c 4s As
+Résultat pour Joueur 2: Perd
+current_combination : [StdDeckCardMask { mask: 2199023255552 }]
+Statistiques pour le Joueur 1: "OnePair ( A K T 7)"
+Statistiques pour le Joueur 2: "OnePair ( 2 A K T)"
+Joueur 1: 7c Ac - Td Kd 2c 5s As
+Joueur 2: 4s 5s - Td Kd 2c 5s As
+Résultat pour Joueur 1: Gagne
+Joueur 2: 4s 5s - Td Kd 2c 5s As
+Joueur 1: 7c Ac - Td Kd 2c 5s As
+Résultat pour Joueur 2: Perd
+current_combination : [StdDeckCardMask { mask: 4398046511104 }]
+Statistiques pour le Joueur 1: "TwoPair ( A 7 K)"
+Statistiques pour le Joueur 2: "NoPair ( A K T 7 5)"
+Joueur 1: 7c Ac - Td Kd 2c 7s As
+Joueur 2: 4s 5s - Td Kd 2c 7s As
+Résultat pour Joueur 1: Gagne
+Joueur 2: 4s 5s - Td Kd 2c 7s As
+Joueur 1: 7c Ac - Td Kd 2c 7s As
+Résultat pour Joueur 2: Perd
+current_combination : [StdDeckCardMask { mask: 17592186044416 }]
+Statistiques pour le Joueur 1: "OnePair ( A K T 7)"
+Statistiques pour le Joueur 2: "NoPair ( A K T 6 5)"
+Joueur 1: 7c Ac - 6d Td Kd 2c As
+Joueur 2: 4s 5s - 6d Td Kd 2c As
+Résultat pour Joueur 1: Gagne
+Joueur 2: 4s 5s - 6d Td Kd 2c As
+Joueur 1: 7c Ac - 6d Td Kd 2c As
+Résultat pour Joueur 2: Perd
+current_combination : [StdDeckCardMask { mask: 131072 }]
+Statistiques pour le Joueur 1: "TwoPair ( A 7 K)"
+Statistiques pour le Joueur 2: "NoPair ( A K T 7 5)"
+Joueur 1: 7c Ac - 7d Td Kd 2c As
+Joueur 2: 4s 5s - 7d Td Kd 2c As
+Résultat pour Joueur 1: Gagne
+Joueur 2: 4s 5s - 7d Td Kd 2c As
+Joueur 1: 7c Ac - 7d Td Kd 2c As
+Résultat pour Joueur 2: Perd
+current_combination : [StdDeckCardMask { mask: 262144 }]
+Statistiques pour le Joueur 1: "OnePair ( A K T 8)"
+Statistiques pour le Joueur 2: "NoPair ( A K T 8 5)"
+Joueur 1: 7c Ac - 8d Td Kd 2c As
+Joueur 2: 4s 5s - 8d Td Kd 2c As
+Résultat pour Joueur 1: Gagne
+Joueur 2: 4s 5s - 8d Td Kd 2c As
+Joueur 1: 7c Ac - 8d Td Kd 2c As
+Résultat pour Joueur 2: Perd
+current_combination : [StdDeckCardMask { mask: 524288 }]
+Statistiques pour le Joueur 1: "OnePair ( A K T 9)"
+Statistiques pour le Joueur 2: "NoPair ( A K T 9 5)"
+Joueur 1: 7c Ac - 9d Td Kd 2c As
+Joueur 2: 4s 5s - 9d Td Kd 2c As
+Résultat pour Joueur 1: Gagne
+Joueur 2: 4s 5s - 9d Td Kd 2c As
+Joueur 1: 7c Ac - 9d Td Kd 2c As
+Résultat pour Joueur 2: Perd
+current_combination : [StdDeckCardMask { mask: 1048576 }]
+Statistiques pour le Joueur 1: "OnePair ( A K J T)"
+Statistiques pour le Joueur 2: "NoPair ( A K J T 5)"
+Joueur 1: 7c Ac - Td Jd Kd 2c As
+Joueur 2: 4s 5s - Td Jd Kd 2c As
+Résultat pour Joueur 1: Gagne
+Joueur 2: 4s 5s - Td Jd Kd 2c As
+Joueur 1: 7c Ac - Td Jd Kd 2c As
+Résultat pour Joueur 2: Perd
+current_combination : [StdDeckCardMask { mask: 4194304 }]
+Statistiques pour le Joueur 1: "OnePair ( A K Q T)"
+Statistiques pour le Joueur 2: "NoPair ( A K Q T 5)"
+Joueur 1: 7c Ac - Td Qd Kd 2c As
+Joueur 2: 4s 5s - Td Qd Kd 2c As
+Résultat pour Joueur 1: Gagne
+Joueur 2: 4s 5s - Td Qd Kd 2c As
+Joueur 1: 7c Ac - Td Qd Kd 2c As
+Résultat pour Joueur 2: Perd
+current_combination : [StdDeckCardMask { mask: 8388608 }]
+Statistiques pour le Joueur 1: "TwoPair ( A 2 K)"
+Statistiques pour le Joueur 2: "OnePair ( 2 A K T)"
+Joueur 1: 7c Ac - Td Kd 2c As
+Joueur 2: 4s 5s - Td Kd 2c As
+Résultat pour Joueur 1: Gagne
+Joueur 2: 4s 5s - Td Kd 2c As
+Joueur 1: 7c Ac - Td Kd 2c As
+Résultat pour Joueur 2: Perd
+current_combination : [StdDeckCardMask { mask: 16777216 }]
+Statistiques pour le Joueur 1: "Trips ( A K T)"
+Statistiques pour le Joueur 2: "OnePair ( A K T 5)"
+Joueur 1: 7c Ac - Td Kd Ad 2c As
+Joueur 2: 4s 5s - Td Kd Ad 2c As
+Résultat pour Joueur 1: Gagne
+Joueur 2: 4s 5s - Td Kd Ad 2c As
+Joueur 1: 7c Ac - Td Kd Ad 2c As
+Résultat pour Joueur 2: Perd
+current_combination : [StdDeckCardMask { mask: 33554432 }]
+Statistiques pour le Joueur 1: "TwoPair ( A 2 K)"
+Statistiques pour le Joueur 2: "OnePair ( 2 A K T)"
+Joueur 1: 7c Ac - Td Kd 2c As
+Joueur 2: 4s 5s - Td Kd 2c As
+Résultat pour Joueur 1: Gagne
+Joueur 2: 4s 5s - Td Kd 2c As
+Joueur 1: 7c Ac - Td Kd 2c As
+Résultat pour Joueur 2: Perd
+current_combination : [StdDeckCardMask { mask: 67108864 }]
+Statistiques pour le Joueur 1: "OnePair ( A K T 7)"
+Statistiques pour le Joueur 2: "Straight ( 5)"
+Joueur 1: 7c Ac - Td Kd 2c 3c As
+Joueur 2: 4s 5s - Td Kd 2c 3c As
+Résultat pour Joueur 1: Perd
+Joueur 2: 4s 5s - Td Kd 2c 3c As
+Joueur 1: 7c Ac - Td Kd 2c 3c As
+Résultat pour Joueur 2: Gagne
+current_combination : [StdDeckCardMask { mask: 134217728 }]
+Statistiques pour le Joueur 1: "TwoPair ( A 2 K)"
+Statistiques pour le Joueur 2: "OnePair ( 2 A K T)"
+Joueur 1: 7c Ac - 2h Td Kd 2c As
+Joueur 2: 4s 5s - 2h Td Kd 2c As
+Résultat pour Joueur 1: Gagne
+Joueur 2: 4s 5s - 2h Td Kd 2c As
+Joueur 1: 7c Ac - 2h Td Kd 2c As
+Résultat pour Joueur 2: Perd
+current_combination : [StdDeckCardMask { mask: 1 }]
+Statistiques pour le Joueur 1: "OnePair ( A K T 7)"
+Statistiques pour le Joueur 2: "Straight ( 5)"
+Joueur 1: 7c Ac - 3h Td Kd 2c As
+Joueur 2: 4s 5s - 3h Td Kd 2c As
+Résultat pour Joueur 1: Perd
+Joueur 2: 4s 5s - 3h Td Kd 2c As
+Joueur 1: 7c Ac - 3h Td Kd 2c As
+Résultat pour Joueur 2: Gagne
+current_combination : [StdDeckCardMask { mask: 2 }]
+Statistiques pour le Joueur 1: "OnePair ( A K T 7)"
+Statistiques pour le Joueur 2: "NoPair ( A K T 6 5)"
+Joueur 1: 7c Ac - 6h Td Kd 2c As
+Joueur 2: 4s 5s - 6h Td Kd 2c As
+Résultat pour Joueur 1: Gagne
+Joueur 2: 4s 5s - 6h Td Kd 2c As
+Joueur 1: 7c Ac - 6h Td Kd 2c As
+Résultat pour Joueur 2: Perd
+current_combination : [StdDeckCardMask { mask: 16 }]
+Statistiques pour le Joueur 1: "TwoPair ( A 7 K)"
+Statistiques pour le Joueur 2: "NoPair ( A K T 7 5)"
+Joueur 1: 7c Ac - 7h Td Kd 2c As
+Joueur 2: 4s 5s - 7h Td Kd 2c As
+Résultat pour Joueur 1: Gagne
+Joueur 2: 4s 5s - 7h Td Kd 2c As
+Joueur 1: 7c Ac - 7h Td Kd 2c As
+Résultat pour Joueur 2: Perd
+current_combination : [StdDeckCardMask { mask: 32 }]
+Statistiques pour le Joueur 1: "OnePair ( A K T 8)"
+Statistiques pour le Joueur 2: "NoPair ( A K T 8 5)"
+Joueur 1: 7c Ac - 8h Td Kd 2c As
+Joueur 2: 4s 5s - 8h Td Kd 2c As
+Résultat pour Joueur 1: Gagne
+Joueur 2: 4s 5s - 8h Td Kd 2c As
+Joueur 1: 7c Ac - 8h Td Kd 2c As
+Résultat pour Joueur 2: Perd
+current_combination : [StdDeckCardMask { mask: 64 }]
+Statistiques pour le Joueur 1: "OnePair ( A K T 9)"
+Statistiques pour le Joueur 2: "NoPair ( A K T 9 5)"
+Joueur 1: 7c Ac - 9h Td Kd 2c As
+Joueur 2: 4s 5s - 9h Td Kd 2c As
+Résultat pour Joueur 1: Gagne
+Joueur 2: 4s 5s - 9h Td Kd 2c As
+Joueur 1: 7c Ac - 9h Td Kd 2c As
+Résultat pour Joueur 2: Perd
+current_combination : [StdDeckCardMask { mask: 128 }]
+Statistiques pour le Joueur 1: "TwoPair ( A T K)"
+Statistiques pour le Joueur 2: "OnePair ( T A K 5)"
+Joueur 1: 7c Ac - Th Td Kd 2c As
+Joueur 2: 4s 5s - Th Td Kd 2c As
+Résultat pour Joueur 1: Gagne
+Joueur 2: 4s 5s - Th Td Kd 2c As
+Joueur 1: 7c Ac - Th Td Kd 2c As
+Résultat pour Joueur 2: Perd
+current_combination : [StdDeckCardMask { mask: 256 }]
+Statistiques pour le Joueur 1: "OnePair ( A K J T)"
+Statistiques pour le Joueur 2: "NoPair ( A K J T 5)"
+Joueur 1: 7c Ac - Jh Td Kd 2c As
+Joueur 2: 4s 5s - Jh Td Kd 2c As
+Résultat pour Joueur 1: Gagne
+Joueur 2: 4s 5s - Jh Td Kd 2c As
+Joueur 1: 7c Ac - Jh Td Kd 2c As
+Résultat pour Joueur 2: Perd
+current_combination : [StdDeckCardMask { mask: 512 }]
+Statistiques pour le Joueur 1: "OnePair ( A K Q T)"
+Statistiques pour le Joueur 2: "NoPair ( A K Q T 5)"
+Joueur 1: 7c Ac - Qh Td Kd 2c As
+Joueur 2: 4s 5s - Qh Td Kd 2c As
+Résultat pour Joueur 1: Gagne
+Joueur 2: 4s 5s - Qh Td Kd 2c As
+Joueur 1: 7c Ac - Qh Td Kd 2c As
+Résultat pour Joueur 2: Perd
+current_combination : [StdDeckCardMask { mask: 1024 }]
+Statistiques pour le Joueur 1: "TwoPair ( A K T)"
+Statistiques pour le Joueur 2: "OnePair ( K A T 5)"
+Joueur 1: 7c Ac - Kh Td Kd 2c As
+Joueur 2: 4s 5s - Kh Td Kd 2c As
+Résultat pour Joueur 1: Gagne
+Joueur 2: 4s 5s - Kh Td Kd 2c As
+Joueur 1: 7c Ac - Kh Td Kd 2c As
+Résultat pour Joueur 2: Perd
+current_combination : [StdDeckCardMask { mask: 2048 }]
+current_combination : [StdDeckCardMask { mask: 2048 }]
+Fin de l'enumeration des combinaisons.
+Résultats Exhaustifs :
+ 44 enumerated boards
+Évaluation exhaustive terminée.
+
+Résultats Exhaustifs:
+Holdem Hi: 44 enumerated boards containing Td Kd 2c As
+cards     win    %win    lose   %lose     tie    %tie    EV
+7c Ac      42  95.45%       2   4.55%       0   0.00% 0.955
+4s 5s       2   4.55%      42  95.45%       0   0.00% 0.045
