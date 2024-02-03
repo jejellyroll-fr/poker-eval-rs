@@ -2001,6 +2001,15 @@ impl EnumResult {
                 exclusion_mask.or(pocket); // Inclure les cartes dans les poches des joueurs dans le masque d'exclusion
             }
 
+
+            // construire un deck std complet
+            let deck1 = STD_DECK_CARD_MASKS_TABLE.iter()
+                .cloned()
+                .collect::<Vec<StdDeckCardMask>>();
+            println!("deck_mask = {:b}", deck1.iter().map(|card_mask| card_mask.mask).sum::<u64>());
+            println!("deck = {:?}", deck1.iter().map(|card_mask| card_mask.mask_to_string()).collect::<Vec<String>>());
+            println!("Nombre de cartes dans le jeu: {}", deck1.len());
+
             // Construire le deck en filtrant les cartes non exclues
             let deck = STD_DECK_CARD_MASKS_TABLE.iter()
                 .filter(|&card_mask| !exclusion_mask.card_is_set(StdDeck::mask_to_index(card_mask).unwrap()))

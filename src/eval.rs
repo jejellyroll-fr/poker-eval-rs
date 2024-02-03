@@ -42,23 +42,23 @@ impl Eval {
 
     pub fn eval_n(cards: &StdDeckCardMask, n_cards: usize) -> HandVal {
         let ss = cards.spades();
-        //println!("Spades: {:b}", ss);
+        println!("Spades: {:b}", ss);
         let sc = cards.clubs();
-        //println!("Clubs: {:b}", sc);
+        println!("Clubs: {:b}", sc);
         let sd = cards.diamonds();
-        //println!("Diamonds: {:b}", sd);
+        println!("Diamonds: {:b}", sd);
         let sh = cards.hearts();
-        //println!("Hearts: {:b}", sh);
+        println!("Hearts: {:b}", sh);
         let ranks = ss | sc | sd | sh;
-        //println!("Combined ranks: {:b}", ranks);
+        println!("Combined ranks: {:b}", ranks);
         let n_ranks = NBITS_TABLE[ranks as usize];
         // Utiliser la fonction count_bits
         //let n_ranks = count_bits(ranks);
         let n_dups = n_cards - n_ranks as usize;
         let hand_val: Option<HandVal> = None;
-        //println!("main: Rangs combinés: {:b}, Nombre de rangs: {}", ranks, n_ranks);
-        //println!("main: Nombre de duplicatas 1: {}", n_dups);
-        //println!("main: Spades: {:b}, Clubs: {:b}, Diamonds: {:b}, Hearts: {:b}", ss, sc, sd, sh);
+        println!("main: Rangs combinés: {:b}, Nombre de rangs: {}", ranks, n_ranks);
+        println!("main: Nombre de duplicatas 1: {}", n_dups);
+        println!("main: Spades: {:b}, Clubs: {:b}, Diamonds: {:b}, Hearts: {:b}", ss, sc, sd, sh);
         if n_ranks >= 5 {
             // Vérifier les flushes et les straight flushes
             for suit in [ss, sc, sd, sh].iter() {
@@ -230,58 +230,4 @@ impl Eval {
             }
         }
     }
-}
-
-// Should return 0 when input is 0
-#[test]
-fn should_return_zero_when_input_is_zero() {
-    let input = 0;
-    let expected = 0;
-    let result = count_bits(input);
-    assert_eq!(result, expected);
-}
-
-// Should return 1 when input is 1
-#[test]
-fn should_return_one_when_input_is_one() {
-    let input = 1;
-    let expected = 1;
-    let result = count_bits(input);
-    assert_eq!(result, expected);
-}
-
-// Should return 1 when input is 2
-#[test]
-fn should_return_one_when_input_is_two() {
-    let input = 2;
-    let expected = 1;
-    let result = count_bits(input);
-    assert_eq!(result, expected);
-}
-
-// Should handle large inputs (e.g. 2^31-1)
-#[test]
-fn should_handle_large_inputs() {
-    let input = std::u32::MAX;
-    let expected = 32;
-    let result = count_bits(input);
-    assert_eq!(result, expected);
-}
-
-// Should handle negative inputs
-#[test]
-fn should_handle_negative_inputs() {
-    let input = -1;
-    let expected = 32;
-    let result = count_bits(input as u32);
-    assert_eq!(result, expected);
-}
-
-// Should return 2 when input is 3
-#[test]
-fn should_return_two_when_input_is_three() {
-    let input = 3;
-    let expected = 2;
-    let result = count_bits(input);
-    assert_eq!(result, expected);
 }

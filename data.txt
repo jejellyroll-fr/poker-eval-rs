@@ -1,104 +1,52 @@
-entrée: StdDeckCardMask { mask: 549755813888 }
-2s -> 2s
-entrée: StdDeckCardMask { mask: 1 }
-2h -> 2h
-entrée: StdDeckCardMask { mask: 8192 }
-2d -> 2d
-entrée: StdDeckCardMask { mask: 67108864 }
-2c -> 2c
-entrée: StdDeckCardMask { mask: 1099511627776 }
-3s -> 3s
-entrée: StdDeckCardMask { mask: 2 }
-3h -> 3h
-entrée: StdDeckCardMask { mask: 16384 }
-3d -> 3d
-entrée: StdDeckCardMask { mask: 134217728 }
-3c -> 3c
-entrée: StdDeckCardMask { mask: 2199023255552 }
-4s -> 4s
-entrée: StdDeckCardMask { mask: 4 }
-4h -> 4h
-entrée: StdDeckCardMask { mask: 32768 }
-4d -> 4d
-entrée: StdDeckCardMask { mask: 268435456 }
-4c -> 4c
-entrée: StdDeckCardMask { mask: 4398046511104 }
-5s -> 5s
-entrée: StdDeckCardMask { mask: 8 }
-5h -> 5h
-entrée: StdDeckCardMask { mask: 65536 }
-5d -> 5d
-entrée: StdDeckCardMask { mask: 536870912 }
-5c -> 5c
-entrée: StdDeckCardMask { mask: 8796093022208 }
-6s -> 6s
-entrée: StdDeckCardMask { mask: 16 }
-6h -> 6h
-entrée: StdDeckCardMask { mask: 131072 }
-6d -> 6d
-entrée: StdDeckCardMask { mask: 1073741824 }
-6c -> 6c
-entrée: StdDeckCardMask { mask: 17592186044416 }
-7s -> 7s
-entrée: StdDeckCardMask { mask: 32 }
-7h -> 7h
-entrée: StdDeckCardMask { mask: 262144 }
-7d -> 7d
-entrée: StdDeckCardMask { mask: 2147483648 }
-7c -> 7c
-entrée: StdDeckCardMask { mask: 35184372088832 }
-8s -> 8s
-entrée: StdDeckCardMask { mask: 64 }
-8h -> 8h
-entrée: StdDeckCardMask { mask: 524288 }
-8d -> 8d
-entrée: StdDeckCardMask { mask: 4294967296 }
-8c -> 8c
-entrée: StdDeckCardMask { mask: 70368744177664 }
-9s -> 9s
-entrée: StdDeckCardMask { mask: 128 }
-9h -> 9h
-entrée: StdDeckCardMask { mask: 1048576 }
-9d -> 9d
-entrée: StdDeckCardMask { mask: 8589934592 }
-9c -> 9c
-entrée: StdDeckCardMask { mask: 140737488355328 }
-Ts -> Ts
-entrée: StdDeckCardMask { mask: 256 }
-Th -> Th
-entrée: StdDeckCardMask { mask: 2097152 }
-Td -> Td
-entrée: StdDeckCardMask { mask: 17179869184 }
-Tc -> Tc
-entrée: StdDeckCardMask { mask: 281474976710656 }
-Js -> Js
-entrée: StdDeckCardMask { mask: 512 }
-Jh -> Jh
-entrée: StdDeckCardMask { mask: 4194304 }
-Jd -> Jd
-entrée: StdDeckCardMask { mask: 34359738368 }
-Jc -> Jc
-entrée: StdDeckCardMask { mask: 562949953421312 }
-Qs -> Qs
-entrée: StdDeckCardMask { mask: 1024 }
-Qh -> Qh
-entrée: StdDeckCardMask { mask: 8388608 }
-Qd -> Qd
-entrée: StdDeckCardMask { mask: 68719476736 }
-Qc -> Qc
-entrée: StdDeckCardMask { mask: 1125899906842624 }
-Ks -> Ks
-entrée: StdDeckCardMask { mask: 2048 }
-Kh -> Kh
-entrée: StdDeckCardMask { mask: 16777216 }
-Kd -> Kd
-entrée: StdDeckCardMask { mask: 137438953472 }
-Kc -> Kc
-entrée: StdDeckCardMask { mask: 2251799813685248 }
-As -> As
-entrée: StdDeckCardMask { mask: 4096 }
-Ah -> Ah
-entrée: StdDeckCardMask { mask: 33554432 }
-Ad -> Ad
-entrée: StdDeckCardMask { mask: 274877906944 }
-Ac -> Ac
+Index obtenu pour le masque de la carte 2h -> StdDeckCardMask { mask: 281474976710656 }: Some(0)
+Index obtenu pour le masque de la carte 3h -> StdDeckCardMask { mask: 562949953421312 }: Some(1)
+Index obtenu pour le masque de la carte 4h -> StdDeckCardMask { mask: 1125899906842624 }: Some(2)
+Index obtenu pour le masque de la carte 5h -> StdDeckCardMask { mask: 2251799813685248 }: Some(3)
+Index obtenu pour le masque de la carte 6h -> StdDeckCardMask { mask: 4503599627370496 }: Some(4)
+Index obtenu pour le masque de la carte 7h -> StdDeckCardMask { mask: 9007199254740992 }: Some(5)
+Index obtenu pour le masque de la carte 8h -> StdDeckCardMask { mask: 18014398509481984 }: Some(6)
+Index obtenu pour le masque de la carte 9h -> StdDeckCardMask { mask: 36028797018963968 }: Some(7)
+Index obtenu pour le masque de la carte Th -> StdDeckCardMask { mask: 72057594037927936 }: Some(8)
+Index obtenu pour le masque de la carte Jh -> StdDeckCardMask { mask: 144115188075855872 }: Some(9)
+Index obtenu pour le masque de la carte Qh -> StdDeckCardMask { mask: 288230376151711744 }: Some(10)
+Index obtenu pour le masque de la carte Kh -> StdDeckCardMask { mask: 576460752303423488 }: Some(11)
+Index obtenu pour le masque de la carte Ah -> StdDeckCardMask { mask: 1152921504606846976 }: Some(12)
+Index obtenu pour le masque de la carte 2d -> StdDeckCardMask { mask: 4294967296 }: Some(13)
+Index obtenu pour le masque de la carte 3d -> StdDeckCardMask { mask: 8589934592 }: Some(14)
+Index obtenu pour le masque de la carte 4d -> StdDeckCardMask { mask: 17179869184 }: Some(15)
+Index obtenu pour le masque de la carte 5d -> StdDeckCardMask { mask: 34359738368 }: Some(16)
+Index obtenu pour le masque de la carte 6d -> StdDeckCardMask { mask: 68719476736 }: Some(17)
+Index obtenu pour le masque de la carte 7d -> StdDeckCardMask { mask: 137438953472 }: Some(18)
+Index obtenu pour le masque de la carte 8d -> StdDeckCardMask { mask: 274877906944 }: Some(19)
+Index obtenu pour le masque de la carte 9d -> StdDeckCardMask { mask: 549755813888 }: Some(20)
+Index obtenu pour le masque de la carte Td -> StdDeckCardMask { mask: 1099511627776 }: Some(21)
+Index obtenu pour le masque de la carte Jd -> StdDeckCardMask { mask: 2199023255552 }: Some(22)
+Index obtenu pour le masque de la carte Qd -> StdDeckCardMask { mask: 4398046511104 }: Some(23)
+Index obtenu pour le masque de la carte Kd -> StdDeckCardMask { mask: 8796093022208 }: Some(24)
+Index obtenu pour le masque de la carte Ad -> StdDeckCardMask { mask: 17592186044416 }: Some(25)
+Index obtenu pour le masque de la carte 2c -> StdDeckCardMask { mask: 65536 }: Some(26)
+Index obtenu pour le masque de la carte 3c -> StdDeckCardMask { mask: 131072 }: Some(27)
+Index obtenu pour le masque de la carte 4c -> StdDeckCardMask { mask: 262144 }: Some(28)
+Index obtenu pour le masque de la carte 5c -> StdDeckCardMask { mask: 524288 }: Some(29)
+Index obtenu pour le masque de la carte 6c -> StdDeckCardMask { mask: 1048576 }: Some(30)
+Index obtenu pour le masque de la carte 7c -> StdDeckCardMask { mask: 2097152 }: Some(31)
+Index obtenu pour le masque de la carte 8c -> StdDeckCardMask { mask: 4194304 }: Some(32)
+Index obtenu pour le masque de la carte 9c -> StdDeckCardMask { mask: 8388608 }: Some(33)
+Index obtenu pour le masque de la carte Tc -> StdDeckCardMask { mask: 16777216 }: Some(34)
+Index obtenu pour le masque de la carte Jc -> StdDeckCardMask { mask: 33554432 }: Some(35)
+Index obtenu pour le masque de la carte Qc -> StdDeckCardMask { mask: 67108864 }: Some(36)
+Index obtenu pour le masque de la carte Kc -> StdDeckCardMask { mask: 134217728 }: Some(37)
+Index obtenu pour le masque de la carte Ac -> StdDeckCardMask { mask: 268435456 }: Some(38)
+Index obtenu pour le masque de la carte 2s -> StdDeckCardMask { mask: 1 }: Some(39)
+Index obtenu pour le masque de la carte 3s -> StdDeckCardMask { mask: 2 }: Some(40)
+Index obtenu pour le masque de la carte 4s -> StdDeckCardMask { mask: 4 }: Some(41)
+Index obtenu pour le masque de la carte 5s -> StdDeckCardMask { mask: 8 }: Some(42)
+Index obtenu pour le masque de la carte 6s -> StdDeckCardMask { mask: 16 }: Some(43)
+Index obtenu pour le masque de la carte 7s -> StdDeckCardMask { mask: 32 }: Some(44)
+Index obtenu pour le masque de la carte 8s -> StdDeckCardMask { mask: 64 }: Some(45)
+Index obtenu pour le masque de la carte 9s -> StdDeckCardMask { mask: 128 }: Some(46)
+Index obtenu pour le masque de la carte Ts -> StdDeckCardMask { mask: 256 }: Some(47)
+Index obtenu pour le masque de la carte Js -> StdDeckCardMask { mask: 512 }: Some(48)
+Index obtenu pour le masque de la carte Qs -> StdDeckCardMask { mask: 1024 }: Some(49)
+Index obtenu pour le masque de la carte Ks -> StdDeckCardMask { mask: 2048 }: Some(50)
+Index obtenu pour le masque de la carte As -> StdDeckCardMask { mask: 4096 }: Some(51)

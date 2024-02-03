@@ -62,46 +62,26 @@ impl StdDeckCardMask {
         // Joignez les chaînes de cartes avec un espace
         card_strings.join(" ")
     }
-    // masque piques
+    // Extraction des piques sans padding supplémentaire
     pub fn spades(&self) -> u16 {
-        let mask_13_bits = 0x1FFF; // Masque pour conserver les 13 bits
-        let shifted_mask = (self.mask >> 39) as u16;
-        if shifted_mask > mask_13_bits {
-            shifted_mask & mask_13_bits
-        } else {
-            shifted_mask
-        }
+        ((self.mask >> (3 * 13)) as u16) & 0x1FFF
     }
-    // masque trêfles
-    pub fn clubs(&self) -> u16 {
-        let mask_13_bits = 0x1FFF; // Masque pour conserver les 13 bits
-        let shifted_mask = (self.mask >> 26) as u16;
-        if shifted_mask > mask_13_bits {
-            shifted_mask & mask_13_bits
-        } else {
-            shifted_mask
-        }
-    }
-    // masque carreaux
-    pub fn diamonds(&self) -> u16 {
-        let mask_13_bits = 0x1FFF; // Masque pour conserver les 13 bits
-        let shifted_mask = (self.mask >> 13) as u16;
-        if shifted_mask > mask_13_bits {
-            shifted_mask & mask_13_bits
-        } else {
-            shifted_mask
-        }
-    }
-    // masque cœurs
+
+    // Extraction des cœurs
     pub fn hearts(&self) -> u16 {
-        let mask_13_bits = 0x1FFF; // Masque pour conserver les 13 bits
-        let hearts_mask = self.mask as u16;
-        if hearts_mask > mask_13_bits {
-            hearts_mask & mask_13_bits
-        } else {
-            hearts_mask
-        }
+        ((self.mask >> (2 * 13)) as u16) & 0x1FFF
     }
+
+    // Extraction des carreaux
+    pub fn diamonds(&self) -> u16 {
+        ((self.mask >> (1 * 13)) as u16) & 0x1FFF
+    }
+
+    // Extraction des trèfles sans décalage supplémentaire
+    pub fn clubs(&self) -> u16 {
+        (self.mask as u16) & 0x1FFF
+    }
+
 
     // Autres opérations sur les masques (exemple: OR, AND, etc.)
     pub fn or(&mut self, other: &StdDeckCardMask) {
@@ -127,10 +107,13 @@ impl StdDeckCardMask {
 
     // Méthode pour vérifier si une carte est présente dans le masque
     pub fn card_is_set(&self, index: usize) -> bool {
-        let result = (self.mask & (1 << index)) != 0;
-        //println!("Vérification de la carte à l'indice {}: {}", index, result); //debug
-        result
+        if index >= STD_DECK_CARD_MASKS_TABLE.len() {
+            return false;
+        }
+        let card_mask = STD_DECK_CARD_MASKS_TABLE[index].mask;
+        self.mask & card_mask != 0
     }
+    
 
     // Méthode pour réinitialiser le masque
     pub fn reset(&mut self) {
@@ -156,34 +139,52 @@ impl StdDeckCardMask {
 
     // Méthode pour ajouter une carte au masque
     pub fn set(&mut self, card_index: usize) {
-        //println!("Masque avant ajout: {:b}", self.mask); //debug
-        self.mask |= 1 << card_index;
-        //println!("Masque après ajout: {:b}", self.mask); //debug
+        if card_index < STD_DECK_CARD_MASKS_TABLE.len() {
+            self.mask |= STD_DECK_CARD_MASKS_TABLE[card_index].mask;
+        }
     }
-
-    // Methode pour definir le masque des cartes piques
+    
+    // Méthode pour définir le masque des cartes piques
     pub fn set_spades(&mut self, ranks: u16) {
-        let mask = STD_DECK_CARDMASK_SPADES;
-        self.mask = (self.mask & !mask) | ((ranks as u64) << 39);
+        for rank in 0..13 {
+            if ranks & (1 << rank) != 0 {
+                // Utilisez l'index calculé pour définir chaque carte de pique dans le masque
+                self.set(rank + 39); // Supposant que l'index 39 correspond au 2 de piques
+            }
+        }
     }
 
-    // Methode pour definir le masque des cartes cœurs
+    // Méthode pour définir le masque des cartes cœurs
     pub fn set_hearts(&mut self, ranks: u16) {
-        let mask = STD_DECK_CARDMASK_HEARTS;
-        self.mask = (self.mask & !mask) | ((ranks as u64) << 48);
+        for rank in 0..13 {
+            if ranks & (1 << rank) != 0 {
+                // Supposant que l'index pour le 2 de cœurs est 26
+                self.set(rank + 26);
+            }
+        }
     }
 
-    // Methode pour definir le masque des cartes trèfles
-    pub fn set_clubs(&mut self, ranks: u16) {
-        let mask = STD_DECK_CARDMASK_CLUBS;
-        self.mask = (self.mask & !mask) | ((ranks as u64) << 26);
-    }
-
-    // Methode pour definir le masque des cartes carreaux
+    // Méthode pour définir le masque des cartes carreaux
     pub fn set_diamonds(&mut self, ranks: u16) {
-        let mask = STD_DECK_CARDMASK_DIAMONDS;
-        self.mask = (self.mask & !mask) | ((ranks as u64) << 13);
+        for rank in 0..13 {
+            if ranks & (1 << rank) != 0 {
+                // Supposant que l'index pour le 2 de carreaux est 13
+                self.set(rank + 13);
+            }
+        }
     }
+
+    // Méthode pour définir le masque des cartes trèfles
+    pub fn set_clubs(&mut self, ranks: u16) {
+        for rank in 0..13 {
+            if ranks & (1 << rank) != 0 {
+                // Supposant que l'index pour le 2 de trèfles est 0
+                self.set(rank);
+            }
+        }
+    }
+
+
 }
 
 // Structure StdDeck
@@ -357,5 +358,192 @@ mod tests {
             assert_eq!(card_str, expected_str, "La conversion de l'indice {} devrait donner '{}', mais a donné '{}'.", card_index, expected_str, card_str);
         }
     }
+    #[test]
+    fn test_mask_to_index() {
+        // Teste si `mask_to_index` renvoie correctement l'index pour chaque masque de carte dans la table
+        for (expected_index, card_mask) in STD_DECK_CARD_MASKS_TABLE.iter().enumerate() {
+            let index = StdDeck::mask_to_index(card_mask);
+            assert_eq!(index, Some(expected_index), "L'index retourné pour le masque {:?} devrait être {}, mais était {:?}", card_mask, expected_index, index);
+        }
+    }
+    #[test]
+    fn test_mask_to_index_for_all_cards() {
+        // Parcourez chaque carte dans la table des masques de cartes standard
+        for (expected_index, &card_mask) in STD_DECK_CARD_MASKS_TABLE.iter().enumerate() {
+            // Utilisez la fonction mask_to_index pour obtenir l'index de la carte basé sur son masque
+            let obtained_index = StdDeck::mask_to_index(&card_mask);
+            println!("Index obtenu pour le masque de la carte {} -> {:?}: {:?}", card_mask.mask_to_string(), card_mask, obtained_index);
 
+            // Vérifiez que l'index obtenu correspond à l'index attendu
+            assert_eq!(obtained_index, Some(expected_index), "L'index obtenu pour le masque de la carte {:?} devrait être {}, mais était {:?}", card_mask, expected_index, obtained_index);
+        }
+    }
+
+    #[test]
+    fn test_or_operation() {
+        let mut mask1 = StdDeckCardMask::new();
+        mask1.set(STD_DECK_RANK_2); // suppose 2 of hearts
+
+        let mut mask2 = StdDeckCardMask::new();
+        mask2.set(STD_DECK_RANK_3); // suppose 3 of hearts
+
+        mask1.or(&mask2);
+
+        assert!(mask1.card_is_set(STD_DECK_RANK_2));
+        assert!(mask1.card_is_set(STD_DECK_RANK_3));
+    }
+
+    #[test]
+    fn test_and_operation() {
+        let mut mask1 = StdDeckCardMask::new();
+        mask1.set(STD_DECK_RANK_2); // suppose 2 of hearts
+
+        let mut mask2 = StdDeckCardMask::new();
+        mask2.set(STD_DECK_RANK_2); // suppose 2 of hearts
+
+        mask1.and(&mask2);
+
+        assert!(mask1.card_is_set(STD_DECK_RANK_2));
+        assert!(!mask1.card_is_set(STD_DECK_RANK_3));
+    }
+
+    #[test]
+    fn test_xor_operation() {
+        let mut mask1 = StdDeckCardMask::new();
+        mask1.set(STD_DECK_RANK_2); // suppose 2 of hearts
+
+        let mut mask2 = StdDeckCardMask::new();
+        mask2.set(STD_DECK_RANK_2); // suppose 2 of hearts
+        mask2.set(STD_DECK_RANK_3); // suppose 3 of hearts
+
+        mask1.xor(&mask2);
+
+        assert!(!mask1.card_is_set(STD_DECK_RANK_2));
+        assert!(mask1.card_is_set(STD_DECK_RANK_3));
+    }
+
+    #[test]
+    fn test_not_operation() {
+        let mut mask = StdDeckCardMask::new();
+        mask.set(STD_DECK_RANK_2); // suppose 2 of hearts
+
+        mask.not();
+
+        assert!(!mask.card_is_set(STD_DECK_RANK_2));
+        assert!(mask.card_is_set(STD_DECK_RANK_3)); // and all other cards except 2 of hearts
+    }
+    #[test]
+    fn test_num_cards() {
+        let mut mask = StdDeckCardMask::new();
+        mask.set(STD_DECK_RANK_2); // suppose 2 of hearts
+        mask.set(STD_DECK_RANK_3); // suppose 3 of hearts
+
+        assert_eq!(mask.num_cards(), 2);
+    }
+
+
+    #[test]
+    fn test_string_to_card() {
+        let card_str = "Ah"; // Ace of Hearts
+        let card_index = StdDeck::string_to_card(card_str).unwrap();
+
+        assert_eq!(card_index, STD_DECK_RANK_ACE + STD_DECK_SUIT_HEARTS * STD_DECK_RANK_COUNT);
+    }
+
+    #[test]
+    fn test_string_to_mask() {
+        let cards_str = "AhKh";
+        let (mask, count) = StdDeck::string_to_mask(cards_str).unwrap();
+
+        assert!(mask.card_is_set(STD_DECK_RANK_ACE + STD_DECK_SUIT_HEARTS * STD_DECK_RANK_COUNT));
+        assert!(mask.card_is_set(STD_DECK_RANK_KING + STD_DECK_SUIT_HEARTS * STD_DECK_RANK_COUNT));
+        assert_eq!(count, 2);
+    }
+    
+
+
+
+
+
+
+
+
+
+
+    #[test]
+    fn test_set_spades_with_specific_card() {
+        // Créez une instance de votre structure StdDeck_CardMask (ou équivalente en Rust).
+        // Assurez-vous d'initialiser le masque avec une valeur appropriée.
+
+        let mut card_mask = StdDeckCardMask::new();
+
+        // Définissez une carte spécifique comme un pique en utilisant les valeurs de rang et de suite appropriées.
+        let specific_spade_rank = 5; // Par exemple, 5 pour le 5 de pique
+        let specific_spade_mask = 1u64 << (specific_spade_rank + 39); // Décalage de 39 bits pour les piques
+
+        // Appelez la méthode set_spades avec la valeur spécifique.
+        card_mask.set_spades(specific_spade_mask as u16);
+
+        // Vérifiez que le masque a été correctement mis à jour pour inclure uniquement la carte spécifique des piques.
+        assert_eq!(card_mask.spades(), specific_spade_mask as u16);
+    }
+
+
+    #[test]
+    fn test_reset_and_is_empty() {
+        let mut card_mask = StdDeckCardMask::new();
+
+        // Définissez quelques cartes dans le masque
+        card_mask.set(STD_DECK_RANK_3 + STD_DECK_SUIT_HEARTS * STD_DECK_RANK_COUNT);
+        card_mask.set(STD_DECK_RANK_9 + STD_DECK_SUIT_DIAMONDS * STD_DECK_RANK_COUNT);
+
+        // Vérifiez que le masque n'est pas vide après la définition de cartes
+        assert!(!card_mask.is_empty());
+
+        // Réinitialisez le masque
+        card_mask.reset();
+
+        // Vérifiez que le masque est maintenant vide
+        assert!(card_mask.is_empty());
+    }
+    #[test]
+    fn test_spades() {
+        let mut mask = StdDeckCardMask::new();
+        mask.set(StdDeck::make_card(STD_DECK_RANK_ACE, STD_DECK_SUIT_SPADES)); // Définit l'As de piques
+        println!("mask.spades(): {}", mask.mask_to_string());
+        let spades = StdDeckCardMask { mask: 1 << STD_DECK_RANK_ACE };
+        println!("spades: {}", spades.mask_to_string());
+        assert_eq!(mask, StdDeckCardMask { mask: 1 << STD_DECK_RANK_ACE }, "Le masque des piques est incorrect");
+    }
+
+    #[test]
+    fn test_spades2() {
+        let mut mask = StdDeckCardMask::new();
+        mask.set(StdDeck::make_card(STD_DECK_RANK_ACE, STD_DECK_SUIT_SPADES)); // Définit l'As de piques
+        println!("mask.to_string: {}", mask.mask_to_string());
+        println!("mask.spades(): {}", mask.spades());
+        assert_eq!(mask.spades(), 1 << STD_DECK_RANK_ACE, "Le masque des piques est incorrect");
+    }
+
+    #[test]
+    fn test_hearts() {
+        let mut mask = StdDeckCardMask::new();
+        mask.set(StdDeck::make_card(STD_DECK_RANK_KING, STD_DECK_SUIT_HEARTS)); // Définit le Roi de cœurs
+        
+        assert_eq!(mask.hearts(), 1 << STD_DECK_RANK_KING, "Le masque des cœurs est incorrect");
+    }
+
+    #[test]
+    fn test_diamonds() {
+        let mut mask = StdDeckCardMask::new();
+        mask.set(StdDeck::make_card(STD_DECK_RANK_QUEEN, STD_DECK_SUIT_DIAMONDS)); // Définit la Reine de carreaux
+        assert_eq!(mask.diamonds(), 1 << STD_DECK_RANK_QUEEN, "Le masque des carreaux est incorrect");
+    }
+
+    #[test]
+    fn test_clubs() {
+        let mut mask = StdDeckCardMask::new();
+        mask.set(StdDeck::make_card(STD_DECK_RANK_JACK, STD_DECK_SUIT_CLUBS)); // Définit le Valet de trèfles
+        assert_eq!(mask.clubs(), 1 << STD_DECK_RANK_JACK, "Le masque des trèfles est incorrect");
+    }
 }
