@@ -62,29 +62,65 @@ impl StdDeckCardMask {
         // Joignez les chaînes de cartes avec un espace
         card_strings.join(" ")
     }
-    // Extraction des piques sans padding supplémentaire
+
+    // Méthodes pour définir et obtenir les suites avec gestion de l'endianness et du padding
+    pub fn set_spades(&mut self, ranks: u16) {
+        let offset = if cfg!(target_endian = "big") { 3 } else { 4 * 13 + 3 * 3 };
+        self.set_suite(ranks, offset);
+    }
+
     pub fn spades(&self) -> u16 {
-        let shifted_mask = (self.mask >> 48) as u16;
-        shifted_mask & 0x1FFF
+        (self.mask & 0x1FFF) as u16
+    }
+    
+    
+    
+
+    // Méthodes pour les trefles
+    pub fn set_clubs(&mut self, ranks: u16) {
+        let offset = if cfg!(target_endian = "big") { 19 } else { 3 * 13 + 2 * 3 };
+        self.set_suite(ranks, offset);
+    }
+    
+    pub fn clubs(&self) -> u16 {
+        ((self.mask >> 16) & 0x1FFF) as u16
+    }
+    
+    
+
+    // Méthodes pour les carreaux
+    pub fn set_diamonds(&mut self, ranks: u16) {
+        let offset = if cfg!(target_endian = "big") { 35 } else { 2 * 13 + 1 * 3 };
+        self.set_suite(ranks, offset);
+    }
+    
+    pub fn diamonds(&self) -> u16 {
+        // Les carreaux suivent les clubs et un padding de 3 bits, donc un décalage total de 32 bits
+        ((self.mask >> 32) & 0x1FFF) as u16
+    }
+    
+    
+
+    // Méthodes pour les trèfles
+    pub fn set_hearts(&mut self, ranks: u16) {
+        let offset = if cfg!(target_endian = "big") { 51 } else { 1 * 13 };
+        self.set_suite(ranks, offset);
+    }
+    
+    pub fn hearts(&self) -> u16 {
+        // Les cœurs suivent les carreaux et un padding de 3 bits, donc un décalage total de 48 bits
+        ((self.mask >> 48) & 0x1FFF) as u16
     }
     
 
-    // Extraire le masque des cœurs
-    pub fn hearts(&self) -> u16 {
-        let shifted_mask = (self.mask >> 36) as u16; // Décalage pour aligner les cœurs dans les 16 bits les moins significatifs
-        shifted_mask & 0x1FFF // Conserver uniquement les 13 bits de rang
+    // Méthodes génériques pour définir et obtenir une suite
+    pub fn set_suite(&mut self, ranks: u16, offset: usize) {
+        let mask: u64 = (ranks as u64) << offset;
+        self.mask |= mask;
     }
 
-    // Extraire le masque des carreaux
-    pub fn diamonds(&self) -> u16 {
-        let shifted_mask = (self.mask >> 24) as u16; // Décalage pour aligner les carreaux
-        shifted_mask & 0x1FFF // Appliquer le masque de 13 bits
-    }
-
-    // Extraire le masque des trèfles
-    pub fn clubs(&self) -> u16 {
-        let shifted_mask = (self.mask >> 12) as u16; // Décalage pour aligner les trèfles
-        shifted_mask & 0x1FFF // Masque pour les 13 bits de rang
+    pub fn get_suite(&self, offset: usize) -> u16 {
+        ((self.mask >> offset) & 0x1FFF) as u16
     }
 
 
@@ -149,45 +185,7 @@ impl StdDeckCardMask {
         }
     }
     
-    // Méthode pour définir le masque des cartes piques
-    pub fn set_spades(&mut self, ranks: u16) {
-        for rank in 0..13 {
-            if ranks & (1 << rank) != 0 {
-                // Utilisez l'index calculé pour définir chaque carte de pique dans le masque
-                self.set(rank + 39); // Supposant que l'index 39 correspond au 2 de piques
-            }
-        }
-    }
-
-    // Méthode pour définir le masque des cartes cœurs
-    pub fn set_hearts(&mut self, ranks: u16) {
-        for rank in 0..13 {
-            if ranks & (1 << rank) != 0 {
-                // Supposant que l'index pour le 2 de cœurs est 26
-                self.set(rank + 26);
-            }
-        }
-    }
-
-    // Méthode pour définir le masque des cartes carreaux
-    pub fn set_diamonds(&mut self, ranks: u16) {
-        for rank in 0..13 {
-            if ranks & (1 << rank) != 0 {
-                // Supposant que l'index pour le 2 de carreaux est 13
-                self.set(rank + 13);
-            }
-        }
-    }
-
-    // Méthode pour définir le masque des cartes trèfles
-    pub fn set_clubs(&mut self, ranks: u16) {
-        for rank in 0..13 {
-            if ranks & (1 << rank) != 0 {
-                // Supposant que l'index pour le 2 de trèfles est 0
-                self.set(rank);
-            }
-        }
-    }
+    
 
 
 }
@@ -523,7 +521,81 @@ mod tests {
         assert_eq!(mask, StdDeckCardMask { mask: 1 << STD_DECK_RANK_ACE }, "Le masque des piques est incorrect");
     }
 
+    #[test]
+    fn test_all_spades() {
+        let mut mask = StdDeckCardMask::new();
+    
+        // Définir toutes les cartes de pique
+        for rank in 0..13 {
+            mask.set(StdDeck::make_card(rank, STD_DECK_SUIT_SPADES));
+        }
+        println!("mask to string: {}", mask.mask_to_string());
+        println!("mask.mask: {:b}", mask.mask);
+        println!("mask.spades(): {:b}", mask.spades());
+        
+        // Calculer le masque attendu pour tous les piques: 0b1111111111111 (13 bits à 1)
+        let expected_spades_mask = (1 << 13) - 1; // 8191 ou 0x1FFF
+    
+        // Comparer le masque des piques obtenu avec le masque attendu
+        assert_eq!(mask.spades(), expected_spades_mask, "Le masque pour tous les piques est incorrect");
+    }
 
+    #[test]
+    fn test_all_clubs() {
+        let mut mask = StdDeckCardMask::new();
+    
+        // Définir toutes les cartes de trèfle
+        for rank in 0..13 {
+            mask.set(StdDeck::make_card(rank, STD_DECK_SUIT_CLUBS));
+        }
+        println!("mask to string: {}", mask.mask_to_string());
+        println!("mask.mask: {:b}", mask.mask);
+        println!("mask.clubs(): {:b}", mask.clubs());
+    
+        // Calculer le masque attendu pour tous les clubs
+        let expected_clubs_mask = (1 << 13) - 1;
+    
+        // Comparer le masque des clubs obtenu avec le masque attendu
+        assert_eq!(mask.clubs(), expected_clubs_mask, "Le masque pour tous les clubs est incorrect");
+    }
+    
 
+    #[test]
+    fn test_all_diamonds() {
+        let mut mask = StdDeckCardMask::new();
+    
+        // Définir toutes les cartes de carreau 
+        for rank in 0..13 {
+            mask.set(StdDeck::make_card(rank, STD_DECK_SUIT_DIAMONDS));
+        }
+        println!("mask to string: {}", mask.mask_to_string());
+        println!("mask.mask: {:b}", mask.mask);
+        println!("mask.diamonds(): {:b}", mask.diamonds());
+    
+        // Calculer le masque attendu pour tous les diamonds
+        let expected_diamonds_mask = (1 << 13) - 1;
+    
+        // Comparer le masque des diamonds obtenu avec le masque attendu
+        assert_eq!(mask.diamonds(), expected_diamonds_mask, "Le masque pour tous les diamands est incorrect");
+    }    
+
+    #[test]
+    fn test_all_hearts() {
+        let mut mask = StdDeckCardMask::new();
+    
+        // Définir toutes les cartes de coeur
+        for rank in 0..13 {
+            mask.set(StdDeck::make_card(rank, STD_DECK_SUIT_HEARTS));
+        }
+        println!("mask to string: {}", mask.mask_to_string());
+        println!("mask.mask: {:b}", mask.mask);
+        println!("mask.hearts(): {:b}", mask.hearts());
+    
+        // Calculer le masque attendu pour tous les coeurs
+        let expected_hearts_mask = (1 << 13) - 1;
+    
+        // Comparer le masque des hearts obtenu avec le masque attendu
+        assert_eq!(mask.hearts(), expected_hearts_mask, "Le masque pour tous les hearts est incorrect");
+    }    
 
 }

@@ -418,10 +418,10 @@ fn evaluate_combination() {
 
 fn main() {
     //holdem_sample();
-    //holdem_exhaustive();
+    holdem_exhaustive();
     //test_all_deck_cards()
     //test_all_deck_cards_with_joker()
-    evaluate_combination()
+    //evaluate_combination()
 }
 
 //fonction qui transforme "AsAd" en stdcardmask et puis qui retransforme le stdcardmask en "AsAd"
