@@ -319,7 +319,7 @@ mod tests {
 
             // Définissez la carte actuelle dans le masque
             card_mask.set(card_index);
-            println!("Masque pour la carte {}: {:b}", card_index, card_mask.mask);
+            //println!("Masque pour la carte {}: {:b}", card_index, card_mask.mask);
 
             // Vérifiez que `card_is_set` indique que cette carte est bien définie
             assert!(
@@ -327,7 +327,7 @@ mod tests {
                 "La carte à l'index {} devrait être définie.",
                 card_index
             );
-            println!("La carte à l'index {} est définie.", card_index);
+            //println!("La carte à l'index {} est définie.", card_index);
 
             // Vérifiez que `card_is_set` retourne `false` pour toutes les autres cartes
             for other_card_index in 0..STD_DECK_N_CARDS {

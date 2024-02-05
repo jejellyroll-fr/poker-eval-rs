@@ -15,6 +15,7 @@ use poker_eval_rs::t_cardmasks::StdDeckCardMask;
 use poker_eval_rs::deck_joker::JokerDeck;
 use poker_eval_rs::t_jokercardmasks::JokerDeckCardMask;
 use poker_eval_rs::eval::Eval;
+use poker_eval_rs::enumerate::enum_exhaustive;
 
 
 fn evaluate_combination() {
@@ -541,34 +542,16 @@ fn holdem_sample() {
 }
 
 fn holdem_exhaustive() {
-    // Initialiser les mains et le tableau
+    // Initialiser les mains, le tableau, et les cartes mortes
     let pocket_str1 = "Ac7c";
     let pocket_str2 = "5s4s";
-    let board_r = "2cKdAsTd";
+    let board_str = "2cKdAsTd"; // Modifiez ceci selon le cas de test
 
-
-  
     let hand1 = StdDeck::string_to_mask(pocket_str1).unwrap().0;
-    println!("hand1 = {:b}", hand1.mask);
-    let hand1_string = hand1.mask_to_string();
-    println!("hand1_string = {}", hand1_string);
-
     let hand2 = StdDeck::string_to_mask(pocket_str2).unwrap().0;
-    println!("hand2 = {:b}", hand2.mask);
-    let hand2_string = hand2.mask_to_string();
-    println!("hand2_string = {}", hand2_string);
-    //let board = StdDeckCardMask::new(); // Commencez avec un tableau vide
-    let board = StdDeck::string_to_mask(board_r).unwrap().0;
-    println!("board = {:b}", board.mask);
-    let board_string = board.mask_to_string();
-    println!("board_string = {}", board_string);
+    let board = StdDeck::string_to_mask(board_str).unwrap().0;
     let dead = StdDeckCardMask::new(); // Aucune carte morte pour commencer
-    println!("dead = {:b}", dead.mask);
-    let dead_string = dead.mask_to_string();
-    println!("dead_string = {}", dead_string);
-    let npockets = 2; // Puisque vous avez deux mains
-
-
+    let npockets = 2; // Nombre de mains
 
     // Initialiser les résultats pour l'évaluation exhaustive
     let mut result_exhaustive = EnumResult {
@@ -590,15 +573,27 @@ fn holdem_exhaustive() {
         ordering: None,
     };
 
-    // Effectuer l'évaluation exhaustive
-    match result_exhaustive.exhaustive_holdem_evaluation(&[hand1, hand2], board, dead, npockets) {
+    // Déterminez le nombre de cartes sur le tableau
+    let nboard = board.num_cards(); // Assurez-vous que la méthode `num_cards` existe
+
+    // Appeler enum_exhaustive ici, assurez-vous que la fonction est accessible
+    let orderflag = false; // Définir selon votre besoin
+
+    match enum_exhaustive(
+        Game::Holdem,
+        &[hand1, hand2],
+        board,
+        dead,
+        npockets,
+        nboard,
+        orderflag,
+        &mut result_exhaustive,
+    ) {
         Ok(()) => println!("Évaluation exhaustive terminée."),
         Err(e) => eprintln!("Erreur lors de l'évaluation exhaustive: {:?}", e),
     }
 
-
-    let pockets = [hand1, hand2]; // Créez un tableau de poches pour passer à la fonction d'affichage
     // Afficher les résultats pour l'évaluation exhaustive
     println!("\nRésultats Exhaustifs:");
-    result_exhaustive.enum_result_print(&pockets, board); // Affichez les résultats exhaustifs
+    result_exhaustive.enum_result_print(&[hand1, hand2], board); // Assurez-vous que `enum_result_print` est correctement implémentée
 }
