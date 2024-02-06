@@ -1232,37 +1232,41 @@ pub fn inner_loop_holdem(
     board: &StdDeckCardMask,
     shared_cards: &StdDeckCardMask,
     hival: &mut [HandVal],
-    loval: &mut [LowHandVal],
-) {
+    loval: &mut [LowHandVal]
+) -> Result<(), EnumError> {
     for (i, pocket) in pockets.iter().enumerate() {
         let final_board = board.clone() | shared_cards.clone();
         let hand = pocket.clone() | final_board;
 
         hival[i] = Eval::eval_n(&hand, 7);
-        //println!("{:?} {:?}", hand, hival[i]);
-        //println!("Retourne HandVal {:?}", hival[i].std_rules_hand_val_to_string());
+        
+
+        
         loval[i] = LowHandVal { value: 0 };
     }
+    Ok(())
 }
+
+
 
 // Variante: Texas Hold'em Hi/Lo 8 or better
-pub fn inner_loop_holdem8(
-    pockets: &[StdDeckCardMask],
-    board: &StdDeckCardMask,
-    shared_cards: &StdDeckCardMask,
-    hival: &mut [HandVal],
-    loval: &mut [LowHandVal],
-) {
-    for (i, pocket) in pockets.iter().enumerate() {
-        // Combinaison des cartes du tableau et des cartes partagées
-        let final_board = board.clone() | shared_cards.clone();
-        let hand = pocket.clone() | final_board;
+// pub fn inner_loop_holdem8(
+//     pockets: &[StdDeckCardMask],
+//     board: &StdDeckCardMask,
+//     shared_cards: &StdDeckCardMask,
+//     hival: &mut [HandVal],
+//     loval: &mut [LowHandVal],
+// ) {
+//     for (i, pocket) in pockets.iter().enumerate() {
+//         // Combinaison des cartes du tableau et des cartes partagées
+//         let final_board = board.clone() | shared_cards.clone();
+//         let hand = pocket.clone() | final_board;
 
-        // Évaluation des mains hautes et basses
-        hival[i] = Eval::eval_n(&hand, 7);
-        loval[i] = std_deck_lowball8_eval(&hand, 7);
-    }
-}
+//         // Évaluation des mains hautes et basses
+//         hival[i] = Eval::eval_n(&hand, 7);
+//         loval[i] = std_deck_lowball8_eval(&hand, 7);
+//     }
+// }
 
 // Variante: Omaha
 pub fn inner_loop_omaha(
@@ -1467,32 +1471,32 @@ pub fn inner_loop_7stud(
         loval[i] = LowHandVal { value: 0 };
     }
 }
-// Variante: 7-Card Stud Hi/Lo 8 or better
-pub fn inner_loop_7stud8(
-    pockets: &[StdDeckCardMask],
-    unshared_cards: &[StdDeckCardMask],
-    hival: &mut [HandVal],
-    loval: &mut [LowHandVal],
-) {
-    for (i, pocket) in pockets.iter().enumerate() {
-        if i >= unshared_cards.len() {
-            eprintln!(
-                "Nombre insuffisant de cartes non partagées pour l'index {}",
-                i
-            );
-            continue;
-        }
+// // Variante: 7-Card Stud Hi/Lo 8 or better
+// pub fn inner_loop_7stud8(
+//     pockets: &[StdDeckCardMask],
+//     unshared_cards: &[StdDeckCardMask],
+//     hival: &mut [HandVal],
+//     loval: &mut [LowHandVal],
+// ) {
+//     for (i, pocket) in pockets.iter().enumerate() {
+//         if i >= unshared_cards.len() {
+//             eprintln!(
+//                 "Nombre insuffisant de cartes non partagées pour l'index {}",
+//                 i
+//             );
+//             continue;
+//         }
 
-        // Combinaison des cartes de poche et des cartes non partagées
-        let hand = pocket.clone() | unshared_cards[i].clone();
+//         // Combinaison des cartes de poche et des cartes non partagées
+//         let hand = pocket.clone() | unshared_cards[i].clone();
 
-        // Évaluation de la main haute
-        hival[i] = Eval::eval_n(&hand, 7);
+//         // Évaluation de la main haute
+//         hival[i] = Eval::eval_n(&hand, 7);
 
-        // Évaluation de la main basse (lowball 8 or better)
-        loval[i] = std_deck_lowball8_eval(&hand, 7);
-    }
-}
+//         // Évaluation de la main basse (lowball 8 or better)
+//         loval[i] = std_deck_lowball8_eval(&hand, 7);
+//     }
+// }
 // Variante: 7-Card Stud Hi/Lo no stinking qualifier
 pub fn inner_loop_7studnsq(
     pockets: &[StdDeckCardMask],
@@ -1781,6 +1785,10 @@ pub fn enum_exhaustive(
         Game::Holdem => {
             result.exhaustive_holdem_evaluation(pockets, board, dead, npockets, nboard)?;
         },
+        Game::Holdem8 => {
+            println!("Jeu Holdem8 implémenté");
+            result.exhaustive_holdem8_evaluation(pockets, board, dead, npockets, nboard)?;
+        },
         Game::Omaha => {
             //exhaustive_omaha_evaluation(result, pockets, board, dead, npockets, nboard)?;
         },
@@ -1790,6 +1798,7 @@ pub fn enum_exhaustive(
 
     Ok(())
 }
+
 
 
 
@@ -1949,7 +1958,7 @@ impl EnumResult {
             // Assurez-vous que le tableau final contient exactement 5 cartes.
             if complete_board.num_cards() == 5 {
                 // Évaluez les mains des joueurs avec le tableau complet.
-                inner_loop_holdem(pockets, &complete_board, &StdDeckCardMask::new(), &mut hival, &mut loval);
+                let _ = inner_loop_holdem(pockets, &complete_board, &StdDeckCardMask::new(), &mut hival, &mut loval);
 
                 // Affichez les résultats de la simulation pour le débogage ou l'analyse.
                 //println!("Simulation:");
@@ -2006,22 +2015,25 @@ impl EnumResult {
         match nboard {
             0 => enumerate_5_cards_d(&deck, &[], |c1, c2, c3, c4, c5| {
                 let new_board = board | *c1 | *c2 | *c3 | *c4 | *c5;
-                let _ = self.evaluate_hands(pockets, &new_board, npockets);
+                let _ = self.evaluate_holdem_hands(pockets, &new_board, npockets);
                 self.nsamples += 1;
             }),
             3 => enumerate_2_cards_d(&deck, &[], |c1, c2| {
                 let new_board = board | *c1 | *c2;
-                let _ = self.evaluate_hands(pockets, &new_board, npockets);
+                let _ = self.evaluate_holdem_hands(pockets, &new_board, npockets);
+                // let mut hival: Vec<HandVal> = vec![HandVal::new(0, 0, 0, 0, 0, 0); npockets];
+                // let mut loval: Vec<LowHandVal> = vec![LowHandVal::new(0, 0, 0, 0, 0, 0); npockets];
+                // let _ = inner_loop_holdem(pockets, &new_board, &StdDeckCardMask::new(), &mut hival, &mut loval);
                 self.nsamples += 1;
             }),
             4 => enumerate_1_cards_d(&deck, &[], |c| {
                     let new_board = board | *c;  // Crée un nouveau tableau complet avec la carte supplémentaire
-                    self.evaluate_hands(pockets, &new_board, npockets).unwrap();  // Évalue les mains avec ce nouveau tableau
+                    self.evaluate_holdem_hands(pockets, &new_board, npockets).unwrap();  // Évalue les mains avec ce nouveau tableau
                     self.nsamples += 1;  // Incrémente nsamples pour chaque nouvelle évaluation
             }),
             5 => {
                 // Le board est déjà complet, évaluez directement les mains
-                let _ = self.evaluate_hands(pockets, &board, npockets);
+                let _ = self.evaluate_holdem_hands(pockets, &board, npockets);
                 self.nsamples += 1;
             },
             _ => println!("erreur"),
@@ -2029,36 +2041,62 @@ impl EnumResult {
     
         Ok(())
     }
-// Énumération de toutes les combinaisons possibles de cartes pour compléter le tableau
-
- 
-    
 
 
-    // pub fn evaluate_hands(
-    //     &mut self,
-    //     pockets: &[StdDeckCardMask],
-    //     board: &StdDeckCardMask,
-    //     npockets: usize,
-    // ) -> Result<(), EnumError> {
-    //     // Initialisez le vecteur hival avec une taille égale au nombre de poches et des valeurs par défaut.
-    //     let mut hival: Vec<HandVal> = vec![HandVal::new(0, 0, 0, 0, 0, 0); npockets];
+
+
+    pub fn exhaustive_holdem8_evaluation(
+        &mut self,
+        pockets: &[StdDeckCardMask],
+        board: StdDeckCardMask,
+        dead: StdDeckCardMask,
+        npockets: usize,
+        nboard: usize,
+    ) -> Result<(), EnumError> {
+        self.nplayers = npockets as u32;
+        let mut exclusion_mask = dead | board ; // Combine dead and board cards into one mask
+        // Inclure chaque carte dans les poches des joueurs dans le masque d'exclusion
+        for pocket in pockets {
+            exclusion_mask = exclusion_mask | *pocket;
+        }
+        // Construisez un deck en excluant les cartes mortes et les cartes du board
+        let deck: Vec<StdDeckCardMask> = STD_DECK_CARD_MASKS_TABLE.iter()
+            .filter(|&card| !exclusion_mask.card_is_set(StdDeck::mask_to_index(card).unwrap()))
+            .cloned()
+            .collect();
+        //println!("deck_mask = {:b}", deck.iter().map(|card_mask| card_mask.mask).sum::<u64>());
+        //println!("deck = {:?}", deck.iter().map(|card_mask| card_mask.mask_to_string()).collect::<Vec<String>>());
+        //println!("Nombre de cartes dans le jeu: {}", deck.len());
+        match nboard {
+            0 => enumerate_5_cards_d(&deck, &[], |c1, c2, c3, c4, c5| {
+                let new_board = board | *c1 | *c2 | *c3 | *c4 | *c5;
+                let _ = self.evaluate_holdem8_hands(pockets, &new_board, npockets);
+                self.nsamples += 1;
+            }),
+            3 => enumerate_2_cards_d(&deck, &[], |c1, c2| {
+                let new_board = board | *c1 | *c2;
+                //let _ = self.evaluate_hands(pockets, &new_board, npockets);
+                let _ = self.evaluate_holdem8_hands(pockets, &new_board, npockets);
+                self.nsamples += 1;
+            }),
+            4 => enumerate_1_cards_d(&deck, &[], |c| {
+                    let new_board = board | *c;  // Crée un nouveau tableau complet avec la carte supplémentaire
+                    self.evaluate_holdem8_hands(pockets, &new_board, npockets).unwrap();  // Évalue les mains avec ce nouveau tableau
+                    self.nsamples += 1;  // Incrémente nsamples pour chaque nouvelle évaluation
+            }),
+            5 => {
+                // Le board est déjà complet, évaluez directement les mains
+                let _ = self.evaluate_holdem8_hands(pockets, &board, npockets);
+                self.nsamples += 1;
+            },
+            _ => println!("erreur"),
+        }
     
-    //     for (i, pocket) in pockets.iter().enumerate().take(npockets) {
-    //         let hand = pocket.clone() | board.clone(); // Combinez les cartes en main avec le tableau
-    //         hival[i] = Eval::eval_n(&hand, 7); // Stockez la valeur évaluée à la position i du vecteur hival
-    
-    //         // Passez tous les arguments nécessaires à update_statistics
-    //         self.update_statistics(i, hival[i], pockets, board, npockets);
-    //         println!("Statistiques pour le Joueur {}: {:#?}", i + 1, hival[i]); // Ajoutez +1 pour ajuster l'affichage
-    //         println!("Résultat pour Joueur {}: {}", i + 2, if hival[i] > hival[1 - i] { "Gagne" } else if hival[i] < hival[1 - i] { "Perd" } else { "Égalité" }); // i + 2 semble incorrect, cela devrait être i + 1 si vous voulez ajuster l'indice pour l'affichage
-            
-    //     }
-    
-    //     Ok(())
-    // }
+        Ok(())
+    }
+
    
-    pub fn evaluate_hands(
+    pub fn evaluate_holdem_hands(
         &mut self,
         pockets: &[StdDeckCardMask],
         board: &StdDeckCardMask,
@@ -2109,7 +2147,34 @@ impl EnumResult {
         Ok(())
     }
     
+    pub fn evaluate_holdem8_hands(
+        &mut self,
+        pockets: &[StdDeckCardMask],
+        board: &StdDeckCardMask,
+        npockets: usize,
+    ) -> Result<(), EnumError> {
+        // Vérifiez que le nombre de poches correspond au nombre de joueurs
+        if pockets.len() != npockets {
+            return Err(EnumError::TooManyPlayers); // Utilisez une erreur appropriée
+        }
+        println!("Avant eval hilow et update_statistics_hilo: {:?}", self.game);
+        self.game = Game::Holdem8;
+        // Itérer sur chaque joueur pour évaluer sa main
+        for (i, pocket) in pockets.iter().enumerate() {
+            let hand = *pocket | *board; // Combinez les cartes en main avec le tableau
     
+            // Évaluez la main haute
+            let hi_val = Eval::eval_n(&hand, 7); 
+    
+            // Évaluez la main basse pour lowball 8 (supposez que std_deck_lowball8_eval existe)
+            let lo_val = std_deck_lowball8_eval(&hand, 7);
+    
+            // Mettre à jour les statistiques pour chaque joueur
+            self.update_statistics_hilo(i, hi_val, lo_val, pockets, board, npockets);
+        }
+        println!("Après update_statistics_hilo: {:?}", self.game);
+        Ok(())
+    } 
 
     // Supposons que vous avez une fonction pour mettre à jour les statistiques de jeu
     pub fn update_statistics(
@@ -2165,74 +2230,182 @@ impl EnumResult {
         //          self.ev[player_index]);
     }
     
-
-    pub fn print_ordering(&self, terse: bool) {
-        if let Some(ordering_ptr) = self.ordering {
-            let ordering = unsafe { ordering_ptr.as_ref() }; // Utilisation sécurisée de unsafe pour déréférencer le pointeur NonNull
-
+    pub fn update_statistics_hilo(
+        &mut self,
+        player_index: usize,
+        hi_val: HandVal,
+        lo_val: Option<LowHandVal>,
+        pockets: &[StdDeckCardMask],
+        board: &StdDeckCardMask,
+        npockets: usize,
+    ) {
+        let mut hi_wins = 0;
+        let mut hi_ties = 0;
+        let mut hi_losses = 0;
+        let mut lo_wins = 0;
+        let mut lo_ties = 0;
+        let mut lo_losses = 0;
+    
+        for (i, &other_pocket) in pockets.iter().enumerate() {
+            if i != player_index {
+                let other_hand = other_pocket | *board;
+                let other_hi_val = Eval::eval_n(&other_hand, 7);
+                let other_lo_val = std_deck_lowball8_eval(&other_hand, 7); // Assurez-vous que cette fonction retourne Option<LowHandVal>
+    
+                // Mise à jour pour la main haute
+                if hi_val > other_hi_val {
+                    hi_wins += 1;
+                } else if hi_val == other_hi_val {
+                    hi_ties += 1;
+                } else {
+                    hi_losses += 1;
+                }
+    
+                // Mise à jour pour la main basse si qualifiée
+                match (lo_val, other_lo_val) {
+                    (Some(my_lo_val), Some(their_lo_val)) => {
+                        if my_lo_val < their_lo_val {
+                            lo_wins += 1;
+                        } else if my_lo_val == their_lo_val {
+                            lo_ties += 1;
+                        } else {
+                            lo_losses += 1;
+                        }
+                    },
+                    (Some(_), None) => {
+                        // Le joueur actuel a une main basse qualifiée, mais l'autre joueur non
+                        lo_wins += 1;
+                    },
+                    (None, Some(_)) => {
+                        // L'autre joueur a une main basse qualifiée, mais le joueur actuel non
+                        lo_losses += 1;
+                    },
+                    (None, None) => {
+                        // Ni le joueur actuel ni l'autre joueur n'ont une main basse qualifiée
+                    },
+                }
+            }
+        }
+    
+        // Mise à jour des statistiques
+        self.nwinhi[player_index] += hi_wins;
+        self.ntiehi[player_index] += hi_ties;
+        self.nlosehi[player_index] += hi_losses;
+    
+        if lo_val.is_some() || lo_losses > 0 { // Mise à jour si le joueur a une main basse ou s'il y a eu des pertes dans la main basse
+            self.nwinlo[player_index] += lo_wins;
+            self.ntielo[player_index] += lo_ties;
+            self.nloselo[player_index] += lo_losses;
+        }
+    
+        // Mise à jour des scoops
+        if lo_val.is_some() && hi_wins > 0 && lo_wins > 0 && hi_ties == 0 && lo_ties == 0 {
+            self.nscoop[player_index] += 1;
+        }
+    
+        // Calcul de l'équité (EV)
+        let total_opponents = (npockets - 1) as f64;
+        let hi_equity = (hi_wins as f64 + hi_ties as f64 / 2.0) / total_opponents;
+        let lo_equity = (lo_wins as f64 + lo_ties as f64 / 2.0) / total_opponents; // Calcul de l'équité pour la main basse même si le joueur n'a pas une main qualifiée
+        self.ev[player_index] += hi_equity + lo_equity;
+    }
+    
+    
+    
+    pub fn print_ordering(&self, _result: &EnumResult, terse: bool) {
+        //println!("result: {:?}", _result);
+        if let Some(mut ordering_ptr) = _result.ordering {
+            //let ordering = unsafe { ordering_ptr.as_ref() }; // Utilisation sécurisée de unsafe pour déréférencer le pointeur NonNull
+            let ordering_mut = unsafe { ordering_ptr.as_mut() }; 
             if !terse {
                 println!("Histogram of relative hand ranks:");
             }
-
-            match ordering.mode {
+            //println!("ordering mode: {:?}", ordering_mut.mode);
+            //println!("ordering nplayers: {}", ordering_mut.nplayers);
+            //println!("ordering nentries: {}", ordering_mut.nentries);
+            //println!("ordering hist: {:?}", ordering_mut.hist);
+            match ordering_mut.mode {
                 EnumOrderingMode::Hi | EnumOrderingMode::Lo => {
                     if !terse {
-                        //print!("ORD {} {}:", ordering.mode as u32, ordering.nplayers);
-                        for k in 0..ordering.nplayers {
-                            //println!("test");   
+                        //print!("ORD {} {}:", ordering_mut.mode as u32, ordering_mut.nplayers);
+                        for k in 0..ordering_mut.nplayers {
+                             
                             print!(" {:2}", (b'A' + k as u8) as char);
                         }
                         println!(" {:8}", "Freq");
                     } else {
-                        print!("ORD {} {}:", ordering.mode as u32, ordering.nplayers);
+                        print!("ORD {} {}:", ordering_mut.mode as u32, ordering_mut.nplayers);
                     }
-                    println!("ordering entries: {}", ordering.nentries);
-                    for i in 0..ordering.nentries {
-                        println!("hist de i{}:", ordering.hist[i]);
-                        if ordering.hist[i] > 0 {
-                            for k in 0..ordering.nplayers {
-                                let rank = enum_ordering_decode_k(i as i32, ordering.nplayers, k);
-                                println!("rank {} = {}", k, rank);
-                                if rank as usize == ordering.nplayers {
-                                    print!(" NQ");
-                                } else {
-                                    print!(" {:2}", rank + 1);
-                                }
-                            }
-                            print!(" {:8}", ordering.hist[i]);
-                            if terse {
-                                print!("|");
-                            } else {
-                                println!();
+                    // Initialisation de l'histogramme pour les paires de joueurs
+                    let nplayers = _result.nplayers as usize;
+                    for i in 0..nplayers {
+                        for j in 0..nplayers {
+                            if i != j {
+                                // Calcul de l'index pour la paire de joueurs (i, j) dans l'histogramme
+                                let index = i * nplayers + j; // Exemple de calcul d'index, peut nécessiter ajustement
+                    
+                                // Mise à jour de l'histogramme pour la paire de joueurs (i, j)
+                                // Notez que nous ajoutons uniquement les victoires de i sur j
+                                ordering_mut.hist[index] = _result.nwinhi[i]; // Victoires de i sur j
+                    
+                                // Si vous souhaitez également comptabiliser les égalités ou les défaites, ajustez comme suit
+                                ordering_mut.hist[index] = _result.ntiehi[i]; // Égalités entre i et j (si pertinent)
+                                ordering_mut.hist[index] = _result.nlosehi[j]; // Défaites de i contre j (si pertinent)
                             }
                         }
                     }
+                    //println!("ordering hist: {:?}", ordering_mut.hist);
+                    //println!("ordering entries: {}", ordering.nentries);
+                    for i in 0..ordering_mut.nentries {
+                        //println!(" {:8}", i);
+                        //println!(" {:8}", ordering.hist[i]);
+                        if ordering_mut.hist[i] > 0 {
+                            for k in 0..ordering_mut.nplayers {
+                                println!("k {}", k);
+                                println!("i {}", i);
+                                println!("ordering_mut.nplayers {}", ordering_mut.nplayers);
+                                let rank = enum_ordering_decode_k(i as i32, ordering_mut.nplayers, k);
+                                if rank as usize == ordering_mut.nplayers {
+                                    print!(" NQ");
+                                } else {
+                                    print!(" {:2}", rank + 1); // Assurez-vous que l'espacement et le formatage correspondent.
+                                }
+                            }
+                            print!(" {:8}", ordering_mut.hist[i]); // Imprime l'historique avec un formatage aligné.
+                            if terse {
+                                print!("|"); // Pour le mode 'terse', ajoute un séparateur.
+                            } else {
+                                println!(); // Pour le mode non 'terse', ajoute un saut de ligne.
+                            }
+                        }
+                    }
+                    
                 }
                 EnumOrderingMode::Hilo => {
                     if !terse {
                         print!("HI:");
-                        for k in 0..ordering.nplayers {
+                        for k in 0..ordering_mut.nplayers {
                             print!(" {:2}", (b'A' + k as u8) as char);
                         }
                         print!("  LO:");
-                        for k in 0..ordering.nplayers {
+                        for k in 0..ordering_mut.nplayers {
                             print!(" {:2}", (b'A' + k as u8) as char);
                         }
                         println!(" {:8}", "Freq");
                     } else {
-                        print!("ORD HILO {}:", ordering.nplayers);
+                        print!("ORD HILO {}:", ordering_mut.nplayers);
                     }
 
-                    for i in 0..ordering.nentries {
-                        if ordering.hist[i] > 0 {
+                    for i in 0..ordering_mut.nentries {
+                        if ordering_mut.hist[i] > 0 {
                             if !terse {
                                 print!("   ");
                             }
 
-                            for k in 0..ordering.nplayers {
+                            for k in 0..ordering_mut.nplayers {
                                 let rank_hi =
-                                    enum_ordering_decode_hilo_k_hi(i as i32, ordering.nplayers, k);
-                                if rank_hi as usize == ordering.nplayers {
+                                    enum_ordering_decode_hilo_k_hi(i as i32, ordering_mut.nplayers, k);
+                                if rank_hi as usize == ordering_mut.nplayers {
                                     print!(" NQ");
                                 } else {
                                     print!(" {:2}", rank_hi + 1);
@@ -2243,17 +2416,17 @@ impl EnumResult {
                                 print!("     ");
                             }
 
-                            for k in 0..ordering.nplayers {
+                            for k in 0..ordering_mut.nplayers {
                                 let rank_lo =
-                                    enum_ordering_decode_hilo_k_lo(i as i32, ordering.nplayers, k);
-                                if rank_lo as usize == ordering.nplayers {
+                                    enum_ordering_decode_hilo_k_lo(i as i32, ordering_mut.nplayers, k);
+                                if rank_lo as usize == ordering_mut.nplayers {
                                     print!(" NQ");
                                 } else {
                                     print!(" {:2}", rank_lo + 1);
                                 }
                             }
 
-                            print!(" {:8}", ordering.hist[i]);
+                            print!(" {:8}", ordering_mut.hist[i]);
                             if terse {
                                 print!("|");
                             } else {
@@ -2277,11 +2450,14 @@ impl EnumResult {
 
 
     pub fn enum_result_print(&self, pockets: &[StdDeckCardMask], board: StdDeckCardMask) {
-        let gp = self.game.game_params(); // Supposons que `game_params` retourne `Option<GameParams>`
-    
+        println!("Au début de enum_result_print: {:?}", self.game);
+        let gp = self.game.game_params();
+        println!("Au début de enum_result_print: {:?}", self.game);
+        println!("self.game {:?}", self.game);
         if let Some(gp) = gp {
+            println!("gp {:?}", gp.name);
             let width = gp.maxpocket * 3 - 1;
-            print!(
+            println!(
                 "{}: {} {} {}{}",
                 gp.name,
                 self.nsamples,
@@ -2294,30 +2470,27 @@ impl EnumResult {
             );
     
             if board.num_cards() > 0 {
-                print!(" containing {}", board.to_string_representation());
+                println!(" containing {}", board.to_string_representation());
             }
-            println!();
-            
     
-            // Gestion des cas où il y a des pots high ou low séparément
-            if gp.haslopot == 1 || gp.hashipot == 1 {
-                let _pot_type = if gp.haslopot == 1 { "LO" } else { "HI" };
-                println!("{:width$} {:>7} {:>7} {:>7} {:>7} {:>7} {:>7} {:>5}", "cards", "win", "%win", "lose", "%lose", "tie", "%tie", "EV", width = width as usize);
-                //println!("Évaluation exhaustive terminée. {} tableaux énumérés.", self.nsamples);
-                //
-                //println!("Tableau final: {}", board.mask_to_string());
-
-                //println!("self.nplayers = {}", self.nplayers);
+            // Gestion des cas où il y a des pots high et low
+            if gp.haslopot == 1 && gp.hashipot == 1 {
+                println!("{:width$} {:>7} {:>7} {:>7} {:>7} {:>7} {:>7} {:>7} {:>5}", "cards", "scoop", "HIwin", "HIlos", "HItie", "LOwin", "LOlos", "LOtie", "EV", width = width as usize);
                 for i in 0..self.nplayers as usize {
-                    //println!("i = {}", i);
-                    //println!("self.nplayers = {}", self.nplayers);
-                    // println!("Joueur {}: {} victoires, {} égalités, {} défaites, EV: {:.2}",
-                    // i + 1,
-                    // self.nwinhi[i],
-                    // self.ntiehi[i],
-                    // self.nlosehi[i],
-                    // self.ev[i]);
-
+                    println!(
+                        "{:width$} {:7} {:7} {:7} {:7} {:7} {:7} {:7} {:5.3}",
+                        pockets[i].to_string_representation(),
+                        self.nscoop[i],
+                        self.nwinhi[i], self.nlosehi[i], self.ntiehi[i],
+                        self.nwinlo[i], self.nloselo[i], self.ntielo[i],
+                        self.ev[i] / self.nsamples as f64,
+                        width = width as usize
+                    );
+                }
+            } else {
+                // Affichage pour les cas high ou low uniquement
+                println!("{:width$} {:>7} {:>6} {:>7} {:>6} {:>7} {:>6} {:>5}", "cards", "win", "%win", "lose", "%lose", "tie", "%tie", "EV", width = width as usize);
+                for i in 0..self.nplayers as usize {
                     let (nwin, nlose, ntie) = if gp.haslopot == 1 {
                         (self.nwinlo[i], self.nloselo[i], self.ntielo[i])
                     } else {
@@ -2340,15 +2513,16 @@ impl EnumResult {
                     );
                 }
             }
-        // Appel à print_ordering pour afficher l'ordonnancement des résultats
-        // Remplacer 'self.ordering' par la référence ou la manière d'accéder à 'ordering' dans votre contexte
-        if self.ordering.is_some() {
-            self.print_ordering(false); // 'false' pour un affichage détaillé, 'true' pour un affichage succinct
-        }
+    
+            // Affichage de l'ordonnancement des résultats
+            if self.ordering.is_some() {
+                self.print_ordering(self, false); // Remplacer `self` par la référence à `result` si nécessaire
+            }
         } else {
             println!("enumResultPrint: invalid game type");
         }
     }
+    
     
     
     

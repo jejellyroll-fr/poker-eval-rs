@@ -24,12 +24,15 @@ pub fn std_deck_omaha_hi_low8_eval(
     allcards.or(&hole);
     allcards.or(&board);
 
+
+
+
     // Utilisez std_deck_lowball8_eval pour évaluer la main basse
     let allval = std_deck_lowball8_eval(&allcards, STD_DECK_N_CARDS); // Ici, le nombre de cartes est STD_DECK_N_CARDS, ajustez si nécessaire
     let eligible_for_low = allval
-        != LowHandVal {
+        != Some(LowHandVal {
             value: LOW_HAND_VAL_NOTHING,
-        };
+        });
 
     let mut hole_cards: Vec<StdDeckCardMask> = Vec::new();
     let mut board_cards: Vec<StdDeckCardMask> = Vec::new();
@@ -64,35 +67,30 @@ pub fn std_deck_omaha_hi_low8_eval(
     }
 
     // La logique pour évaluer les mains hautes et basses
-    let mut best_hi = HandVal { value: 0 }; // Assurez-vous que c'est la valeur appropriée pour "rien"
-    let mut best_lo = LowHandVal {
-        value: LOW_HAND_VAL_NOTHING,
-    }; // Assurez-vous que c'est la valeur appropriée pour "rien"
+    let best_hi = HandVal { value: 0 }; // Assurez-vous que c'est la valeur appropriée pour "rien"
+    // Initialiser best_lo comme None pour indiquer aucune main basse qualifiée trouvée jusqu'à présent
+    let mut best_lo: Option<LowHandVal> = None;
 
-    for h1 in 0..hole_cards.len() {
-        for h2 in h1 + 1..hole_cards.len() {
-            for b1 in 0..board_cards.len() {
-                for b2 in (b1 + 1)..board_cards.len() {
-                    for b3 in (b2 + 1)..board_cards.len() {
-                        let mut n5 = StdDeckCardMask::new();
-                        n5.or(&hole_cards[h1]);
-                        n5.or(&hole_cards[h2]);
-                        n5.or(&board_cards[b1]);
-                        n5.or(&board_cards[b2]);
-                        n5.or(&board_cards[b3]);
+    // Évaluation de la main basse si éligible
+    if eligible_for_low {
+        for h1 in 0..hole_cards.len() {
+            for h2 in h1 + 1..hole_cards.len() {
+                for b1 in 0..board_cards.len() {
+                    for b2 in (b1 + 1)..board_cards.len() {
+                        for b3 in (b2 + 1)..board_cards.len() {
+                            let mut n5 = StdDeckCardMask::new();
+                            n5.or(&hole_cards[h1]);
+                            n5.or(&hole_cards[h2]);
+                            n5.or(&board_cards[b1]);
+                            n5.or(&board_cards[b2]);
+                            n5.or(&board_cards[b3]);
 
-                        // Évaluation de la main haute
-                        let cur_hi = Eval::eval_n(&n5, 5);
-                        if cur_hi.value > best_hi.value || best_hi.value == 0 {
-                            best_hi = cur_hi;
-                        }
-
-                        // Évaluation de la main basse si éligible
-                        if eligible_for_low {
                             let cur_lo = std_deck_lowball8_eval(&n5, 5);
-                            if cur_lo.value < best_lo.value || best_lo.value == LOW_HAND_VAL_NOTHING
-                            {
-                                best_lo = cur_lo;
+
+                            if let Some(cur_lo_val) = cur_lo {
+                                if best_lo.map_or(true, |best_lo_val| cur_lo_val < best_lo_val) {
+                                    best_lo = Some(cur_lo_val);
+                                }
                             }
                         }
                     }
@@ -101,9 +99,8 @@ pub fn std_deck_omaha_hi_low8_eval(
         }
     }
 
-    // Ici, vous pouvez mettre à jour hival et loval avec les meilleures mains hautes et basses trouvées
     *hival = Some(best_hi);
-    *loval = Some(best_lo);
+    *loval = best_lo; // Pas besoin de déballer, car loval est déjà de type Option<LowHandVal>
 
     Ok(())
 }

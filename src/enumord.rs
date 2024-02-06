@@ -117,7 +117,11 @@ pub fn enum_ordering_encode_hilo(nplayers: usize, hiranks: &[i32], loranks: &[i3
 // Fonction pour décoder le rang d'un joueur à partir de l'encodage
 pub fn enum_ordering_decode_k(encoding: i32, nplayers: usize, k: usize) -> i32 {
     let nbits = ENUM_NBITS[nplayers];
+    //println!("nbits = {}", nbits);
     let shift = (nplayers - k - 1) * (nbits as usize);
+    //println!("shift = {}", shift);
+    //println!("encoding = {}", encoding);
+    //println!("(encoding >> shift) = {}", (encoding >> shift));
     (encoding >> shift) & ((1 << nbits) - 1)
 }
 
@@ -237,4 +241,18 @@ mod tests {
         assert_eq!(rank, 2); // Rang attendu
     }
 
+
+    #[test]
+    fn test_enum_ordering_decode_k_2_players() {
+        let encoding: i32 = 0b00011010; // Exemple d'encodage binaire (26 en décimal)
+        let nplayers: usize = 2;
+
+        // Test avec k = 0
+        let k0_result = enum_ordering_decode_k(encoding, nplayers, 0);
+        assert_eq!(k0_result, 1); // Le résultat attendu est 1
+
+        // Test avec k = 1
+        let k1_result = enum_ordering_decode_k(encoding, nplayers, 1);
+        assert_eq!(k1_result, 0); // Le résultat attendu est 0
+    }
 }

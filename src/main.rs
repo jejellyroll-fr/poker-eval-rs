@@ -419,7 +419,8 @@ fn evaluate_combination() {
 
 fn main() {
     //holdem_sample();
-    holdem_exhaustive();
+    holdem8_exhaustive();
+    //holdem_exhaustive();
     //test_all_deck_cards()
     //test_all_deck_cards_with_joker()
     //evaluate_combination()
@@ -578,7 +579,7 @@ fn holdem_exhaustive() {
     let nboard = board.num_cards(); // Assurez-vous que la méthode `num_cards` existe
 
     // Appeler enum_exhaustive ici, assurez-vous que la fonction est accessible
-    let orderflag = true; // Définir selon votre besoin
+    let orderflag = false; // Définir selon votre besoin
 
     match enum_exhaustive(
         Game::Holdem,
@@ -594,6 +595,66 @@ fn holdem_exhaustive() {
         Err(e) => eprintln!("Erreur lors de l'évaluation exhaustive: {:?}", e),
     }
 
+    // Afficher les résultats pour l'évaluation exhaustive
+    println!("\nRésultats Exhaustifs:");
+    result_exhaustive.enum_result_print(&[hand1, hand2], board); // Assurez-vous que `enum_result_print` est correctement implémentée
+}
+
+
+fn holdem8_exhaustive() {
+    // Initialiser les mains, le tableau, et les cartes mortes
+    let pocket_str1 = "Ac7c";
+    let pocket_str2 = "5s4s";
+    let board_str = "2cKdAsTd"; // Modifiez ceci selon le cas de test
+    //let board_str = "2cKdAs";
+    let hand1 = StdDeck::string_to_mask(pocket_str1).unwrap().0;
+    let hand2 = StdDeck::string_to_mask(pocket_str2).unwrap().0;
+    let board = StdDeck::string_to_mask(board_str).unwrap().0;
+    //let board = StdDeckCardMask::new();
+    let dead = StdDeckCardMask::new(); // Aucune carte morte pour commencer
+    let npockets = 2; // Nombre de mains
+
+    // Initialiser les résultats pour l'évaluation exhaustive
+    let mut result_exhaustive = EnumResult {
+        game: Game::Holdem8,
+        sample_type: SampleType::Exhaustive,
+        nsamples: 0,
+        nplayers: npockets as u32,
+        nwinhi: [0; ENUM_MAXPLAYERS],
+        ntiehi: [0; ENUM_MAXPLAYERS],
+        nlosehi: [0; ENUM_MAXPLAYERS],
+        nwinlo: [0; ENUM_MAXPLAYERS],
+        ntielo: [0; ENUM_MAXPLAYERS],
+        nloselo: [0; ENUM_MAXPLAYERS],
+        nscoop: [0; ENUM_MAXPLAYERS],
+        nsharehi: [[0; ENUM_MAXPLAYERS + 1]; ENUM_MAXPLAYERS],
+        nsharelo: [[0; ENUM_MAXPLAYERS + 1]; ENUM_MAXPLAYERS],
+        nshare: [[[0; ENUM_MAXPLAYERS + 1]; ENUM_MAXPLAYERS + 1]; ENUM_MAXPLAYERS],
+        ev: [0.0; ENUM_MAXPLAYERS],
+        ordering: None,
+    };
+    println!("Après initialisation dans holdem8_exhaustive: {:?}", result_exhaustive.game);
+    // Déterminez le nombre de cartes sur le tableau
+    let nboard = board.num_cards(); // Assurez-vous que la méthode `num_cards` existe
+
+    // Appeler enum_exhaustive ici, assurez-vous que la fonction est accessible
+    let orderflag = false; // Définir selon votre besoin
+
+    match enum_exhaustive(
+        Game::Holdem8,
+        &[hand1, hand2],
+        board,
+        dead,
+        npockets,
+        nboard,
+        orderflag,
+        &mut result_exhaustive,
+    ) {
+        Ok(()) => println!("Évaluation exhaustive terminée."),
+        Err(e) => eprintln!("Erreur lors de l'évaluation exhaustive: {:?}", e),
+    }
+    println!("game {:?}", Game::Holdem8);
+    println!("result_exhaustive {:?}", result_exhaustive.game);
     // Afficher les résultats pour l'évaluation exhaustive
     println!("\nRésultats Exhaustifs:");
     result_exhaustive.enum_result_print(&[hand1, hand2], board); // Assurez-vous que `enum_result_print` est correctement implémentée
