@@ -237,4 +237,4 @@ mod tests {
         assert_eq!(rank, 2); // Rang attendu
     }
 
-
+}

@@ -2083,7 +2083,7 @@ impl EnumResult {
     
         // Comparer les résultats des joueurs et déterminer le gagnant.
         for i in 0..npockets {
-            let mut result = "Perd";
+            let mut _result = "Perd";
             // Comparez la main de ce joueur à celle de tous les autres joueurs.
             for j in 0..npockets {
                 if i != j {
@@ -2096,10 +2096,10 @@ impl EnumResult {
                     let value_j = Eval::eval_n(&hand_j, 7);
     
                     if value_i > value_j {
-                        result = "Gagne";
+                        _result = "Gagne";
                         break; // Si le joueur actuel gagne contre n'importe quel joueur, arrêtez la comparaison.
                     } else if value_i == value_j {
-                        result = "Égalité"; // Continuez la boucle pour s'assurer qu'il n'y a pas de perdants.
+                        _result = "Égalité"; // Continuez la boucle pour s'assurer qu'il n'y a pas de perdants.
                     }
                 }
             }
