@@ -2000,17 +2000,19 @@ impl EnumResult {
             .filter(|&card| !exclusion_mask.card_is_set(StdDeck::mask_to_index(card).unwrap()))
             .cloned()
             .collect();
-        println!("deck_mask = {:b}", deck.iter().map(|card_mask| card_mask.mask).sum::<u64>());
-        println!("deck = {:?}", deck.iter().map(|card_mask| card_mask.mask_to_string()).collect::<Vec<String>>());
-        println!("Nombre de cartes dans le jeu: {}", deck.len());
+        //println!("deck_mask = {:b}", deck.iter().map(|card_mask| card_mask.mask).sum::<u64>());
+        //println!("deck = {:?}", deck.iter().map(|card_mask| card_mask.mask_to_string()).collect::<Vec<String>>());
+        //println!("Nombre de cartes dans le jeu: {}", deck.len());
         match nboard {
             0 => enumerate_5_cards_d(&deck, &[], |c1, c2, c3, c4, c5| {
                 let new_board = board | *c1 | *c2 | *c3 | *c4 | *c5;
                 let _ = self.evaluate_hands(pockets, &new_board, npockets);
+                self.nsamples += 1;
             }),
             3 => enumerate_2_cards_d(&deck, &[], |c1, c2| {
                 let new_board = board | *c1 | *c2;
                 let _ = self.evaluate_hands(pockets, &new_board, npockets);
+                self.nsamples += 1;
             }),
             4 => enumerate_1_cards_d(&deck, &[], |c| {
                     let new_board = board | *c;  // Crée un nouveau tableau complet avec la carte supplémentaire
@@ -2020,6 +2022,7 @@ impl EnumResult {
             5 => {
                 // Le board est déjà complet, évaluez directement les mains
                 let _ = self.evaluate_hands(pockets, &board, npockets);
+                self.nsamples += 1;
             },
             _ => println!("erreur"),
         }
@@ -2075,7 +2078,7 @@ impl EnumResult {
             self.update_statistics(i, hand_value, pockets, board, npockets);
     
             // Afficher les statistiques pour chaque joueur.
-            println!("Statistiques pour le Joueur {}: {:#?}", i + 1, hand_value.std_rules_hand_val_to_string());
+            //println!("Statistiques pour le Joueur {}: {:#?}", i + 1, hand_value.std_rules_hand_val_to_string());
         }
     
         // Comparer les résultats des joueurs et déterminer le gagnant.
@@ -2085,10 +2088,10 @@ impl EnumResult {
             for j in 0..npockets {
                 if i != j {
                     let hand_i = pockets[i].clone() | board.clone();
-                    println!("Joueur {}: {} - {}", i + 1, pockets[i].clone().mask_to_string(),board.clone().mask_to_string());
+                    //println!("Joueur {}: {} - {}", i + 1, pockets[i].clone().mask_to_string(),board.clone().mask_to_string());
                     let hand_j = pockets[j].clone() | board.clone();
 
-                    println!("Joueur {}: {} - {}", j + 1, pockets[j].clone().mask_to_string(),board.clone().mask_to_string());
+                    //println!("Joueur {}: {} - {}", j + 1, pockets[j].clone().mask_to_string(),board.clone().mask_to_string());
                     let value_i = Eval::eval_n(&hand_i, 7);
                     let value_j = Eval::eval_n(&hand_j, 7);
     
@@ -2100,7 +2103,7 @@ impl EnumResult {
                     }
                 }
             }
-            println!("Résultat pour Joueur {}: {}", i + 1, result);
+            //println!("Résultat pour Joueur {}: {}", i + 1, result);
         }
     
         Ok(())
@@ -2154,12 +2157,12 @@ impl EnumResult {
         self.ev[player_index] += equity;
     
         // Afficher les mises à jour des statistiques pour le joueur actuel
-        println!("Mise à jour des statistiques pour le joueur {}: Victoires: {}, Égalités: {}, Défaites: {}, EV: {:.2}", 
-                 player_index + 1, 
-                 self.nwinhi[player_index], 
-                 self.ntiehi[player_index], 
-                 self.nlosehi[player_index], 
-                 self.ev[player_index]);
+        // println!("Mise à jour des statistiques pour le joueur {}: Victoires: {}, Égalités: {}, Défaites: {}, EV: {:.2}", 
+        //          player_index + 1, 
+        //          self.nwinhi[player_index], 
+        //          self.ntiehi[player_index], 
+        //          self.nlosehi[player_index], 
+        //          self.ev[player_index]);
     }
     
 
@@ -2174,18 +2177,22 @@ impl EnumResult {
             match ordering.mode {
                 EnumOrderingMode::Hi | EnumOrderingMode::Lo => {
                     if !terse {
+                        //print!("ORD {} {}:", ordering.mode as u32, ordering.nplayers);
                         for k in 0..ordering.nplayers {
+                            //println!("test");   
                             print!(" {:2}", (b'A' + k as u8) as char);
                         }
                         println!(" {:8}", "Freq");
                     } else {
                         print!("ORD {} {}:", ordering.mode as u32, ordering.nplayers);
                     }
-
+                    println!("ordering entries: {}", ordering.nentries);
                     for i in 0..ordering.nentries {
+                        println!("hist de i{}:", ordering.hist[i]);
                         if ordering.hist[i] > 0 {
                             for k in 0..ordering.nplayers {
                                 let rank = enum_ordering_decode_k(i as i32, ordering.nplayers, k);
+                                println!("rank {} = {}", k, rank);
                                 if rank as usize == ordering.nplayers {
                                     print!(" NQ");
                                 } else {
@@ -2300,16 +2307,16 @@ impl EnumResult {
                 //
                 //println!("Tableau final: {}", board.mask_to_string());
 
-                println!("self.nplayers = {}", self.nplayers);
+                //println!("self.nplayers = {}", self.nplayers);
                 for i in 0..self.nplayers as usize {
-                    println!("i = {}", i);
-                    println!("self.nplayers = {}", self.nplayers);
-                    println!("Joueur {}: {} victoires, {} égalités, {} défaites, EV: {:.2}",
-                    i + 1,
-                    self.nwinhi[i],
-                    self.ntiehi[i],
-                    self.nlosehi[i],
-                    self.ev[i]);
+                    //println!("i = {}", i);
+                    //println!("self.nplayers = {}", self.nplayers);
+                    // println!("Joueur {}: {} victoires, {} égalités, {} défaites, EV: {:.2}",
+                    // i + 1,
+                    // self.nwinhi[i],
+                    // self.ntiehi[i],
+                    // self.nlosehi[i],
+                    // self.ev[i]);
 
                     let (nwin, nlose, ntie) = if gp.haslopot == 1 {
                         (self.nwinlo[i], self.nloselo[i], self.ntielo[i])

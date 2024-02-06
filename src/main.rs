@@ -545,11 +545,12 @@ fn holdem_exhaustive() {
     // Initialiser les mains, le tableau, et les cartes mortes
     let pocket_str1 = "Ac7c";
     let pocket_str2 = "5s4s";
-    let board_str = "2cKdAsTd"; // Modifiez ceci selon le cas de test
-
+    //let board_str = "2cKdAsTd"; // Modifiez ceci selon le cas de test
+    let board_str = "2cKdAs";
     let hand1 = StdDeck::string_to_mask(pocket_str1).unwrap().0;
     let hand2 = StdDeck::string_to_mask(pocket_str2).unwrap().0;
     let board = StdDeck::string_to_mask(board_str).unwrap().0;
+    //let board = StdDeckCardMask::new();
     let dead = StdDeckCardMask::new(); // Aucune carte morte pour commencer
     let npockets = 2; // Nombre de mains
 
@@ -577,7 +578,7 @@ fn holdem_exhaustive() {
     let nboard = board.num_cards(); // Assurez-vous que la méthode `num_cards` existe
 
     // Appeler enum_exhaustive ici, assurez-vous que la fonction est accessible
-    let orderflag = false; // Définir selon votre besoin
+    let orderflag = true; // Définir selon votre besoin
 
     match enum_exhaustive(
         Game::Holdem,
