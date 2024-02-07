@@ -2267,7 +2267,14 @@ impl EnumResult {
                         if my_lo_val < their_lo_val {
                             lo_wins += 1;
                         } else if my_lo_val == their_lo_val {
-                            lo_ties += 1;
+                            if my_lo_val == (LowHandVal { value: 135069696 }) {
+                                println!("Tie! zero lowball!");
+                            } else {
+                                println!("Tie! !");
+                                println!("My lowball: {:?}, Their lowball: {:?}", my_lo_val, their_lo_val);
+                                lo_ties += 1;
+                            }
+                            
                         } else {
                             lo_losses += 1;
                         }
