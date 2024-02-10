@@ -241,7 +241,6 @@ mod tests {
         assert_eq!(rank, 2); // Rang attendu
     }
 
-
     #[test]
     fn test_enum_ordering_decode_k_2_players() {
         let encoding: i32 = 0b00011010; // Exemple d'encodage binaire (26 en décimal)

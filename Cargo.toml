@@ -17,3 +17,6 @@ crate-type = ["cdylib", "rlib"]
 [[bin]]
 name = "poker_eval_rs"
 path = "src/main.rs"
+
+[profile.release]
+debug = true

@@ -180,5 +180,4 @@ mod tests {
 
     // Vous pouvez ajouter ici des tests supplémentaires si nécessaire
     // test chaque masque en les convertissant en cartes
-
 }

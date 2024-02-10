@@ -32,4 +32,3 @@ pub fn std_deck_lowball8_eval(cards: &StdDeckCardMask, _n_cards: usize) -> Optio
         })
     }
 }
-

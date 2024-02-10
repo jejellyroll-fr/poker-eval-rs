@@ -13,10 +13,9 @@ use poker_eval_rs::t_cardmasks::StdDeckCardMask;
 //use std::io::{self, BufRead};
 //use std::str::FromStr;
 use poker_eval_rs::deck_joker::JokerDeck;
-use poker_eval_rs::t_jokercardmasks::JokerDeckCardMask;
-use poker_eval_rs::eval::Eval;
 use poker_eval_rs::enumerate::enum_exhaustive;
-
+use poker_eval_rs::eval::Eval;
+use poker_eval_rs::t_jokercardmasks::JokerDeckCardMask;
 
 fn evaluate_combination() {
     let hands = vec![
@@ -54,7 +53,10 @@ fn evaluate_combination() {
                 return; // ou gestion d'erreur alternative
             }
         };
-        println!("Masque de cartes : {:b}, Nombre de cartes : {}", mask.mask, num_cards);
+        println!(
+            "Masque de cartes : {:b}, Nombre de cartes : {}",
+            mask.mask, num_cards
+        );
 
         // Assurez-vous que le nombre de cartes est correct
         let actual_num_cards = mask.num_cards();
@@ -85,19 +87,20 @@ fn evaluate_combination() {
             // Évaluer la main pour low
             //let low_hand_val = std_deck_lowball_eval(&mask, num_cards);
             //println!("Low HandVal : {:?}", low_hand_val);
-        //     println!(
-        //         "Représentation de la main low : {}",
-        //         low_hand_val.to_string()
-        //     );
+            //     println!(
+            //         "Représentation de la main low : {}",
+            //         low_hand_val.to_string()
+            //     );
 
-        //     //let low_hand_val = ace_to_five_lowball_eval(&mask); // Utilisez 'mask' ici
-        //     //low_hand_val.print_ace_to_five_lowball();
-        // } else {
-        //     println!("Nombre de cartes insuffisant pour évaluer une main.");
-        // }
+            //     //let low_hand_val = ace_to_five_lowball_eval(&mask); // Utilisez 'mask' ici
+            //     //low_hand_val.print_ace_to_five_lowball();
+            // } else {
+            //     println!("Nombre de cartes insuffisant pour évaluer une main.");
+            // }
 
-        println!("----------------------");
-    }}
+            println!("----------------------");
+        }
+    }
 }
 //     // Cartes de poche des joueurs
 //     let pocket_str1 = "AsKc"; // As de pique, Roi de cœur (Joueur 1)
@@ -263,7 +266,7 @@ fn evaluate_combination() {
 //     let mut terse = false;
 
 //     let mut current_pocket = Vec::new();
-//     let mut parsing_section = "pockets"; // Commencez par analyser les poches des joueurs
+//     let mut parsing_section = "pockets"; // Commencez par analyser les pockets des joueurs
 
 //     for arg in args.into_iter().skip(1) {
 //         // Skip le nom du programme
@@ -297,7 +300,7 @@ fn evaluate_combination() {
 //                     pockets.push(mask);
 //                     current_pocket.clear();
 //                 }
-//                 npockets += 1; // Augmentez le compteur de poches
+//                 npockets += 1; // Augmentez le compteur de pockets
 //             }
 //             _ => match parsing_section {
 //                 "niter" => niter = arg.parse().map_err(|_| "Nombre d'itérations invalide")?,
@@ -419,17 +422,20 @@ fn evaluate_combination() {
 
 fn main() {
     //holdem_sample();
-    holdem8_exhaustive();
+    //holdem8_exhaustive();
     //holdem_exhaustive();
     //test_all_deck_cards()
     //test_all_deck_cards_with_joker()
     //evaluate_combination()
+    omaha_exhaustive()
 }
 
 //fonction qui transforme "AsAd" en stdcardmask et puis qui retransforme le stdcardmask en "AsAd"
 fn test_all_deck_cards() {
     // Définition des valeurs de cartes et des enseignes
-    let values = ["2", "3", "4", "5", "6", "7", "8", "9", "T", "J", "Q", "K", "A"];
+    let values = [
+        "2", "3", "4", "5", "6", "7", "8", "9", "T", "J", "Q", "K", "A",
+    ];
     let suits = ["s", "h", "d", "c"]; // s = pique, h = coeur, d = carreau, c = trèfle
 
     // Itérer sur chaque combinaison de valeur et d'enseigne
@@ -446,7 +452,11 @@ fn test_all_deck_cards() {
             println!("{} -> {}", card_str, card_str2);
 
             // Vérifie que la chaîne de caractères originale et la chaîne convertie sont les mêmes
-            assert_eq!(card_str, card_str2, "Erreur de conversion pour la carte {}", card_str);
+            assert_eq!(
+                card_str, card_str2,
+                "Erreur de conversion pour la carte {}",
+                card_str
+            );
         }
     }
 
@@ -455,7 +465,9 @@ fn test_all_deck_cards() {
 
 fn test_all_deck_cards_with_joker() {
     // Définition des valeurs de cartes et des enseignes
-    let values = ["2", "3", "4", "5", "6", "7", "8", "9", "T", "J", "Q", "K", "A"];
+    let values = [
+        "2", "3", "4", "5", "6", "7", "8", "9", "T", "J", "Q", "K", "A",
+    ];
     let suits = ["s", "h", "d", "c"]; // s = pique, h = coeur, d = carreau, c = trèfle
 
     // Itérer sur chaque combinaison de valeur et d'enseigne pour les cartes standards
@@ -475,7 +487,11 @@ fn test_all_deck_cards_with_joker() {
                 println!("{} -> {}", card_str, card_str2);
 
                 // Vérifie que la chaîne de caractères originale et la chaîne convertie sont les mêmes
-                assert_eq!(card_str, card_str2, "Erreur de conversion pour la carte {}", card_str);
+                assert_eq!(
+                    card_str, card_str2,
+                    "Erreur de conversion pour la carte {}",
+                    card_str
+                );
             }
         }
     }
@@ -490,12 +506,15 @@ fn test_all_deck_cards_with_joker() {
         let joker_str2 = JokerDeck::card_to_string(joker_index);
         println!("{} -> {}", joker_str, joker_str2);
 
-        assert_eq!(joker_str.to_lowercase(), joker_str2.to_lowercase(), "Erreur de conversion pour le joker");
+        assert_eq!(
+            joker_str.to_lowercase(),
+            joker_str2.to_lowercase(),
+            "Erreur de conversion pour le joker"
+        );
     }
 
     println!("Toutes les cartes, y compris le joker, ont été testées avec succès.");
 }
-
 
 fn holdem_sample() {
     // Initialiser les mains et le tableau
@@ -531,15 +550,19 @@ fn holdem_sample() {
     // Simuler les 10000 itérations Monte Carlo
     const N_ITER_MONTE_CARLO: usize = 44;
     let nboard = 0; // Nombre de cartes déjà présentes sur le tableau (0 dans ce cas)
-    let _ = result_monte_carlo.simulate_holdem_game(&[hand1, hand2], board, dead, npockets, nboard, N_ITER_MONTE_CARLO);
-
+    let _ = result_monte_carlo.simulate_holdem_game(
+        &[hand1, hand2],
+        board,
+        dead,
+        npockets,
+        nboard,
+        N_ITER_MONTE_CARLO,
+    );
 
     // Afficher les résultats pour la simulation Monte Carlo
     println!("Résultats Monte Carlo:");
-    let pockets = [hand1, hand2]; // Créez un tableau de poches pour passer à la fonction d'affichage
+    let pockets = [hand1, hand2]; // Créez un tableau de pockets pour passer à la fonction d'affichage
     result_monte_carlo.enum_result_print(&pockets, board); // Affichez les résultats Monte Carlo
-
-
 }
 
 fn holdem_exhaustive() {
@@ -547,11 +570,11 @@ fn holdem_exhaustive() {
     let pocket_str1 = "Ac7c";
     let pocket_str2 = "5s4s";
     //let board_str = "2cKdAsTd"; // Modifiez ceci selon le cas de test
-    let board_str = "2cKdAs";
+    //let board_str = "2cKdAs";
     let hand1 = StdDeck::string_to_mask(pocket_str1).unwrap().0;
     let hand2 = StdDeck::string_to_mask(pocket_str2).unwrap().0;
-    let board = StdDeck::string_to_mask(board_str).unwrap().0;
-    //let board = StdDeckCardMask::new();
+    //let board = StdDeck::string_to_mask(board_str).unwrap().0;
+    let board = StdDeckCardMask::new();
     let dead = StdDeckCardMask::new(); // Aucune carte morte pour commencer
     let npockets = 2; // Nombre de mains
 
@@ -596,17 +619,16 @@ fn holdem_exhaustive() {
     }
 
     // Afficher les résultats pour l'évaluation exhaustive
-    println!("\nRésultats Exhaustifs:");
+    //println!("\nRésultats Exhaustifs:");
     result_exhaustive.enum_result_print(&[hand1, hand2], board); // Assurez-vous que `enum_result_print` est correctement implémentée
 }
-
 
 fn holdem8_exhaustive() {
     // Initialiser les mains, le tableau, et les cartes mortes
     let pocket_str1 = "Ac7c";
     let pocket_str2 = "5s4s";
     let board_str = "2cKdAsTd"; // Modifiez ceci selon le cas de test
-    //let board_str = "2cKdAs";
+                                //let board_str = "2cKdAs";
     let hand1 = StdDeck::string_to_mask(pocket_str1).unwrap().0;
     let hand2 = StdDeck::string_to_mask(pocket_str2).unwrap().0;
     let board = StdDeck::string_to_mask(board_str).unwrap().0;
@@ -633,7 +655,10 @@ fn holdem8_exhaustive() {
         ev: [0.0; ENUM_MAXPLAYERS],
         ordering: None,
     };
-    println!("Après initialisation dans holdem8_exhaustive: {:?}", result_exhaustive.game);
+    // println!(
+    //     "Après initialisation dans holdem8_exhaustive: {:?}",
+    //     result_exhaustive.game
+    // );
     // Déterminez le nombre de cartes sur le tableau
     let nboard = board.num_cards(); // Assurez-vous que la méthode `num_cards` existe
 
@@ -653,8 +678,70 @@ fn holdem8_exhaustive() {
         Ok(()) => println!("Évaluation exhaustive terminée."),
         Err(e) => eprintln!("Erreur lors de l'évaluation exhaustive: {:?}", e),
     }
-    println!("game {:?}", Game::Holdem8);
-    println!("result_exhaustive {:?}", result_exhaustive.game);
+    //println!("game {:?}", Game::Holdem8);
+    //println!("result_exhaustive {:?}", result_exhaustive.game);
+    // Afficher les résultats pour l'évaluation exhaustive
+    println!("\nRésultats Exhaustifs:");
+    result_exhaustive.enum_result_print(&[hand1, hand2], board); // Assurez-vous que `enum_result_print` est correctement implémentée
+}
+
+fn omaha_exhaustive() {
+    // Initialiser les mains, le tableau, et les cartes mortes
+    let pocket_str1 = "AsKhQsJh";
+    let pocket_str2 = "8h8d7h6d";
+    //let board_str = "2cKdAdTd"; // Modifiez ceci selon le cas de test
+                                //let board_str = "2cKdAs";
+    let hand1 = StdDeck::string_to_mask(pocket_str1).unwrap().0;
+    let hand2 = StdDeck::string_to_mask(pocket_str2).unwrap().0;
+    //let board = StdDeck::string_to_mask(board_str).unwrap().0;
+    let board = StdDeckCardMask::new();
+    let dead = StdDeckCardMask::new(); // Aucune carte morte pour commencer
+    let npockets = 2; // Nombre de mains
+
+    // Initialiser les résultats pour l'évaluation exhaustive
+    let mut result_exhaustive = EnumResult {
+        game: Game::Omaha,
+        sample_type: SampleType::Exhaustive,
+        nsamples: 0,
+        nplayers: npockets as u32,
+        nwinhi: [0; ENUM_MAXPLAYERS],
+        ntiehi: [0; ENUM_MAXPLAYERS],
+        nlosehi: [0; ENUM_MAXPLAYERS],
+        nwinlo: [0; ENUM_MAXPLAYERS],
+        ntielo: [0; ENUM_MAXPLAYERS],
+        nloselo: [0; ENUM_MAXPLAYERS],
+        nscoop: [0; ENUM_MAXPLAYERS],
+        nsharehi: [[0; ENUM_MAXPLAYERS + 1]; ENUM_MAXPLAYERS],
+        nsharelo: [[0; ENUM_MAXPLAYERS + 1]; ENUM_MAXPLAYERS],
+        nshare: [[[0; ENUM_MAXPLAYERS + 1]; ENUM_MAXPLAYERS + 1]; ENUM_MAXPLAYERS],
+        ev: [0.0; ENUM_MAXPLAYERS],
+        ordering: None,
+    };
+    // println!(
+    //     "Après initialisation dans holdem8_exhaustive: {:?}",
+    //     result_exhaustive.game
+    // );
+    // Déterminez le nombre de cartes sur le tableau
+    let nboard = board.num_cards(); // Assurez-vous que la méthode `num_cards` existe
+
+    // Appeler enum_exhaustive ici, assurez-vous que la fonction est accessible
+    let orderflag = false; // Définir selon votre besoin
+
+    match enum_exhaustive(
+        Game::Omaha,
+        &[hand1, hand2],
+        board,
+        dead,
+        npockets,
+        nboard,
+        orderflag,
+        &mut result_exhaustive,
+    ) {
+        Ok(()) => println!("Évaluation exhaustive terminée."),
+        Err(e) => eprintln!("Erreur lors de l'évaluation exhaustive: {:?}", e),
+    }
+    //println!("game {:?}", Game::Holdem8);
+    //println!("result_exhaustive {:?}", result_exhaustive.game);
     // Afficher les résultats pour l'évaluation exhaustive
     println!("\nRésultats Exhaustifs:");
     result_exhaustive.enum_result_print(&[hand1, hand2], board); // Assurez-vous que `enum_result_print` est correctement implémentée
