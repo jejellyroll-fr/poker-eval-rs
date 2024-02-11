@@ -34,6 +34,7 @@ use std::ptr::NonNull;
 //use std::collections::HashSet;
 use rand::thread_rng;
 //use std::any::Any;
+use std::time::Instant;
 
 // Trait pour gérer les masques de cartes
 pub trait CardMask: BitOr<Output = Self> + Clone + PartialEq + std::fmt::Debug {
@@ -585,39 +586,7 @@ where
         }
     }
 }
-// // Fonction pour énumérer toutes les combinaisons possibles de `n_cards` cartes dans un deck, en excluant les dead card,
-// // et appliquer une action donnée sur chaque combinaison valide
-// fn enumerate_n_cards_d<T, F>(deck: &[T], dead_cards: &[T], n_cards: usize, mut action: F)
-// where
-//     T: CardMask,
-//     F: FnMut(Vec<&T>),
-// {
-//     let mut indices = (0..n_cards).collect::<Vec<_>>();
 
-//     while !indices.is_empty() {
-//         if indices.last().unwrap() < &deck.len() {
-//             if indices.iter().all(|&i| {
-//                 !dead_cards
-//                     .iter()
-//                     .any(|dead_card| dead_card.mask() == deck[i].mask())
-//             }) {
-//                 let current_combination = indices.iter().map(|&i| &deck[i]).collect::<Vec<_>>();
-//                 println!("current_combination : {:?}", current_combination);
-//                 action(current_combination);
-//             }
-
-//             *indices.last_mut().unwrap() += 1;
-//         } else {
-//             indices.pop();
-//             if let Some(last) = indices.last_mut() {
-//                 *last += 1;
-//                 while indices.len() < n_cards {
-//                     indices.push(indices.last().unwrap() + 1);
-//                 }
-//             }
-//         }
-//     }
-// }
 
 // Énumère toutes les combinaisons de `n_cards` cartes dans un deck, excluant les dead cards,
 // et applique une action donnée sur chaque combinaison valide.
@@ -1783,15 +1752,24 @@ pub fn enum_exhaustive(
     // Gestion spécifique du jeu
     match game {
         Game::Holdem => {
+            let start_time = Instant::now();
             result.exhaustive_holdem_evaluation(pockets, board, dead, npockets, nboard)?;
+            let elapsed_time = start_time.elapsed();
+            println!("Temps d'exécution: {:?}", elapsed_time);
         }
         Game::Holdem8 => {
             //println!("Jeu Holdem8 implémenté");
+            let start_time = Instant::now();
             result.exhaustive_holdem8_evaluation(pockets, board, dead, npockets, nboard)?;
+            let elapsed_time = start_time.elapsed();
+            println!("Temps d'exécution: {:?}", elapsed_time);
         }
         Game::Omaha => {
             //exhaustive_omaha_evaluation(result, pockets, board, dead, npockets, nboard)?;
+            let start_time = Instant::now();
             result.exhaustive_omaha_evaluation(pockets, board, dead, npockets, nboard)?;
+            let elapsed_time = start_time.elapsed();
+            println!("Temps d'exécution: {:?}", elapsed_time);
         }
         // Ajoutez d'autres jeux et leurs évaluations exhaustives ici...
         _ => return Err(EnumError::UnsupportedGameType),
@@ -2102,7 +2080,8 @@ impl EnumResult {
 
         // Itérer sur chaque joueur et évaluer sa main.
         for (i, pocket) in pockets.iter().enumerate() {
-            let hand = pocket.clone() | board.clone(); // Combinez les cartes en main avec le tableau.
+            let hand = *pocket | *board;
+            //let hand = pocket.clone() | board.clone(); // Combinez les cartes en main avec le tableau.
             let hand_value = Eval::eval_n(&hand, 7); // Évaluez la main.
 
             // Mettre à jour les statistiques pour chaque joueur.
@@ -2112,30 +2091,8 @@ impl EnumResult {
             //println!("Statistiques pour le Joueur {}: {:#?}", i + 1, hand_value.std_rules_hand_val_to_string());
         }
 
-        // Comparer les résultats des joueurs et déterminer le gagnant.
-        for i in 0..npockets {
-            let mut _result = "Perd";
-            // Comparez la main de ce joueur à celle de tous les autres joueurs.
-            for j in 0..npockets {
-                if i != j {
-                    let hand_i = pockets[i].clone() | board.clone();
-                    //println!("Joueur {}: {} - {}", i + 1, pockets[i].clone().mask_to_string(),board.clone().mask_to_string());
-                    let hand_j = pockets[j].clone() | board.clone();
 
-                    //println!("Joueur {}: {} - {}", j + 1, pockets[j].clone().mask_to_string(),board.clone().mask_to_string());
-                    let value_i = Eval::eval_n(&hand_i, 7);
-                    let value_j = Eval::eval_n(&hand_j, 7);
 
-                    if value_i > value_j {
-                        _result = "Gagne";
-                        break; // Si le joueur actuel gagne contre n'importe quel joueur, arrêtez la comparaison.
-                    } else if value_i == value_j {
-                        _result = "Égalité"; // Continuez la boucle pour s'assurer qu'il n'y a pas de perdants.
-                    }
-                }
-            }
-            //println!("Résultat pour Joueur {}: {}", i + 1, result);
-        }
 
         Ok(())
     }
