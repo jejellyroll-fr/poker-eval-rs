@@ -17,6 +17,7 @@ use poker_eval_rs::enumerate::enum_exhaustive;
 use poker_eval_rs::eval::Eval;
 use poker_eval_rs::t_jokercardmasks::JokerDeckCardMask;
 
+#[allow(dead_code)]
 fn evaluate_combination() {
     let hands = vec![
         "2h4d5s6h7d",
@@ -463,6 +464,7 @@ fn test_all_deck_cards() {
     println!("Toutes les cartes ont été testées avec succès.");
 }
 
+#[allow(dead_code)]
 fn test_all_deck_cards_with_joker() {
     // Définition des valeurs de cartes et des enseignes
     let values = [
@@ -516,6 +518,7 @@ fn test_all_deck_cards_with_joker() {
     println!("Toutes les cartes, y compris le joker, ont été testées avec succès.");
 }
 
+#[allow(dead_code)]
 fn holdem_sample() {
     // Initialiser les mains et le tableau
     let pocket_str1 = "Ac7c";
@@ -565,6 +568,7 @@ fn holdem_sample() {
     result_monte_carlo.enum_result_print(&pockets, board); // Affichez les résultats Monte Carlo
 }
 
+#[allow(dead_code)]
 fn holdem_exhaustive() {
     // Initialiser les mains, le tableau, et les cartes mortes
     let pocket_str1 = "Ac7c";
@@ -623,6 +627,7 @@ fn holdem_exhaustive() {
     result_exhaustive.enum_result_print(&[hand1, hand2], board); // Assurez-vous que `enum_result_print` est correctement implémentée
 }
 
+#[allow(dead_code)]
 fn holdem8_exhaustive() {
     // Initialiser les mains, le tableau, et les cartes mortes
     let pocket_str1 = "Ac7c";
@@ -685,6 +690,7 @@ fn holdem8_exhaustive() {
     result_exhaustive.enum_result_print(&[hand1, hand2], board); // Assurez-vous que `enum_result_print` est correctement implémentée
 }
 
+#[allow(dead_code)]
 fn omaha_exhaustive() {
     // Initialiser les mains, le tableau, et les cartes mortes
     let pocket_str1 = "AsKhQsJh";
