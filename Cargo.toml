@@ -3,19 +3,16 @@ name = "poker-eval-rs"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
 pyo3 = { version = "0.21.2", features = ["extension-module"] }
 rand = "0.8.3"
 
-
 [lib]
-name = "poker_eval_rs"
+name = "poker_eval_rs" 
 crate-type = ["cdylib", "rlib"]
 
 [[bin]]
-name = "poker_eval_rs"
+name = "poker_eval_rs_cli"  
 path = "src/main.rs"
 
 [profile.release]
