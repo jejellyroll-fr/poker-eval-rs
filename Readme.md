@@ -25,6 +25,9 @@ git clone https://github.com/yourusername/poker-eval-rs.git
 ```
 Navigate to the cloned directory:
 
+WARNING:
+don't forget to setup your env PYO3_PYTHON to point to your python interpreter
+
 bash
 ```
 cd poker-eval-rs
