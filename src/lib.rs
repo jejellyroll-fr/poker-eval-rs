@@ -97,9 +97,10 @@ fn eval_low_func(input: &str) -> PyResult<String> {
 }
 
 #[pymodule]
-fn poker_eval_rs(_py: Python, m: &PyModule) -> PyResult<()> {
+fn poker_eval_rs(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(string_to_mask, m)?)?;
     m.add_function(wrap_pyfunction!(eval_n, m)?)?;
     m.add_function(wrap_pyfunction!(eval_low_func, m)?)?;
     Ok(())
 }
+
