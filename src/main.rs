@@ -424,10 +424,10 @@ fn main() {
     //holdem_sample();
     //holdem8_exhaustive();
     //holdem_exhaustive();
-    //test_all_deck_cards()
+    test_all_deck_cards()
     //test_all_deck_cards_with_joker()
     //evaluate_combination()
-    omaha_exhaustive()
+    //omaha_exhaustive()
 }
 
 //fonction qui transforme "AsAd" en stdcardmask et puis qui retransforme le stdcardmask en "AsAd"
