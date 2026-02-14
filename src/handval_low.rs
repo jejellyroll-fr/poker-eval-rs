@@ -199,6 +199,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::assertions_on_constants)]
     fn test_constants() {
         assert!(LOW_HAND_VAL_NOTHING > 0);
         assert!(LOW_HAND_VAL_WORST_EIGHT > 0);

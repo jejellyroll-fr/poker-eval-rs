@@ -296,7 +296,7 @@ impl Eval {
     #[cfg(all(feature = "simd", target_arch = "x86_64"))]
     /// Evaluates 8 hands in parallel using AVX2.
     ///
-    #[cfg(all(feature = "simd", target_arch = "x86_64"))]
+    #[cfg(all(feature = "simd", target_arch = "x86_64", feature = "large-table", not(feature = "compact-table")))]
     /// Evaluates 8 hands in parallel using AVX2.
     ///
     /// # Safety
@@ -516,7 +516,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(all(feature = "simd", target_arch = "x86_64"))]
+    #[cfg(all(feature = "simd", target_arch = "x86_64", feature = "large-table", not(feature = "compact-table")))]
     fn test_eval_8_hands_simd() {
         let (h1, _) = hand("AsKsQsJsTs"); // Royal Flush
         let (h2, _) = hand("AsAhAdAcKs"); // Quads

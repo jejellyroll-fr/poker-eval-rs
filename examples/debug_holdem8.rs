@@ -1,11 +1,10 @@
-use poker_eval_rs::deck::{StdDeck, StdDeckCardMask, STD_DECK_N_CARDS};
-use poker_eval_rs::evaluators::lowball::std_deck_lowball_eval;
+use poker_eval_rs::deck::{StdDeckCardMask, STD_DECK_N_CARDS};
 use poker_eval_rs::evaluators::lowball8::std_deck_lowball8_eval;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
 
 fn main() {
-    let niter = 1_000_000;
+    let _niter = 1_000_000;
     let npockets = 2;
 
     // Reproduce benchmark_variants logic
@@ -33,8 +32,8 @@ fn main() {
         }
 
         // Evaluate
-        for i in 0..npockets {
-            let hand = pockets[i] | board;
+        for &hand_mask in &pockets {
+            let hand = hand_mask | board;
             // Calls std_deck_lowball8_eval which calls std_deck_lowball_eval
             // We verify if it crashes
             let _ = std_deck_lowball8_eval(&hand, 7);

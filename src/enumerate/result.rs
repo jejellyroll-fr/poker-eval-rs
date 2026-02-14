@@ -67,7 +67,7 @@ impl EnumResult {
         self.nsharehi = [[0; ENUM_MAXPLAYERS + 1]; ENUM_MAXPLAYERS];
         self.nsharelo = [[0; ENUM_MAXPLAYERS + 1]; ENUM_MAXPLAYERS];
         // Re-allocate or memset. Since it's boxed, we can just overwrite.
-        self.nshare = Box::new([[[0; ENUM_MAXPLAYERS + 1]; ENUM_MAXPLAYERS + 1]; ENUM_MAXPLAYERS]);
+        *self.nshare = [[[0; ENUM_MAXPLAYERS + 1]; ENUM_MAXPLAYERS + 1]; ENUM_MAXPLAYERS];
 
         self.ev = [0.0; ENUM_MAXPLAYERS];
         self.ordering = None;
@@ -1112,7 +1112,7 @@ impl EnumResult {
                 |combo| {
                     let mut card_idx = 0;
                     for i in 0..npockets {
-                        let mut hand = joker_pockets[i].clone();
+                        let mut hand = joker_pockets[i];
                         let needed = cards_needed_per_player[i];
                         for _ in 0..needed {
                             hand = JokerDeckCardMask {

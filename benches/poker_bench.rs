@@ -114,7 +114,7 @@ fn bench_equity(c: &mut Criterion) {
 }
 
 /// Benchmark SIMD 8-hand evaluation
-#[cfg(all(feature = "simd", target_arch = "x86_64"))]
+#[cfg(all(feature = "simd", target_arch = "x86_64", feature = "large-table", not(feature = "compact-table")))]
 fn bench_eval_simd(c: &mut Criterion) {
     let mut group = c.benchmark_group("eval_simd");
 
@@ -152,13 +152,17 @@ fn create_empty_result(nplayers: usize) -> EnumResult {
         nscoop: [0; ENUM_MAXPLAYERS],
         nsharehi: [[0; ENUM_MAXPLAYERS + 1]; ENUM_MAXPLAYERS],
         nsharelo: [[0; ENUM_MAXPLAYERS + 1]; ENUM_MAXPLAYERS],
-        nshare: Box::new([[[0; ENUM_MAXPLAYERS + 1]; ENUM_MAXPLAYERS + 1]; ENUM_MAXPLAYERS]),
+        nshare: {
+            let mut ns = Box::new([[[0; ENUM_MAXPLAYERS + 1]; ENUM_MAXPLAYERS + 1]; ENUM_MAXPLAYERS]);
+            *ns = [[[0; ENUM_MAXPLAYERS + 1]; ENUM_MAXPLAYERS + 1]; ENUM_MAXPLAYERS];
+            ns
+        },
         ev: [0.0; ENUM_MAXPLAYERS],
         ordering: None,
     }
 }
 
-#[cfg(all(feature = "simd", target_arch = "x86_64"))]
+#[cfg(all(feature = "simd", target_arch = "x86_64", feature = "large-table", not(feature = "compact-table")))]
 criterion_group!(
     benches,
     bench_eval_n,
@@ -166,6 +170,6 @@ criterion_group!(
     bench_equity,
     bench_eval_simd
 );
-#[cfg(not(all(feature = "simd", target_arch = "x86_64")))]
+#[cfg(not(all(feature = "simd", target_arch = "x86_64", feature = "large-table", not(feature = "compact-table"))))]
 criterion_group!(benches, bench_eval_n, bench_string_to_mask, bench_equity);
 criterion_main!(benches);

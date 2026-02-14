@@ -744,7 +744,7 @@ fn format_short_deck_hand(val: u32) -> String {
             s.push("23456789TJQKA".chars().nth(*r as usize).unwrap_or('?'));
         }
         s.push(')');
-        return s;
+        s
     } else if ht == 5 {
         // Stored as Flush, actually a FullHouse
         // Read 2 cards (Trips rank, Pair rank)
@@ -757,9 +757,9 @@ fn format_short_deck_hand(val: u32) -> String {
             s.push("23456789TJQKA".chars().nth(*r as usize).unwrap_or('?'));
         }
         s.push(')');
-        return s;
+        s
     } else {
         // Standard display for others (Straight, StFlush, Quads, Trips, etc.)
-        return hv.to_string();
+        hv.to_string()
     }
 }

@@ -1,4 +1,4 @@
-#![cfg(feature = "python")]
+// Python bindings module
 
 use crate::board::{calculate_outs as calc_outs_rust, BoardTexture};
 use crate::deck::*;
@@ -8,9 +8,7 @@ use crate::evaluators::range_equity::calculate_equity as calc_equity_rust;
 use crate::evaluators::{
     Eval, EvalJoker, HandEvaluator, OmahaHiEvaluator, OmahaHiLoEvaluator, ShortDeckEvaluator,
 };
-use crate::handval_low::LowHandVal;
 use crate::range::HandRange;
-use crate::rules::HandType;
 use crate::tables::t_cardmasks::StdDeckCardMask;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
@@ -99,12 +97,8 @@ impl PyCard {
         (self.index / 13) as u8
     }
 
-    pub fn to_string(&self) -> String {
-        StdDeckCardMask::from_card_index(self.index).to_string()
-    }
-
     pub fn __repr__(&self) -> String {
-        format!("<Card {}>", self.to_string())
+        format!("<Card {}>", self)
     }
 
     pub fn __str__(&self) -> String {
@@ -113,6 +107,12 @@ impl PyCard {
 
     pub fn __int__(&self) -> usize {
         self.index
+    }
+}
+
+impl std::fmt::Display for PyCard {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", StdDeckCardMask::from_card_index(self.index))
     }
 }
 
@@ -125,6 +125,7 @@ pub struct PyHand {
 #[pymethods]
 impl PyHand {
     #[new]
+    #[pyo3(signature = (input=None))]
     pub fn new(input: Option<&str>) -> PyResult<Self> {
         if let Some(s) = input {
             let (mask, _) = parse_and_validate(s)?;
@@ -157,7 +158,7 @@ impl PyHand {
     }
 
     pub fn __repr__(&self) -> String {
-        format!("<Hand {}>", self.mask.to_string())
+        format!("<Hand {}>", self.mask)
     }
 }
 
@@ -368,7 +369,7 @@ pub fn calculate_equity(
         }
     };
 
-    if npockets < 2 || npockets > ENUM_MAXPLAYERS {
+    if !(2..=ENUM_MAXPLAYERS).contains(&npockets) {
         return Err(PyErr::new::<pyo3::exceptions::PyValueError, _>(format!(
             "Need 2-{} hands",
             ENUM_MAXPLAYERS
@@ -485,11 +486,11 @@ pub fn calculate_equity(
             dict.set_item("samples", result.nsamples)?;
 
             let mut players = Vec::new();
-            for i in 0..npockets {
+            for (i, hand) in hands.iter().enumerate().take(npockets) {
                 let total = result.nwinhi[i] + result.ntiehi[i] + result.nlosehi[i];
                 if total > 0 {
                     let player_dict = PyDict::new(py);
-                    player_dict.set_item("hand", &hands[i])?;
+                    player_dict.set_item("hand", hand)?;
                     player_dict
                         .set_item("win", (result.nwinhi[i] as f64 / total as f64) * 100.0)?;
                     player_dict

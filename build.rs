@@ -306,7 +306,10 @@ fn main() {
     let mut compact_lookup = vec![0u32; 100_000];
 
     let mut max_idx: usize = 0;
-    let is_large = env::var("CARGO_FEATURE_LARGE_TABLE").is_ok();
+    // large-table is ONLY used if compact-table is NOT set.
+    // This matches the priority in evaluators/mod.rs logic.
+    let is_large = env::var("CARGO_FEATURE_LARGE_TABLE").is_ok()
+        && env::var("CARGO_FEATURE_COMPACT_TABLE").is_err();
 
     if is_large {
         // LARGE TABLE: Simple sparse array indexed by raw key.
@@ -416,22 +419,27 @@ fn main() {
     // 4. Emit all tables
     // ========================================================================
     writeln!(f, "/// OMPEval-compatible rank multipliers.").unwrap();
+    writeln!(f, "#[allow(dead_code)]").unwrap();
     writeln!(f, "pub const RANKS: [u32; 13] = {:?};", RANKS).unwrap();
     writeln!(f).unwrap();
 
     writeln!(f, "/// Flush rank multipliers (powers of 2).").unwrap();
+    writeln!(f, "#[allow(dead_code)]").unwrap();
     writeln!(f, "pub const FLUSH_RANKS: [u32; 13] = {:?};", FLUSH_RANKS).unwrap();
     writeln!(f).unwrap();
 
-    writeln!(
-        f,
-        "pub const PERF_HASH_ROW_SHIFT: u32 = {};",
-        PERF_HASH_ROW_SHIFT
-    )
-    .unwrap();
     if is_large {
+        writeln!(f, "#[allow(dead_code)]").unwrap();
         writeln!(f, "pub const PERF_HASH_ROW_OFFSETS: [u32; 0] = [];").unwrap();
+        writeln!(f, "#[allow(dead_code)]").unwrap();
+        writeln!(f, "pub const PERF_HASH_ROW_SHIFT: u32 = 0;").unwrap();
     } else {
+        writeln!(
+            f,
+            "pub const PERF_HASH_ROW_SHIFT: u32 = {};",
+            PERF_HASH_ROW_SHIFT
+        )
+        .unwrap();
         writeln!(f, "/// Perfect hash row offsets.").unwrap();
         writeln!(f, "pub static PERF_HASH_ROW_OFFSETS: [u32; {}] = [", n_rows).unwrap();
         for (i, &v) in row_offsets.iter().enumerate() {
@@ -509,6 +517,7 @@ fn main() {
 
     // Keep legacy table for backward compat during transition
     writeln!(f, "/// Legacy 13-bit rank lookup (kept for compatibility).").unwrap();
+    writeln!(f, "#[allow(dead_code)]").unwrap();
     writeln!(
         f,
         "pub static RANK_5_EVAL_TABLE: [u32; 8192] = [0u32; 8192];"

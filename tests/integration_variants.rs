@@ -1,4 +1,4 @@
-use poker_eval_rs::deck::{Rank, StdDeck};
+use poker_eval_rs::deck::StdDeck;
 use poker_eval_rs::evaluators::{
     Eval, HandEvaluator, HoldemEvaluator, LowballEvaluator, OmahaHiEvaluator, OmahaHiLoEvaluator,
     ShortDeckEvaluator,

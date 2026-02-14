@@ -335,9 +335,7 @@ pub fn std_deck_omaha_hi_eval(
                     -1
                 };
 
-                for i in 0..hp_count {
-                    let hp = &hole_pairs[i];
-
+                for hp in hole_pairs.iter().take(hp_count) {
                     // Fast non-flush eval: add pre-computed SUIT_HASH values
                     let key = tri_hash_s
                         .wrapping_add(hp.hash_s)

@@ -226,17 +226,17 @@ impl ShortDeckEvaluator {
 
         // Check A-6-7-8-9 Straight (not a flush)
         // Only if current hand is weaker than a Straight
-        if htype < (crate::rules::HandType::Straight as u32) << 24 {
-            if (ranks & Self::MASK_A_6_7_8_9) == Self::MASK_A_6_7_8_9 {
-                return Ok(HandVal::new(
-                    crate::rules::HandType::Straight as u8,
-                    7,
-                    6,
-                    5,
-                    4,
-                    12,
-                ));
-            }
+        if htype < (crate::rules::HandType::Straight as u32) << 24
+            && (ranks & Self::MASK_A_6_7_8_9) == Self::MASK_A_6_7_8_9
+        {
+            return Ok(HandVal::new(
+                crate::rules::HandType::Straight as u8,
+                7,
+                6,
+                5,
+                4,
+                12,
+            ));
         }
 
         Ok(val)

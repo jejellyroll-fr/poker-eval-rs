@@ -104,14 +104,11 @@ fn parse_range_part(s: &str) -> Result<HandRange, String> {
     // Check for specific cards first (e.g., "AhKh" or "AsKsQsJs")
     // Should do this before range syntax to catch explicit lists of cards.
     // However, string_to_mask is strict (expects RankSuit pairs), so it won't accidentally match "AKs" or "JJ+".
-    match StdDeck::string_to_mask(s) {
-        Ok((mask, count)) => {
-            if count > 0 {
-                range.push(mask);
-                return Ok(range);
-            }
+    if let Ok((mask, count)) = StdDeck::string_to_mask(s) {
+        if count > 0 {
+            range.push(mask);
+            return Ok(range);
         }
-        Err(_) => {} // Continue to try other formats
     }
 
     // Check for "plus" notation
