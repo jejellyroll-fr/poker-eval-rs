@@ -1,106 +1,62 @@
-#![allow(dead_code)]
-// Importez les modules nécessaires
-pub mod combinaison;
+// #![warn(missing_docs)] // Disabled to allow CI to pass without documenting everything immediately
+//! # poker-eval-rs
+//!
+//! A high-performance poker hand evaluation library for Rust.
+//!
+//! This crate provides tools for:
+//! - Evaluating hand values for various poker variants (Hold'em, Omaha, Lowball).
+//! - Exhaustive and Monte Carlo equity calculations.
+//! - Parallelized evaluation using [Rayon](https://crates.io/crates/rayon).
+//! - Serialization support via [Serde](https://crates.io/crates/serde).
+//!
+//! ## Quick Start
+//!
+//! ```rust
+//! use poker_eval_rs::deck::StdDeck;
+//! use poker_eval_rs::evaluators::{HoldemEvaluator, OmahaHiEvaluator, HandEvaluator};
+//!
+//! // Texas Hold'em Evaluation
+//! let (hole, _) = StdDeck::string_to_mask("AsKs").unwrap();
+//! let (board, _) = StdDeck::string_to_mask("QsJsTs5h2d").unwrap();
+//! let hand_val = HoldemEvaluator::evaluate_hand(&hole, &board).unwrap();
+//! println!("Hold'em Hand: {}", hand_val.std_rules_hand_val_to_string());
+//!
+//! // Omaha High Evaluation
+//! let (omaha_hole, _) = StdDeck::string_to_mask("AsKs2h2d").unwrap();
+//! let (omaha_board, _) = StdDeck::string_to_mask("QsJsTs").unwrap();
+//! let omaha_val = OmahaHiEvaluator::evaluate_hand(&omaha_hole, &omaha_board).unwrap().unwrap();
+//! println!("Omaha Hand: {}", omaha_val.std_rules_hand_val_to_string());
+//! ```
+//!
+//! ## Python Bindings
+//!
+//! This crate includes optional Python bindings. Enable the `python` feature to build the extension module.
+//!
+//! ```bash
+//! maturin develop --features python
+//! ```
+
+pub mod board;
+pub mod combinations;
 pub mod deck;
-pub mod deck_joker;
-pub mod deck_std;
 pub mod enumdefs;
 pub mod enumerate;
-pub mod enumord;
-pub mod eval;
-pub mod eval_joker;
-pub mod eval_joker_low;
-pub mod eval_joker_low8;
-pub mod eval_low;
-pub mod eval_low27;
-pub mod eval_low8;
-pub mod eval_omaha;
+pub(crate) mod enumord;
+pub mod errors;
+pub mod evaluators;
 pub mod handval;
 pub mod handval_low;
-pub mod lowball;
-pub mod rules_joker;
-pub mod rules_std;
-pub mod t_botcard;
-pub mod t_botfivecards;
-pub mod t_cardmasks;
-pub mod t_jokercardmasks;
-pub mod t_jokerstraight;
-pub mod t_nbits;
-pub mod t_straight;
-pub mod t_topcard;
-pub mod t_topfivecards;
+pub mod range;
+pub mod rules;
+pub(crate) mod tables;
 
+// ===== Python Bindings (optional, enabled with "python" feature) =====
+#[cfg(feature = "python")]
+mod python_bindings;
 
-use crate::eval::Eval;
-use crate::eval_low::std_deck_lowball_eval;
-use deck_std::*;
+#[cfg(feature = "python")]
+pub use python_bindings::poker_eval_rs;
 
-use pyo3::prelude::*;
-
-#[pyfunction]
-fn string_to_mask(input: &str) -> PyResult<String> {
-    let result = StdDeck::string_to_mask(input);
-    let (mask, _num_cards) = match result {
-        Ok((mask, num_cards)) => (mask, num_cards),
-        Err(e) => {
-            eprintln!(
-                "Erreur lors de la conversion de la chaîne en masque de cartes : {}",
-                e
-            );
-            return Err(PyErr::new::<pyo3::exceptions::PyValueError, _>(format!(
-                "Erreur lors de la conversion de la chaîne en masque de cartes : {}",
-                e
-            )));
-        }
-    };
-    Ok(format!("{:b}", mask.mask)) // Convertir en binaire et retourner
-}
-
-#[pyfunction]
-fn eval_n(input: &str) -> PyResult<String> {
-    let result = StdDeck::string_to_mask(input);
-    let (mask, num_cards) = match result {
-        Ok((mask, num_cards)) => (mask, num_cards),
-        Err(e) => {
-            eprintln!(
-                "Erreur lors de la conversion de la chaîne en masque de cartes : {}",
-                e
-            );
-            return Err(PyErr::new::<pyo3::exceptions::PyValueError, _>(format!(
-                "Erreur lors de la conversion de la chaîne en masque de cartes : {}",
-                e
-            )));
-        }
-    };
-    let hand_val = Eval::eval_n(&mask, num_cards);
-    Ok(hand_val.std_rules_hand_val_to_string())
-}
-
-#[pyfunction]
-fn eval_low_func(input: &str) -> PyResult<String> {
-    let result = StdDeck::string_to_mask(input);
-    let (mask, num_cards) = match result {
-        Ok((mask, num_cards)) => (mask, num_cards),
-        Err(e) => {
-            eprintln!(
-                "Erreur lors de la conversion de la chaîne en masque de cartes : {}",
-                e
-            );
-            return Err(PyErr::new::<pyo3::exceptions::PyValueError, _>(format!(
-                "Erreur lors de la conversion de la chaîne en masque de cartes : {}",
-                e
-            )));
-        }
-    };
-    let low_hand_val = std_deck_lowball_eval(&mask, num_cards);
-    Ok(low_hand_val.to_string())
-}
-
-#[pymodule]
-fn poker_eval_rs(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
-    m.add_function(wrap_pyfunction!(string_to_mask, m)?)?;
-    m.add_function(wrap_pyfunction!(eval_n, m)?)?;
-    m.add_function(wrap_pyfunction!(eval_low_func, m)?)?;
-    Ok(())
-}
-
+// ===== WASM Bindings (optional, enabled with "wasm" feature) =====
+#[cfg(feature = "wasm")]
+pub mod wasm_bindings;
