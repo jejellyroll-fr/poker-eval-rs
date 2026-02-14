@@ -1,8 +1,6 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use poker_eval_rs::deck::StdDeck;
-use poker_eval_rs::evaluators::lowball::{
-    extract_top_five_cards_lowball, get_trips,
-};
+use poker_eval_rs::evaluators::lowball::{extract_top_five_cards_lowball, get_trips};
 use poker_eval_rs::evaluators::omaha::std_deck_omaha_hi_low8_eval;
 use poker_eval_rs::evaluators::Eval;
 
