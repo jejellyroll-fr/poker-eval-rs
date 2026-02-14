@@ -8,6 +8,11 @@ use crate::tables::t_topcard::TOP_CARD_TABLE;
 /// Standard Texas Hold'em (and similar 5+ card games) evaluator.
 pub struct Eval;
 
+#[cfg(not(any(feature = "compact-table", feature = "large-table")))]
+compile_error!(
+    "Either 'compact-table' or 'large-table' feature must be enabled to use the Hand Evaluator."
+);
+
 impl Eval {
     // extract_top_five_cards removed, using crate::rules::std::extract_top_five_cards
 
@@ -296,7 +301,12 @@ impl Eval {
     #[cfg(all(feature = "simd", target_arch = "x86_64"))]
     /// Evaluates 8 hands in parallel using AVX2.
     ///
-    #[cfg(all(feature = "simd", target_arch = "x86_64", feature = "large-table", not(feature = "compact-table")))]
+    #[cfg(all(
+        feature = "simd",
+        target_arch = "x86_64",
+        feature = "large-table",
+        not(feature = "compact-table")
+    ))]
     /// Evaluates 8 hands in parallel using AVX2.
     ///
     /// # Safety
@@ -516,7 +526,12 @@ mod tests {
     }
 
     #[test]
-    #[cfg(all(feature = "simd", target_arch = "x86_64", feature = "large-table", not(feature = "compact-table")))]
+    #[cfg(all(
+        feature = "simd",
+        target_arch = "x86_64",
+        feature = "large-table",
+        not(feature = "compact-table")
+    ))]
     fn test_eval_8_hands_simd() {
         let (h1, _) = hand("AsKsQsJsTs"); // Royal Flush
         let (h2, _) = hand("AsAhAdAcKs"); // Quads
