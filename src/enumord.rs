@@ -1,13 +1,15 @@
-// Importations nécessaires
+#![allow(dead_code)]
+// Required imports
 use crate::handval::HandVal;
-use std::cmp::Ordering;
 
-// Constantes pour la limite des joueurs
+// Constants for player limits
 pub const ENUM_ORDERING_MAXPLAYERS: usize = 7;
 pub const ENUM_ORDERING_MAXPLAYERS_HILO: usize = 5;
 
-// Enum pour les modes d'ordre final des mains
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+use serde::{Deserialize, Serialize};
+
+// Enum for the final hand ordering modes
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum EnumOrderingMode {
     None = 0,
     Hi,
@@ -15,7 +17,8 @@ pub enum EnumOrderingMode {
     Hilo,
 }
 
-// Structure pour le suivi des ordres des mains
+// Structure for tracking hand orderings
+#[derive(Debug, Serialize, Deserialize)]
 pub struct EnumOrdering {
     pub mode: EnumOrderingMode,
     pub nplayers: usize,
@@ -23,36 +26,10 @@ pub struct EnumOrdering {
     pub hist: Vec<u32>,
 }
 
-// Tableau de bits pour les rangs des joueurs
+// Bit table for player ranks
 static ENUM_NBITS: [i32; ENUM_ORDERING_MAXPLAYERS + 1] = [0, 1, 2, 2, 3, 3, 3, 3];
 
-// Structure pour aider à classer les mains
-struct EnumRankelem {
-    index: usize,
-    handval: i32,
-}
-
-impl Ord for EnumRankelem {
-    fn cmp(&self, other: &Self) -> Ordering {
-        self.handval.cmp(&other.handval)
-    }
-}
-
-impl PartialOrd for EnumRankelem {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
-impl PartialEq for EnumRankelem {
-    fn eq(&self, other: &Self) -> bool {
-        self.handval == other.handval
-    }
-}
-
-impl Eq for EnumRankelem {}
-
-// Fonction pour calculer le rang des mains
+// Function to compute hand ranks
 pub fn enum_ordering_rank(
     hands: &mut [HandVal],
     noqual: HandVal,
@@ -60,21 +37,21 @@ pub fn enum_ordering_rank(
     ranks: &mut [i32],
     reverse: bool,
 ) {
-    // Création d'une structure intermédiaire pour le tri
+    // Create an intermediate structure for sorting
     let mut elems: Vec<(usize, HandVal)> = hands
         .iter()
         .enumerate()
         .map(|(index, handval)| (index, *handval))
         .collect();
 
-    // Tri des mains en fonction de leur valeur, en ordre croissant ou décroissant
+    // Sort hands by value, in ascending or descending order
     if reverse {
-        elems.sort_by(|a, b| b.1.value.cmp(&a.1.value)); // Tri en ordre décroissant si reverse est vrai
+        elems.sort_by(|a, b| b.1.value.cmp(&a.1.value)); // Descending order if reverse is true
     } else {
-        elems.sort_by(|a, b| a.1.value.cmp(&b.1.value)); // Tri en ordre croissant sinon
+        elems.sort_by(|a, b| a.1.value.cmp(&b.1.value)); // Ascending order otherwise
     }
 
-    // Attribuer des rangs en fonction du tri
+    // Assign ranks based on sorting
     let mut currank = 0;
     let mut lastval = elems[0].1.value;
     for &(index, ref handval) in &elems {
@@ -83,14 +60,14 @@ pub fn enum_ordering_rank(
             lastval = handval.value;
         }
         if handval.value == noqual.value {
-            ranks[index] = nplayers as i32; // Rang pour no qualifier
+            ranks[index] = nplayers as i32; // Rank for no qualifier
         } else {
             ranks[index] = currank;
         }
     }
 }
 
-// Fonction pour encoder les rangs en un seul entier
+// Function to encode ranks into a single integer
 pub fn enum_ordering_encode(nplayers: usize, ranks: &[i32]) -> i32 {
     let mut encoding = 0;
     let nbits = ENUM_NBITS[nplayers];
@@ -100,7 +77,7 @@ pub fn enum_ordering_encode(nplayers: usize, ranks: &[i32]) -> i32 {
     encoding
 }
 
-// Fonction pour encoder les rangs high/low en un seul entier
+// Function to encode high/low ranks into a single integer
 pub fn enum_ordering_encode_hilo(nplayers: usize, hiranks: &[i32], loranks: &[i32]) -> i32 {
     let mut encoding = 0;
     let nbits = ENUM_NBITS[nplayers];
@@ -114,39 +91,35 @@ pub fn enum_ordering_encode_hilo(nplayers: usize, hiranks: &[i32], loranks: &[i3
 }
 
 //
-// Fonction pour décoder le rang d'un joueur à partir de l'encodage
+// Function to decode a player's rank from the encoding
 pub fn enum_ordering_decode_k(encoding: i32, nplayers: usize, k: usize) -> i32 {
     let nbits = ENUM_NBITS[nplayers];
-    //println!("nbits = {}", nbits);
     let shift = (nplayers - k - 1) * (nbits as usize);
-    //println!("shift = {}", shift);
-    //println!("encoding = {}", encoding);
-    //println!("(encoding >> shift) = {}", (encoding >> shift));
     (encoding >> shift) & ((1 << nbits) - 1)
 }
 
 pub fn enum_ordering_decode_hilo_k_hi(encoding: i32, nplayers: usize, k: usize) -> i32 {
     let nbits_per_rank = ENUM_NBITS[nplayers] as usize;
-    let total_bits = nbits_per_rank * nplayers * 2; // Multiplié par 2 pour les rangs high et low
-    let high_bits_offset = total_bits / 2; // La moitié des bits pour les rangs high
+    let total_bits = nbits_per_rank * nplayers * 2; // Multiplied by 2 for high and low ranks
+    let high_bits_offset = total_bits / 2; // Half the bits for high ranks
 
-    // Calculer le décalage pour le rang high du joueur k
+    // Compute the shift for player k's high rank
     let shift = high_bits_offset - (k + 1) * nbits_per_rank;
 
-    // Extraire le rang high du joueur k
+    // Extract player k's high rank
     (encoding >> shift) & ((1 << nbits_per_rank) - 1)
 }
 
 pub fn enum_ordering_decode_hilo_k_lo(encoding: i32, nplayers: usize, k: usize) -> i32 {
     let nbits_per_rank = ENUM_NBITS[nplayers] as usize;
-    // Aucun décalage additionnel nécessaire pour les rangs low, car ils suivent immédiatement les rangs high
+    // No additional shift needed for low ranks, as they immediately follow high ranks
     let shift = (nplayers - k - 1) * nbits_per_rank;
 
-    // Extraire le rang low du joueur k
+    // Extract player k's low rank
     (encoding >> shift) & ((1 << nbits_per_rank) - 1)
 }
 
-// Fonction pour calculer le nombre d'entrées dans l'histogramme
+// Function to compute the number of histogram entries
 pub fn enum_ordering_nentries(nplayers: usize) -> i32 {
     if nplayers > ENUM_ORDERING_MAXPLAYERS || ENUM_NBITS[nplayers] < 0 {
         -1
@@ -155,7 +128,7 @@ pub fn enum_ordering_nentries(nplayers: usize) -> i32 {
     }
 }
 
-// Fonction pour calculer le nombre d'entrées dans l'histogramme pour les jeux high/low
+// Function to compute the number of histogram entries for high/low games
 pub fn enum_ordering_nentries_hilo(nplayers: usize) -> i32 {
     if nplayers > ENUM_ORDERING_MAXPLAYERS_HILO || ENUM_NBITS[nplayers] < 0 {
         -1
@@ -164,19 +137,19 @@ pub fn enum_ordering_nentries_hilo(nplayers: usize) -> i32 {
     }
 }
 
-// Fonction pour incrémenter la valeur d'une entrée spécifique de l'histogramme
+// Function to increment a specific histogram entry
 pub fn enum_ordering_increment(ordering: &mut EnumOrdering, ranks: &[i32]) {
     let encoding = enum_ordering_encode(ordering.nplayers, ranks);
     ordering.hist[encoding as usize] += 1;
 }
 
-// Fonction pour incrémenter la valeur d'une entrée spécifique de l'histogramme pour les jeux high/low
+// Function to increment a specific histogram entry for high/low games
 pub fn enum_ordering_increment_hilo(ordering: &mut EnumOrdering, hiranks: &[i32], loranks: &[i32]) {
     let encoding = enum_ordering_encode_hilo(ordering.nplayers, hiranks, loranks);
     ordering.hist[encoding as usize] += 1;
 }
 
-// Implémentation de EnumOrdering
+// Implementation of EnumOrdering
 impl EnumOrdering {
     pub fn new(mode: EnumOrderingMode, nplayers: usize) -> Self {
         let nentries = match mode {
@@ -196,7 +169,7 @@ impl EnumOrdering {
 mod tests {
     use super::*;
 
-    // Test pour vérifier la création d'un objet EnumOrdering
+    // Test to verify the creation of an EnumOrdering object
     #[test]
     fn test_enum_ordering_new() {
         let ordering = EnumOrdering::new(EnumOrderingMode::Hi, 5);
@@ -204,13 +177,13 @@ mod tests {
         assert_eq!(ordering.nplayers, 5);
     }
 
-    // Test pour la fonction enum_ordering_rank
+    // Test for the enum_ordering_rank function
     #[test]
     fn test_enum_ordering_rank() {
         let mut hands = vec![
-            HandVal { value: 3 }, // Main 1
-            HandVal { value: 5 }, // Main 2
-            HandVal { value: 2 }, // Main 3
+            HandVal { value: 3 }, // Hand 1
+            HandVal { value: 5 }, // Hand 2
+            HandVal { value: 2 }, // Hand 3
         ];
         let noqual = HandVal { value: 0 };
         let nplayers = 3;
@@ -218,40 +191,42 @@ mod tests {
 
         enum_ordering_rank(&mut hands, noqual, nplayers, &mut ranks, false);
 
-        assert_eq!(ranks, vec![1, 2, 0]); // Les rangs attendus après le tri
+        assert_eq!(ranks, vec![1, 2, 0]); // Expected ranks after sorting
     }
 
-    // Test pour enum_ordering_encode
+    // Test for enum_ordering_encode
     #[test]
     fn test_enum_ordering_encode() {
         let ranks = vec![1, 2, 0];
         let nplayers = 3;
         let encoded = enum_ordering_encode(nplayers, &ranks);
 
-        assert_eq!(encoded, 24); // La valeur encodée attendue
+        assert_eq!(encoded, 24); // Expected encoded value
     }
 
-    // Test pour enum_ordering_decode_k
+    // Test for enum_ordering_decode_k
     #[test]
     fn test_enum_ordering_decode_k() {
-        let encoded = 9; // Encodage de [1, 2, 0]
+        let encoded = 9; // Encoding of [1, 2, 0]
         let nplayers = 3;
-        let rank = enum_ordering_decode_k(encoded, nplayers, 1); // Décodage du 2e rang
+        let rank = enum_ordering_decode_k(encoded, nplayers, 1); // Decoding the 2nd rank
 
-        assert_eq!(rank, 2); // Rang attendu
+        assert_eq!(rank, 2); // Expected rank
     }
 
     #[test]
     fn test_enum_ordering_decode_k_2_players() {
-        let encoding: i32 = 0b00011010; // Exemple d'encodage binaire (26 en décimal)
+        // For 2 players, ENUM_NBITS[2] = 2 bits per player
+        // Encoding ranks [1, 0] = (1 << 2) | 0 = 4 = 0b0100
+        let encoding: i32 = 0b0100; // 4 in decimal
         let nplayers: usize = 2;
 
-        // Test avec k = 0
+        // Test with k = 0 (first player's rank)
         let k0_result = enum_ordering_decode_k(encoding, nplayers, 0);
-        assert_eq!(k0_result, 1); // Le résultat attendu est 1
+        assert_eq!(k0_result, 1); // Expected: 1 (bits [3:2] = 01)
 
-        // Test avec k = 1
+        // Test with k = 1 (second player's rank)
         let k1_result = enum_ordering_decode_k(encoding, nplayers, 1);
-        assert_eq!(k1_result, 0); // Le résultat attendu est 0
+        assert_eq!(k1_result, 0); // Expected: 0 (bits [1:0] = 00)
     }
 }

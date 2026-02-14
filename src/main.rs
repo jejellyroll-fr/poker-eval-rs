@@ -1,754 +1,765 @@
-// Importez les modules nécessaires
-use poker_eval_rs::deck_std::StdDeck;
+//! Poker Eval RS - Command Line Interface
+//!
+//! CLI for evaluating poker hands and calculating equity between hands.
+
+use clap::{Parser, Subcommand};
+use poker_eval_rs::board::BoardTexture;
+use poker_eval_rs::deck::StdDeck;
+use poker_eval_rs::deck::StdDeckCardMask;
 use poker_eval_rs::enumdefs::{EnumResult, Game, SampleType, ENUM_MAXPLAYERS};
-//use poker_eval_rs::enumerate::enum_sample;
-//use poker_eval_rs::enumerate::inner_loop_holdem;
-//use poker_eval_rs::enumord::EnumOrdering;
-//use poker_eval_rs::eval::Eval;
-//use poker_eval_rs::eval_low::std_deck_lowball_eval;
-//use poker_eval_rs::handval::HandVal;
-//use poker_eval_rs::handval_low::LowHandVal;
-use poker_eval_rs::t_cardmasks::StdDeckCardMask;
-//use std::env;
-//use std::io::{self, BufRead};
-//use std::str::FromStr;
-use poker_eval_rs::deck_joker::JokerDeck;
-use poker_eval_rs::enumerate::enum_exhaustive;
-use poker_eval_rs::eval::Eval;
-use poker_eval_rs::t_jokercardmasks::JokerDeckCardMask;
+use poker_eval_rs::enumerate::{enum_exhaustive, enum_sample};
+use poker_eval_rs::evaluators::range_equity::calculate_equity;
+use poker_eval_rs::evaluators::{
+    Eval, HandEvaluator, LowballEvaluator, OmahaHiEvaluator, OmahaHiLoEvaluator,
+};
+use poker_eval_rs::range::HandRange;
+use serde::Serialize;
+use std::str::FromStr;
 
-#[allow(dead_code)]
-fn evaluate_combination() {
-    let hands = vec![
-        "2h4d5s6h7d",
-        "3h4d5s6h7d",
-        "3h4h5h6h7h",
-        "2h4h5h6h7h",
-        "3h3d5s6h7d",
-        "3h3d5s5h7d",
-        "3h3d3s6h7d",
-        "3h3d3s6h6d",
-        "3h3d3s6h3c",
-        "3h3d3s6h2c2d",
-        "3h3d3s6h2c2d3c",
-        "3h3d5s5h7d2c4d",
-        "Ac2s4d6c8h",
-        "2s3s4d5c7h",
-        "As2d4h3c5d",
-        "KhQhJhTh4h",
-        "AsKcTd2c7s",
-    ];
+/// Poker hand evaluation tool
+#[derive(Parser)]
+#[command(name = "poker-eval")]
+#[command(author = "poker-eval-rs")]
+#[command(version = "0.1.0")]
+#[command(about = "Evaluate poker hands and calculate equity")]
+struct Cli {
+    #[command(subcommand)]
+    command: Commands,
+}
 
-    for input in hands {
-        println!("Cartes en entrée: {}", input);
+#[derive(Subcommand)]
+enum Commands {
+    /// Evaluate a single poker hand
+    Eval {
+        /// Hand to evaluate (e.g., "AsKsQsJsTs" for a royal flush)
+        hand: String,
+    },
 
-        // Étape 1: Convertir la chaîne en un masque de cartes
-        let result = StdDeck::string_to_mask(input);
-        let (mask, num_cards) = match result {
-            Ok((mask, num_cards)) => (mask, num_cards),
-            Err(e) => {
-                eprintln!(
-                    "Erreur lors de la conversion de la chaîne en masque de cartes : {}",
-                    e
-                );
-                return; // ou gestion d'erreur alternative
-            }
-        };
-        println!(
-            "Masque de cartes : {:b}, Nombre de cartes : {}",
-            mask.mask, num_cards
-        );
+    /// Calculate equity between hands
+    Equity {
+        /// Player hands separated by spaces (e.g., "AsAd" "KsKd")
+        #[arg(required = true)]
+        hands: Vec<String>,
 
-        // Assurez-vous que le nombre de cartes est correct
-        let actual_num_cards = mask.num_cards();
-        println!("Nombre de cartes dans le masque : {}", actual_num_cards);
-        assert_eq!(
-            num_cards, actual_num_cards,
-            "Le nombre de cartes ne correspond pas"
-        );
+        /// Board cards (e.g., "Th9h8h")
+        #[arg(short, long, default_value = "")]
+        board: String,
 
-        // Afficher le masque de cartes
-        println!("Masque de cartes : {:b}", mask.mask);
+        /// Dead/removed cards
+        #[arg(short, long, default_value = "")]
+        dead: String,
 
-        // Étape 2: Évaluer la main à partir du masque de cartes
-        if num_cards >= 5 {
-            println!("dans main.rs: nombre de cartes : {:?}", num_cards);
-            println!("dans main.rs: masque de cartes : {:b}", mask.mask);
+        /// Game variant (holdem, omaha, etc.)
+        #[arg(short, long, default_value = "holdem")]
+        game: String,
 
-            let hand_val = Eval::eval_n(&mask, num_cards);
-            println!("HandVal : {:?}", hand_val);
+        /// Use Monte Carlo sampling instead of exhaustive
+        #[arg(short, long)]
+        monte_carlo: bool,
 
-            // Étape 3: Afficher les informations de HandVal
-            //println!("Type de main : {:?}", hand_val.get_hand_type());
-            println!(
-                "Représentation de la main : {}",
-                hand_val.std_rules_hand_val_to_string()
-            );
+        /// Number of iterations for Monte Carlo (default: 100000)
+        #[arg(short, long, default_value = "100000")]
+        iterations: usize,
 
-            // Évaluer la main pour low
-            //let low_hand_val = std_deck_lowball_eval(&mask, num_cards);
-            //println!("Low HandVal : {:?}", low_hand_val);
-            //     println!(
-            //         "Représentation de la main low : {}",
-            //         low_hand_val.to_string()
-            //     );
+        /// Output results in JSON format
+        #[arg(long)]
+        json: bool,
+    },
 
-            //     //let low_hand_val = ace_to_five_lowball_eval(&mask); // Utilisez 'mask' ici
-            //     //low_hand_val.print_ace_to_five_lowball();
-            // } else {
-            //     println!("Nombre de cartes insuffisant pour évaluer une main.");
-            // }
+    /// Compare hands to find the winner (static evaluation)
+    Compare {
+        /// Player hands separated by spaces
+        #[arg(required = true)]
+        hands: Vec<String>,
 
-            println!("----------------------");
-        }
+        /// Board cards (required for comparison unless complete hands provided)
+        #[arg(short, long, default_value = "")]
+        board: String,
+
+        /// Game variant
+        #[arg(short, long, default_value = "holdem")]
+        game: String,
+    },
+
+    /// Parse and display card mask information  
+    Parse {
+        /// Cards to parse (e.g., "AsKd")
+        cards: String,
+    },
+
+    /// Analyze board texture
+    Texture {
+        /// Board cards (e.g., "AhKhQh")
+        board: String,
+    },
+}
+
+#[derive(Serialize)]
+struct EquityResultOutput {
+    game: String,
+    samples: u32,
+    board: String,
+    players: Vec<PlayerStat>,
+}
+
+#[derive(Serialize)]
+struct PlayerStat {
+    hand: String,
+    win_pct: f64,
+    tie_pct: f64,
+    lose_pct: f64,
+    scoop_pct: Option<f64>,
+    ev: f64,
+}
+
+fn parse_game(game_str: &str) -> Result<Game, String> {
+    match game_str.to_lowercase().as_str() {
+        "holdem" => Ok(Game::Holdem),
+        "holdem8" => Ok(Game::Holdem8),
+        "omaha" => Ok(Game::Omaha),
+        "omaha5" => Ok(Game::Omaha5),
+        "omaha6" => Ok(Game::Omaha6),
+        "omaha8" => Ok(Game::Omaha8),
+        "omaha85" => Ok(Game::Omaha85),
+        "stud7" => Ok(Game::Stud7),
+        "stud78" => Ok(Game::Stud78),
+        "stud7nsq" => Ok(Game::Stud7nsq),
+        "razz" => Ok(Game::Razz),
+        "draw5" => Ok(Game::Draw5),
+        "draw58" => Ok(Game::Draw58),
+        "draw5nsq" => Ok(Game::Draw5nsq),
+        "lowball" => Ok(Game::Lowball),
+        "lowball27" => Ok(Game::Lowball27),
+        "shortdeck" => Ok(Game::ShortDeck),
+        _ => Err(format!("Unsupported game variant: {}", game_str)),
     }
 }
-//     // Cartes de poche des joueurs
-//     let pocket_str1 = "AsKc"; // As de pique, Roi de cœur (Joueur 1)
-//     let pocket_str2 = "QhJh"; // Dame de cœur, Valet de cœur (Joueur 2)
-
-//     // Cartes du board (flop, turn, river)
-//     let flop_str = "Td2c7s"; // Flop
-//     let turn_str = "5c"; // Turn
-//     let river_str = "9d"; // River
-
-//     // Convertir les chaînes en masques de cartes
-//     let pocket_cards1 = StdDeck::string_to_mask(pocket_str1).unwrap().0;
-//     let pocket_cards2 = StdDeck::string_to_mask(pocket_str2).unwrap().0;
-//     let flop_cards = StdDeck::string_to_mask(flop_str).unwrap().0;
-//     let turn_card = StdDeck::string_to_mask(turn_str).unwrap().0;
-//     let river_card = StdDeck::string_to_mask(river_str).unwrap().0;
-
-//     // Combinez le flop, le turn et la river pour créer le board
-//     let board = flop_cards | turn_card | river_card;
-
-//     // Évaluer les mains pour les deux joueurs
-//     let mut hival1 = vec![HandVal { value: 0 }; 1];
-//     let mut loval1 = vec![LowHandVal { value: 0 }; 1];
-//     inner_loop_holdem(
-//         &[pocket_cards1],
-//         &board,
-//         &StdDeckCardMask { mask: 0 },
-//         &mut hival1,
-//         &mut loval1,
-//     );
-
-//     let mut hival2 = vec![HandVal { value: 0 }; 1];
-//     let mut loval2 = vec![LowHandVal { value: 0 }; 1];
-//     inner_loop_holdem(
-//         &[pocket_cards2],
-//         &board,
-//         &StdDeckCardMask { mask: 0 },
-//         &mut hival2,
-//         &mut loval2,
-//     );
-
-//     // Afficher les résultats
-//     println!(
-//         "Représentation de la main haute pour le Joueur 1: {}",
-//         hival1[0].std_rules_hand_val_to_string()
-//     );
-//     //println!("Représentation de la main basse pour le Joueur 1: {}", loval1[0].to_string());
-//     println!(
-//         "Représentation de la main haute pour le Joueur 2: {}",
-//         hival2[0].std_rules_hand_val_to_string()
-//     );
-//     //println!("Représentation de la main basse pour le Joueur 2: {}", loval2[0].to_string());
-// }
-
-// fn main() -> io::Result<()> {
-//     let args: Vec<String> = std::env::args().collect();
-//     let stdin = io::stdin();
-//     let mut input_lines = stdin.lock().lines();
-
-//     // Déterminer si le programme doit lire depuis stdin
-//     let from_stdin = args.len() == 2 && args[1] == "-i";
-
-//     if from_stdin {
-//         // Lire chaque ligne depuis stdin et traiter comme des arguments
-//         while let Some(Ok(line)) = input_lines.next() {
-//             let line_args: Vec<String> = line.split_whitespace().map(String::from).collect();
-//             if let Err(e) = process_args(&line_args) {
-//                 eprintln!("Erreur lors du traitement des arguments: {}", e);
-//                 return Err(io::Error::new(io::ErrorKind::Other, e));
-//             }
-//         }
-//     } else {
-//         // Traiter les arguments de la ligne de commande
-//         if let Err(e) = process_args(&args[1..]) {
-//             eprintln!("Erreur lors du traitement des arguments: {}", e);
-//             return Err(io::Error::new(io::ErrorKind::Other, e));
-//         }
-//     }
-
-//     Ok(())
-// }
-
-// fn process_args(args: &[String]) -> Result<(), String> {
-//     let (game, enum_type, niter, pockets, board, dead, npockets, nboard, orderflag, terse) =
-//         parse_args(args.to_vec())?;
-
-//     let mut result = EnumResult {
-//         game,
-//         sample_type: enum_type,
-//         nsamples: 0,
-//         nplayers: npockets as u32,
-//         nwinhi: [0; ENUM_MAXPLAYERS],
-//         ntiehi: [0; ENUM_MAXPLAYERS],
-//         nlosehi: [0; ENUM_MAXPLAYERS],
-//         nwinlo: [0; ENUM_MAXPLAYERS],
-//         ntielo: [0; ENUM_MAXPLAYERS],
-//         nloselo: [0; ENUM_MAXPLAYERS],
-//         nscoop: [0; ENUM_MAXPLAYERS],
-//         nsharehi: [[0; ENUM_MAXPLAYERS + 1]; ENUM_MAXPLAYERS],
-//         nsharelo: [[0; ENUM_MAXPLAYERS + 1]; ENUM_MAXPLAYERS],
-//         nshare: [[[0; ENUM_MAXPLAYERS + 1]; ENUM_MAXPLAYERS + 1]; ENUM_MAXPLAYERS],
-//         ev: [0.0; ENUM_MAXPLAYERS],
-//         ordering: None,
-//     };
-
-//     let sample_result = match enum_type {
-//         SampleType::Sample => enum_sample(
-//             game,
-//             &pockets,
-//             board.clone(),
-//             dead.clone(),
-//             npockets,
-//             nboard,
-//             niter,
-//             orderflag,
-//             &mut result,
-//         ),
-//         SampleType::Exhaustive => {
-//             // Implémentez ou gérez le cas SampleType::Exhaustive si nécessaire
-//             todo!()
-//         } // Ajoutez d'autres cas pour SampleType::Exhaustive ou d'autres types si nécessaire
-//     };
-
-//     // Gérez le résultat de l'énumération
-//     sample_result.map_err(|e| format!("Erreur lors de l'énumération: {}", e))?;
-
-//     if terse {
-//         result.enum_result_print_terse(&pockets, board);
-//     } else {
-//         result.enum_result_print(&pockets, board);
-//     }
-
-//     Ok(())
-// }
-
-// // Définition de la fonction parse_args
-// fn parse_args(
-//     args: Vec<String>,
-// ) -> Result<
-//     (
-//         Game,
-//         SampleType,
-//         usize,
-//         Vec<StdDeckCardMask>,
-//         StdDeckCardMask,
-//         StdDeckCardMask,
-//         usize,
-//         usize,
-//         bool,
-//         bool,
-//     ),
-//     String,
-// > {
-//     let mut game = Game::Holdem; // Valeur par défaut
-//     let mut sample_type = SampleType::Sample; // Valeur par défaut
-//     let mut niter = 0; // Utilisé seulement pour SampleType::Sample
-//     let mut pockets = Vec::new();
-//     let mut board = StdDeckCardMask::new();
-//     let mut dead = StdDeckCardMask::new();
-//     let mut npockets = 0;
-//     let nboard = 0;
-//     let mut orderflag = false;
-//     let mut terse = false;
-
-//     let mut current_pocket = Vec::new();
-//     let mut parsing_section = "pockets"; // Commencez par analyser les pockets des joueurs
-
-//     for arg in args.into_iter().skip(1) {
-//         // Skip le nom du programme
-//         match arg.as_str() {
-//             "-mc" => {
-//                 sample_type = SampleType::Sample;
-//                 parsing_section = "niter"; // Prochain argument doit être le nombre d'itérations
-//             }
-//             "-t" => terse = true,
-//             "-O" => orderflag = true,
-//             "-h" => game = Game::Holdem,
-//             "-h8" => game = Game::Holdem8,
-//             // Ajoutez d'autres options ici...
-//             "--" => {
-//                 // Terminez de traiter la poche actuelle et commencez à traiter le tableau
-//                 if !current_pocket.is_empty() {
-//                     let (mask, _) = StdDeck::string_to_mask(&current_pocket.join(""))?;
-//                     pockets.push(mask);
-//                     current_pocket.clear();
-//                 }
-//                 parsing_section = "board";
-//             }
-//             "/" => {
-//                 // Terminez de traiter la section actuelle et commencez à traiter les cartes mortes
-//                 parsing_section = "dead";
-//             }
-//             "-" => {
-//                 // Terminez de traiter la poche actuelle et commencez une nouvelle poche
-//                 if !current_pocket.is_empty() {
-//                     let (mask, _) = StdDeck::string_to_mask(&current_pocket.join(""))?;
-//                     pockets.push(mask);
-//                     current_pocket.clear();
-//                 }
-//                 npockets += 1; // Augmentez le compteur de pockets
-//             }
-//             _ => match parsing_section {
-//                 "niter" => niter = arg.parse().map_err(|_| "Nombre d'itérations invalide")?,
-//                 "pockets" | "board" | "dead" => current_pocket.push(arg.to_string()), // Ajoutez la carte à la poche, au tableau ou aux cartes mortes actuels
-//                 _ => return Err("Section d'analyse inconnue".to_string()),
-//             },
-//         }
-//     }
-
-//     // Assurez-vous de traiter la dernière poche ou le dernier tableau
-//     if !current_pocket.is_empty() {
-//         let (mask, _) = StdDeck::string_to_mask(&current_pocket.join(""))?;
-//         match parsing_section {
-//             "pockets" => {
-//                 pockets.push(mask);
-//                 npockets += 1;
-//             }
-//             "board" => board = mask,
-//             "dead" => dead = mask,
-//             _ => (),
-//         }
-//     }
-
-//     Ok((
-//         game,
-//         sample_type,
-//         niter,
-//         pockets,
-//         board,
-//         dead,
-//         npockets,
-//         nboard,
-//         orderflag,
-//         terse,
-//     ))
-// }
-
-// #[cfg(test)]
-// mod tests {
-//     use super::*;
-
-//     #[test]
-//     fn test_parsing_holdem() {
-//         let args = vec![
-//             "-h".to_string(), // spécifie le jeu de Hold'em
-//             "-".to_string(), // séparateur de main
-//             "AsAd".to_string(), // première main
-//             "-".to_string(), // séparateur de main
-//             "QsQh".to_string(), // deuxième main
-//             "-mc".to_string(), // spécifie le type d'échantillonnage
-//             "1000".to_string(), // nombre d'itérations
-//         ];
-
-//         let (game, sample_type, niter, pockets, _, _, npockets, _, _, _) =
-//             parse_args(args).expect("Le parsing des arguments a échoué");
-
-//         assert_eq!(game, Game::Holdem);
-//         println!("game? {:?}", game); // Utilisez {:?} au lieu de {}
-
-//     }
-//     #[test]
-//     fn test_parsing_holdem_asad() {
-//         let args = vec![
-//             "-h".to_string(), // spécifie le jeu de Hold'em
-//             "-".to_string(), // séparateur de main
-//             "AsAd".to_string(), // première main
-//             "-".to_string(), // séparateur de main
-//             "QsQh".to_string(), // deuxième main
-//             "-mc".to_string(), // spécifie le type d'échantillonnage
-//             "1000".to_string(), // nombre d'itérations
-//         ];
-
-//         let (game, sample_type, niter, pockets, _, _, npockets, _, _, _) =
-//             parse_args(args).expect("Le parsing des arguments a échoué");
-
-//         assert_eq!(sample_type, SampleType::Sample);
-//         println!("sample_type? {:?}", sample_type); // Utilisez {:?} au lieu de {}
-
-//     }
-//     #[test]
-//     fn test_parsing_holdem_asad_vs_qsqh() {
-//         let args = vec![
-//             "-h".to_string(), // spécifie le jeu de Hold'em
-//             "-".to_string(), // séparateur de main
-//             "AsAd".to_string(), // première main
-//             "-".to_string(), // séparateur de main
-//             "QsQh".to_string(), // deuxième main
-//             "-mc".to_string(), // spécifie le type d'échantillonnage
-//             "1000".to_string(), // nombre d'itérations
-//         ];
-
-//         let (game, sample_type, niter, pockets, _, _, npockets, _, _, _) =
-//             parse_args(args).expect("Le parsing des arguments a échoué");
-
-//         assert_eq!(niter, 1000);
-//         println!("niter? {:?}", niter); // Utilisez {:?} au lieu de {}
-
-//     }
-//     #[test]
-//     fn test_parsing_holdem_asad_vs_qsqh_1000_iterations() {
-//         let args = vec![
-//             "-h".to_string(), // spécifie le jeu de Hold'em
-//             "-".to_string(), // séparateur de main
-//             "AsAd".to_string(), // première main
-//             "-".to_string(), // séparateur de main
-//             "QsQh".to_string(), // deuxième main
-//             "-mc".to_string(), // spécifie le type d'échantillonnage
-//             "1000".to_string(), // nombre d'itérations
-//         ];
-
-//         let (game, sample_type, niter, pockets, _, _, npockets, _, _, _) =
-//             parse_args(args).expect("Le parsing des arguments a échoué");
-
-//         assert_eq!(npockets, 2);
-//         println!("npockets? {:?}", npockets); // Utilisez {:?} au lieu de {}
-
-//     }
-// }
 
 fn main() {
-    //holdem_sample();
-    //holdem8_exhaustive();
-    //holdem_exhaustive();
-    test_all_deck_cards()
-    //test_all_deck_cards_with_joker()
-    //evaluate_combination()
-    //omaha_exhaustive()
+    let cli = Cli::parse();
+
+    match cli.command {
+        Commands::Eval { hand } => cmd_eval(&hand),
+        Commands::Equity {
+            hands,
+            board,
+            dead,
+            game,
+            monte_carlo,
+            iterations,
+            json,
+        } => {
+            cmd_equity(&hands, &board, &dead, &game, monte_carlo, iterations, json);
+        }
+        Commands::Compare { hands, board, game } => {
+            cmd_compare(&hands, &board, &game);
+        }
+        Commands::Parse { cards } => cmd_parse(&cards),
+        Commands::Texture { board } => cmd_texture(&board),
+    }
 }
 
-//fonction qui transforme "AsAd" en stdcardmask et puis qui retransforme le stdcardmask en "AsAd"
-fn test_all_deck_cards() {
-    // Définition des valeurs de cartes et des enseignes
-    let values = [
-        "2", "3", "4", "5", "6", "7", "8", "9", "T", "J", "Q", "K", "A",
-    ];
-    let suits = ["s", "h", "d", "c"]; // s = pique, h = coeur, d = carreau, c = trèfle
+/// Evaluate a single poker hand
+fn cmd_eval(hand: &str) {
+    match StdDeck::string_to_mask(hand) {
+        Ok((mask, num_cards)) => {
+            println!("Cards: {}", hand);
+            println!("Number of cards: {}", num_cards);
+            println!("Mask: {:#018x}", mask.as_raw());
 
-    // Itérer sur chaque combinaison de valeur et d'enseigne
-    for value in values.iter() {
-        for suit in suits.iter() {
-            let card_str = format!("{}{}", value, suit); // Crée la chaîne de caractères de la carte
-            let card_mask = StdDeck::string_to_mask(&card_str).unwrap().0; // Convertit la chaîne en masque de carte
-
-            // Affiche le Debug du masque de carte si possible, sinon confirme la conversion
-            println!("entrée: {:?}", card_mask); // Remplacer par une confirmation si Debug n'est pas implémenté
-
-            // Convertit le masque de carte de retour en chaîne de caractères
-            let card_str2 = StdDeckCardMask::mask_to_string(&card_mask);
-            println!("{} -> {}", card_str, card_str2);
-
-            // Vérifie que la chaîne de caractères originale et la chaîne convertie sont les mêmes
-            assert_eq!(
-                card_str, card_str2,
-                "Erreur de conversion pour la carte {}",
-                card_str
-            );
+            if num_cards >= 5 {
+                let hand_val = Eval::eval_n(&mask, num_cards);
+                println!("Hand: {}", hand_val.std_rules_hand_val_to_string());
+                println!("Value: {}", hand_val.value);
+            } else {
+                println!("Need at least 5 cards to evaluate a hand");
+            }
+        }
+        Err(e) => {
+            eprintln!("Error parsing hand: {}", e);
+            std::process::exit(1);
         }
     }
-
-    println!("Toutes les cartes ont été testées avec succès.");
 }
 
-#[allow(dead_code)]
-fn test_all_deck_cards_with_joker() {
-    // Définition des valeurs de cartes et des enseignes
-    let values = [
-        "2", "3", "4", "5", "6", "7", "8", "9", "T", "J", "Q", "K", "A",
-    ];
-    let suits = ["s", "h", "d", "c"]; // s = pique, h = coeur, d = carreau, c = trèfle
+/// Calculate equity between hands
+fn cmd_equity(
+    hands: &[String],
+    board: &str,
+    dead: &str,
+    game_str: &str,
+    monte_carlo: bool,
+    iterations: usize,
+    json: bool,
+) {
+    let npockets = hands.len();
 
-    // Itérer sur chaque combinaison de valeur et d'enseigne pour les cartes standards
-    for value in values.iter() {
-        for suit in suits.iter() {
-            let card_str = format!("{}{}", value, suit); // Crée la chaîne de caractères de la carte
-            let card_result = JokerDeck::string_to_card(&card_str); // Convertit la chaîne en indice de carte
+    if npockets < 2 {
+        eprintln!("Error: Need at least 2 hands for equity calculation");
+        std::process::exit(1);
+    }
 
-            if let Some(card_index) = card_result {
-                let card_mask = JokerDeckCardMask::get_mask(card_index); // Convertit l'indice en masque de carte
+    if npockets > ENUM_MAXPLAYERS {
+        eprintln!("Error: Too many players (max {})", ENUM_MAXPLAYERS);
+        std::process::exit(1);
+    }
 
-                // Affiche le Debug du masque de carte si possible, sinon confirme la conversion
-                println!("{:?}", card_mask); // Remplacer par une confirmation si Debug n'est pas implémenté
+    let game_variant = match parse_game(game_str) {
+        Ok(g) => g,
+        Err(e) => {
+            eprintln!("{}", e);
+            std::process::exit(1);
+        }
+    };
 
-                // Convertit le masque de carte de retour en chaîne de caractères
-                let card_str2 = JokerDeck::card_to_string(card_index);
-                println!("{} -> {}", card_str, card_str2);
+    // Parse hands as ranges first
+    let mut ranges: Vec<HandRange> = Vec::new();
+    let mut is_range_equity = false;
 
-                // Vérifie que la chaîne de caractères originale et la chaîne convertie sont les mêmes
-                assert_eq!(
-                    card_str, card_str2,
-                    "Erreur de conversion pour la carte {}",
-                    card_str
-                );
+    for (i, hand) in hands.iter().enumerate() {
+        match HandRange::from_str(hand) {
+            Ok(range) => {
+                if range.len() > 1 {
+                    is_range_equity = true;
+                }
+                ranges.push(range);
+            }
+            Err(e) => {
+                eprintln!("Error parsing hand range {}: {}", i + 1, e);
+                std::process::exit(1);
             }
         }
     }
 
-    // Test pour le joker
-    let joker_str = "Xx"; // Représentation du joker
-    let joker_result = JokerDeck::string_to_card(joker_str);
-    if let Some(joker_index) = joker_result {
-        let joker_mask = JokerDeckCardMask::get_mask(joker_index);
-        println!("{:?}", joker_mask);
+    // If we have ranges, check if supported
+    if is_range_equity {
+        if npockets != 2 {
+            eprintln!("Error: Range equity currently only supported for exactly 2 players.");
+            std::process::exit(1);
+        }
+        if game_variant != Game::Holdem {
+            eprintln!("Error: Range equity currently only supported for Hold'em.");
+            std::process::exit(1);
+        }
+    }
 
-        let joker_str2 = JokerDeck::card_to_string(joker_index);
-        println!("{} -> {}", joker_str, joker_str2);
+    // Parse board
+    let board_mask = if board.is_empty() {
+        StdDeckCardMask::new()
+    } else {
+        match StdDeck::string_to_mask(board) {
+            Ok((mask, _)) => mask,
+            Err(e) => {
+                eprintln!("Error parsing board: {}", e);
+                std::process::exit(1);
+            }
+        }
+    };
 
-        assert_eq!(
-            joker_str.to_lowercase(),
-            joker_str2.to_lowercase(),
-            "Erreur de conversion pour le joker"
+    // Parse dead cards
+    let dead_mask = if dead.is_empty() {
+        StdDeckCardMask::new()
+    } else {
+        match StdDeck::string_to_mask(dead) {
+            Ok((mask, _)) => mask,
+            Err(e) => {
+                eprintln!("Error parsing dead cards: {}", e);
+                std::process::exit(1);
+            }
+        }
+    };
+
+    let nboard = board_mask.num_cards();
+
+    // Initialize result
+    let mut result = EnumResult::new(game_variant);
+    result.sample_type = if monte_carlo {
+        SampleType::Sample
+    } else {
+        SampleType::Exhaustive
+    };
+    result.nplayers = npockets as u32;
+
+    // Run calculation
+    if is_range_equity {
+        // Use range_equity::calculate_equity
+        // Note: This only supports 2 players and ignores dead cards for now in the CLI wrapper
+        // (though calculate_equity could support them if passed, preventing overlap).
+        // The implementation in range_equity.rs handles board overlap but not explicit dead cards arg.
+
+        match calculate_equity(&ranges[0], &ranges[1], &board_mask, iterations) {
+            Ok(equity_res) => {
+                if json {
+                    let total = equity_res.samples;
+                    let players = vec![
+                        PlayerStat {
+                            hand: hands[0].clone(),
+                            win_pct: (equity_res.wins as f64 / total as f64) * 100.0,
+                            tie_pct: (equity_res.ties as f64 / total as f64) * 100.0,
+                            lose_pct: (equity_res.losses as f64 / total as f64) * 100.0,
+                            scoop_pct: None,
+                            ev: equity_res.equity,
+                        },
+                        PlayerStat {
+                            hand: hands[1].clone(),
+                            win_pct: (equity_res.losses as f64 / total as f64) * 100.0,
+                            tie_pct: (equity_res.ties as f64 / total as f64) * 100.0,
+                            lose_pct: (equity_res.wins as f64 / total as f64) * 100.0,
+                            scoop_pct: None,
+                            ev: 1.0 - equity_res.equity,
+                        },
+                    ];
+
+                    let output = EquityResultOutput {
+                        game: game_str.to_string(),
+                        samples: total as u32,
+                        board: board.to_string(),
+                        players,
+                    };
+                    println!("{}", serde_json::to_string_pretty(&output).unwrap());
+                } else {
+                    println!("=== Poker Range Equity ===\n");
+                    println!("Game: {}", game_str);
+                    println!("Samples: {}\n", equity_res.samples);
+                    println!(
+                        "Board: {}\n",
+                        if board.is_empty() { "(none)" } else { board }
+                    );
+
+                    println!(
+                        "{:<10} {:<20} {:>8} {:>8} {:>8} {:>10}",
+                        "Player", "Range", "Win%", "Tie%", "Lose%", "Equity"
+                    );
+                    println!("{}", "-".repeat(70));
+
+                    let total = equity_res.samples as f64;
+
+                    // P1
+                    println!(
+                        "{:<10} {:<20} {:>7.2}% {:>7.2}% {:>7.2}% {:>10.4}",
+                        "Player 1",
+                        hands[0],
+                        (equity_res.wins as f64 / total) * 100.0,
+                        (equity_res.ties as f64 / total) * 100.0,
+                        (equity_res.losses as f64 / total) * 100.0,
+                        equity_res.equity
+                    );
+
+                    // P2
+                    println!(
+                        "{:<10} {:<20} {:>7.2}% {:>7.2}% {:>7.2}% {:>10.4}",
+                        "Player 2",
+                        hands[1],
+                        (equity_res.losses as f64 / total) * 100.0,
+                        (equity_res.ties as f64 / total) * 100.0,
+                        (equity_res.wins as f64 / total) * 100.0,
+                        1.0 - equity_res.equity
+                    );
+                }
+            }
+            Err(e) => {
+                eprintln!("Error calculating range equity: {}", e);
+                std::process::exit(1);
+            }
+        }
+        return; // Done
+    }
+
+    // Non-range equity (pockets)
+    let pockets: Vec<StdDeckCardMask> = ranges.iter().map(|r| r.hands()[0].0).collect();
+
+    let calc_result = if monte_carlo {
+        enum_sample(
+            game_variant,
+            &pockets,
+            board_mask,
+            dead_mask,
+            npockets,
+            nboard,
+            iterations,
+            false,
+            &mut result,
+        )
+    } else {
+        enum_exhaustive(
+            game_variant,
+            &pockets,
+            board_mask,
+            dead_mask,
+            npockets,
+            nboard,
+            false,
+            &mut result,
+        )
+    };
+
+    match calc_result {
+        Ok(_) => {
+            if json {
+                let mut players = Vec::new();
+                for (i, hand) in hands.iter().enumerate().take(npockets) {
+                    let total = result.nwinhi[i] + result.ntiehi[i] + result.nlosehi[i];
+                    if total > 0 {
+                        players.push(PlayerStat {
+                            hand: hand.clone(),
+                            win_pct: (result.nwinhi[i] as f64 / total as f64) * 100.0,
+                            tie_pct: (result.ntiehi[i] as f64 / total as f64) * 100.0,
+                            lose_pct: (result.nlosehi[i] as f64 / total as f64) * 100.0,
+                            scoop_pct: if game_variant == Game::Holdem8
+                                || game_variant == Game::Omaha8
+                            {
+                                Some((result.nscoop[i] as f64 / total as f64) * 100.0)
+                            } else {
+                                None
+                            },
+                            ev: result.ev[i],
+                        });
+                    }
+                }
+                let output = EquityResultOutput {
+                    game: game_str.to_string(),
+                    samples: result.nsamples,
+                    board: board.to_string(),
+                    players,
+                };
+                println!("{}", serde_json::to_string_pretty(&output).unwrap());
+            } else {
+                // Print results
+                println!("=== Poker Equity Calculator ===\n");
+                println!("Game: {}", game_str);
+                println!(
+                    "Mode: {}",
+                    if monte_carlo {
+                        "Monte Carlo"
+                    } else {
+                        "Exhaustive"
+                    }
+                );
+                println!("Samples: {}\n", result.nsamples);
+
+                println!("Board: {}", if board.is_empty() { "(none)" } else { board });
+                println!();
+
+                // Print header
+                println!(
+                    "{:<10} {:<12} {:>8} {:>8} {:>8} {:>10}",
+                    "Player", "Hand", "Win%", "Tie%", "Lose%", "EV"
+                );
+                println!("{}", "-".repeat(60));
+
+                // Print each player's results
+                for (i, hand) in hands.iter().enumerate().take(npockets) {
+                    let total = result.nwinhi[i] + result.ntiehi[i] + result.nlosehi[i];
+                    if total > 0 {
+                        let win_pct = (result.nwinhi[i] as f64 / total as f64) * 100.0;
+                        let tie_pct = (result.ntiehi[i] as f64 / total as f64) * 100.0;
+                        let lose_pct = (result.nlosehi[i] as f64 / total as f64) * 100.0;
+
+                        println!(
+                            "{:<10} {:<12} {:>7.2}% {:>7.2}% {:>7.2}% {:>10.4}",
+                            format!("Player {}", i + 1),
+                            hand,
+                            win_pct,
+                            tie_pct,
+                            lose_pct,
+                            result.ev[i]
+                        );
+                    }
+                }
+            }
+        }
+        Err(e) => {
+            eprintln!("Error during calculation: {:?}", e);
+            std::process::exit(1);
+        }
+    }
+}
+
+/// Compare hands to find the winner
+fn cmd_compare(hands: &[String], board: &str, game_str: &str) {
+    let game = match parse_game(game_str) {
+        Ok(g) => g,
+        Err(e) => {
+            eprintln!("{}", e);
+            std::process::exit(1);
+        }
+    };
+
+    let board_mask = if board.is_empty() {
+        StdDeckCardMask::new()
+    } else {
+        match StdDeck::string_to_mask(board) {
+            Ok((mask, _)) => mask,
+            Err(e) => {
+                eprintln!("Error parsing board: {}", e);
+                std::process::exit(1);
+            }
+        }
+    };
+
+    let mut results = Vec::new();
+
+    for (i, hand_str) in hands.iter().enumerate() {
+        match StdDeck::string_to_mask(hand_str) {
+            Ok((mask, _)) => {
+                let res = match game {
+                    Game::Holdem
+                    | Game::Holdem8
+                    | Game::Stud7
+                    | Game::Stud7nsq
+                    | Game::Draw5
+                    | Game::Draw5nsq => {
+                        let mut combined = mask;
+                        combined.or(&board_mask);
+                        let count = combined.num_cards();
+                        let v = Eval::eval_n(&combined, count);
+                        Ok((v.value, v.std_rules_hand_val_to_string()))
+                    }
+                    Game::Omaha | Game::Omaha5 | Game::Omaha6 => {
+                        OmahaHiEvaluator::evaluate_hand(&mask, &board_mask).map(|v| {
+                            if let Some(val) = v {
+                                (val.value, val.std_rules_hand_val_to_string())
+                            } else {
+                                (0, "No Hand".to_string())
+                            }
+                        })
+                    }
+                    Game::Omaha8 | Game::Omaha85 | Game::Stud78 | Game::Draw58 => {
+                        OmahaHiLoEvaluator::evaluate_hand(&mask, &board_mask).map(|(hi, lo)| {
+                            let hi_desc = if let Some(val) = hi {
+                                val.std_rules_hand_val_to_string()
+                            } else {
+                                "No Hi".to_string()
+                            };
+                            let val_u32 = if let Some(val) = hi { val.value } else { 0 };
+
+                            let lo_desc = if let Some(val) = lo {
+                                if val.value > 0 {
+                                    format!(" / Lo: {}", val)
+                                } else {
+                                    String::new()
+                                }
+                            } else {
+                                String::new()
+                            };
+
+                            (val_u32, format!("{}{}", hi_desc, lo_desc))
+                        })
+                    }
+                    Game::Lowball => LowballEvaluator::evaluate_hand(&mask, &board_mask)
+                        .map(|v| (v.value, v.to_string())),
+                    Game::Razz | Game::Lowball27 => {
+                        let mut combined = mask;
+                        combined.or(&board_mask);
+                        let count = combined.num_cards();
+                        // Uses Lowball27 evaluator logic if available or generic eval_n inverted?
+                        // actually std_deck_lowball27_eval is available in evaluators module but Eval::eval_n is high only?
+                        // Logic in main.rs line 518 uses Eval::eval_n which is High!
+                        // Razz and 2-7 should PROBABLY use specific evaluators if available.
+
+                        // Checking imports: pub use lowball27::std_deck_lowball27_eval; is available in evaluators.
+                        // But Eval::eval_n is strictly High.
+                        // I should fix Razz/Lowball27 here too.
+
+                        if game == Game::Lowball27 {
+                            use poker_eval_rs::evaluators::std_deck_lowball27_eval;
+                            let v = std_deck_lowball27_eval(&combined, count);
+                            Ok((v.value, v.to_string()))
+                        } else {
+                            // Razz (A-5 low 7 cards).
+                            // Eval::eval_n is high.
+                            // Need A-5 low evaluator.
+                            use poker_eval_rs::evaluators::std_deck_lowball_eval;
+                            let v = std_deck_lowball_eval(&combined, count);
+                            Ok((v.value, v.to_string()))
+                        }
+                    }
+                    Game::ShortDeck => {
+                        // ShortDeckEvaluator takes separate hole and board
+                        poker_eval_rs::evaluators::ShortDeckEvaluator::evaluate_hand(
+                            &mask,
+                            &board_mask,
+                        )
+                        .map(|v| (v.value, format_short_deck_hand(v.value)))
+                    }
+                    Game::NumGames => Err(poker_eval_rs::errors::PokerError::UnsupportedGameType),
+                };
+
+                match res {
+                    Ok((val, desc)) => results.push((i, hand_str, val, desc)),
+                    Err(e) => {
+                        eprintln!("Error evaluating hand {}: {:?}", i + 1, e);
+                        std::process::exit(1);
+                    }
+                }
+            }
+            Err(e) => {
+                eprintln!("Error parsing hand {}: {}", i + 1, e);
+                std::process::exit(1);
+            }
+        }
+    }
+
+    // Sort by value
+    // For Lowball variants (Lowball, Lowball27, Razz), Lower value is Better.
+    // For High and Hi/Lo variants, Higher value is Better (for the High hand).
+    match game {
+        Game::Lowball | Game::Lowball27 | Game::Razz => {
+            results.sort_by(|a, b| a.2.cmp(&b.2)); // Ascending
+        }
+        _ => {
+            results.sort_by(|a, b| b.2.cmp(&a.2)); // Descending
+        }
+    }
+
+    println!("=== Hand Comparison ===\n");
+    println!("Game: {}", game_str);
+    println!("Board: {}", if board.is_empty() { "(none)" } else { board });
+    println!();
+    println!(
+        "{:<8} {:<10} {:<15} {:<15}",
+        "Rank", "Player", "Hand", "Description"
+    );
+    println!("{}", "-".repeat(50));
+
+    let mut rank = 1;
+    for (idx, (original_idx, hand_str, _, desc)) in results.iter().enumerate() {
+        if idx > 0 && results[idx].2 != results[idx - 1].2 {
+            rank = idx + 1;
+        }
+        println!(
+            "{:<8} Player {:<3} {:<15} {:<15}",
+            rank,
+            original_idx + 1,
+            hand_str,
+            desc
         );
     }
-
-    println!("Toutes les cartes, y compris le joker, ont été testées avec succès.");
 }
 
-#[allow(dead_code)]
-fn holdem_sample() {
-    // Initialiser les mains et le tableau
-    let pocket_str1 = "Ac7c";
-    let pocket_str2 = "5s4s";
-    let hand1 = StdDeck::string_to_mask(pocket_str1).unwrap().0;
-    let hand2 = StdDeck::string_to_mask(pocket_str2).unwrap().0;
-    let board = StdDeckCardMask::new(); // Commencez avec un tableau vide
-    let dead = StdDeckCardMask::new(); // Aucune carte morte pour commencer
+/// Parse and display card information
+fn cmd_parse(cards: &str) {
+    match StdDeck::string_to_mask(cards) {
+        Ok((mask, num_cards)) => {
+            println!("Input: {}", cards);
+            println!("Cards: {}", mask.mask_to_string());
+            println!("Count: {}", num_cards);
+            println!("Mask:  {:#018x}", mask.as_raw());
+            println!("Binary: {:064b}", mask.as_raw());
+        }
+        Err(e) => {
+            eprintln!("Error parsing cards: {}", e);
+            std::process::exit(1);
+        }
+    }
+}
 
-    let npockets = 2; // Puisque vous avez deux mains
-
-    // Initialiser les résultats pour la simulation Monte Carlo
-    let mut result_monte_carlo = EnumResult {
-        game: Game::Holdem,
-        sample_type: SampleType::Sample,
-        nsamples: 0,
-        nplayers: npockets as u32,
-        nwinhi: [0; ENUM_MAXPLAYERS],
-        ntiehi: [0; ENUM_MAXPLAYERS],
-        nlosehi: [0; ENUM_MAXPLAYERS],
-        nwinlo: [0; ENUM_MAXPLAYERS],
-        ntielo: [0; ENUM_MAXPLAYERS],
-        nloselo: [0; ENUM_MAXPLAYERS],
-        nscoop: [0; ENUM_MAXPLAYERS],
-        nsharehi: [[0; ENUM_MAXPLAYERS + 1]; ENUM_MAXPLAYERS],
-        nsharelo: [[0; ENUM_MAXPLAYERS + 1]; ENUM_MAXPLAYERS],
-        nshare: [[[0; ENUM_MAXPLAYERS + 1]; ENUM_MAXPLAYERS + 1]; ENUM_MAXPLAYERS],
-        ev: [0.0; ENUM_MAXPLAYERS],
-        ordering: None,
+/// Analyze board texture
+fn cmd_texture(board_str: &str) {
+    let (board, count) = match StdDeck::string_to_mask(board_str) {
+        Ok((m, c)) => (m, c),
+        Err(e) => {
+            eprintln!("Error parsing board: {}", e);
+            std::process::exit(1);
+        }
     };
 
-    // Simuler les 10000 itérations Monte Carlo
-    const N_ITER_MONTE_CARLO: usize = 44;
-    let nboard = 0; // Nombre de cartes déjà présentes sur le tableau (0 dans ce cas)
-    let _ = result_monte_carlo.simulate_holdem_game(
-        &[hand1, hand2],
-        board,
-        dead,
-        npockets,
-        nboard,
-        N_ITER_MONTE_CARLO,
+    if count < 3 {
+        println!("Board must have at least 3 cards for texture analysis.");
+        return;
+    }
+
+    let texture = BoardTexture::analyze(&board);
+
+    println!("=== Board Texture Analysis ===\n");
+    println!("Board: {}", board_str);
+    println!("Cards: {}", board.mask_to_string());
+    println!();
+
+    println!(
+        "Rainbow:       {}",
+        if texture.is_rainbow { "Yes" } else { "No" }
     );
-
-    // Afficher les résultats pour la simulation Monte Carlo
-    println!("Résultats Monte Carlo:");
-    let pockets = [hand1, hand2]; // Créez un tableau de pockets pour passer à la fonction d'affichage
-    result_monte_carlo.enum_result_print(&pockets, board); // Affichez les résultats Monte Carlo
+    println!(
+        "Two Tone:      {}",
+        if texture.is_two_tone { "Yes" } else { "No" }
+    );
+    println!(
+        "Monotone:      {}",
+        if texture.is_monotone { "Yes" } else { "No" }
+    );
+    println!(
+        "Paired:        {}",
+        if texture.is_paired { "Yes" } else { "No" }
+    );
+    println!(
+        "Trips:         {}",
+        if texture.is_trips { "Yes" } else { "No" }
+    );
+    println!(
+        "Quads:         {}",
+        if texture.is_quads { "Yes" } else { "No" }
+    );
+    println!(
+        "Full House:    {}",
+        if texture.is_full_house { "Yes" } else { "No" }
+    );
+    println!(
+        "Straight Draw: {}",
+        if texture.has_straight_draw {
+            "Yes"
+        } else {
+            "No"
+        }
+    );
+    println!(
+        "Flush Draw:    {}",
+        if texture.has_flush_draw { "Yes" } else { "No" }
+    );
 }
 
-#[allow(dead_code)]
-fn holdem_exhaustive() {
-    // Initialiser les mains, le tableau, et les cartes mortes
-    let pocket_str1 = "Ac7c";
-    let pocket_str2 = "5s4s";
-    //let board_str = "2cKdAsTd"; // Modifiez ceci selon le cas de test
-    //let board_str = "2cKdAs";
-    let hand1 = StdDeck::string_to_mask(pocket_str1).unwrap().0;
-    let hand2 = StdDeck::string_to_mask(pocket_str2).unwrap().0;
-    //let board = StdDeck::string_to_mask(board_str).unwrap().0;
-    let board = StdDeckCardMask::new();
-    let dead = StdDeckCardMask::new(); // Aucune carte morte pour commencer
-    let npockets = 2; // Nombre de mains
+/// Helper to format Short Deck hands where Flush > Full House
+/// In ShortDeckEvaluator, Flush is stored as FullHouse (type 6) and FullHouse as Flush (type 5) to coerce correct integer comparison.
+/// We need to swap them back for display.
+fn format_short_deck_hand(val: u32) -> String {
+    use poker_eval_rs::handval::HandVal;
+    let hv = HandVal { value: val };
+    let ht = hv.hand_type();
 
-    // Initialiser les résultats pour l'évaluation exhaustive
-    let mut result_exhaustive = EnumResult {
-        game: Game::Holdem,
-        sample_type: SampleType::Exhaustive,
-        nsamples: 0,
-        nplayers: npockets as u32,
-        nwinhi: [0; ENUM_MAXPLAYERS],
-        ntiehi: [0; ENUM_MAXPLAYERS],
-        nlosehi: [0; ENUM_MAXPLAYERS],
-        nwinlo: [0; ENUM_MAXPLAYERS],
-        ntielo: [0; ENUM_MAXPLAYERS],
-        nloselo: [0; ENUM_MAXPLAYERS],
-        nscoop: [0; ENUM_MAXPLAYERS],
-        nsharehi: [[0; ENUM_MAXPLAYERS + 1]; ENUM_MAXPLAYERS],
-        nsharelo: [[0; ENUM_MAXPLAYERS + 1]; ENUM_MAXPLAYERS],
-        nshare: [[[0; ENUM_MAXPLAYERS + 1]; ENUM_MAXPLAYERS + 1]; ENUM_MAXPLAYERS],
-        ev: [0.0; ENUM_MAXPLAYERS],
-        ordering: None,
-    };
-
-    // Déterminez le nombre de cartes sur le tableau
-    let nboard = board.num_cards(); // Assurez-vous que la méthode `num_cards` existe
-
-    // Appeler enum_exhaustive ici, assurez-vous que la fonction est accessible
-    let orderflag = false; // Définir selon votre besoin
-
-    match enum_exhaustive(
-        Game::Holdem,
-        &[hand1, hand2],
-        board,
-        dead,
-        npockets,
-        nboard,
-        orderflag,
-        &mut result_exhaustive,
-    ) {
-        Ok(()) => println!("Évaluation exhaustive terminée."),
-        Err(e) => eprintln!("Erreur lors de l'évaluation exhaustive: {:?}", e),
+    if ht == 6 {
+        // Stored as FullHouse, actually a Flush
+        // Read 5 cards
+        let ranks = [
+            hv.top_card(),
+            hv.second_card(),
+            hv.third_card(),
+            hv.fourth_card(),
+            hv.fifth_card(),
+        ];
+        let mut s = String::from("Flush (");
+        for (i, r) in ranks.iter().enumerate() {
+            if i > 0 {
+                s.push(' ');
+            }
+            s.push("23456789TJQKA".chars().nth(*r as usize).unwrap_or('?'));
+        }
+        s.push(')');
+        return s;
+    } else if ht == 5 {
+        // Stored as Flush, actually a FullHouse
+        // Read 2 cards (Trips rank, Pair rank)
+        let ranks = [hv.top_card(), hv.second_card()];
+        let mut s = String::from("FullHouse (");
+        for (i, r) in ranks.iter().enumerate() {
+            if i > 0 {
+                s.push(' ');
+            }
+            s.push("23456789TJQKA".chars().nth(*r as usize).unwrap_or('?'));
+        }
+        s.push(')');
+        return s;
+    } else {
+        // Standard display for others (Straight, StFlush, Quads, Trips, etc.)
+        return hv.to_string();
     }
-
-    // Afficher les résultats pour l'évaluation exhaustive
-    //println!("\nRésultats Exhaustifs:");
-    result_exhaustive.enum_result_print(&[hand1, hand2], board); // Assurez-vous que `enum_result_print` est correctement implémentée
-}
-
-#[allow(dead_code)]
-fn holdem8_exhaustive() {
-    // Initialiser les mains, le tableau, et les cartes mortes
-    let pocket_str1 = "Ac7c";
-    let pocket_str2 = "5s4s";
-    let board_str = "2cKdAsTd"; // Modifiez ceci selon le cas de test
-                                //let board_str = "2cKdAs";
-    let hand1 = StdDeck::string_to_mask(pocket_str1).unwrap().0;
-    let hand2 = StdDeck::string_to_mask(pocket_str2).unwrap().0;
-    let board = StdDeck::string_to_mask(board_str).unwrap().0;
-    //let board = StdDeckCardMask::new();
-    let dead = StdDeckCardMask::new(); // Aucune carte morte pour commencer
-    let npockets = 2; // Nombre de mains
-
-    // Initialiser les résultats pour l'évaluation exhaustive
-    let mut result_exhaustive = EnumResult {
-        game: Game::Holdem8,
-        sample_type: SampleType::Exhaustive,
-        nsamples: 0,
-        nplayers: npockets as u32,
-        nwinhi: [0; ENUM_MAXPLAYERS],
-        ntiehi: [0; ENUM_MAXPLAYERS],
-        nlosehi: [0; ENUM_MAXPLAYERS],
-        nwinlo: [0; ENUM_MAXPLAYERS],
-        ntielo: [0; ENUM_MAXPLAYERS],
-        nloselo: [0; ENUM_MAXPLAYERS],
-        nscoop: [0; ENUM_MAXPLAYERS],
-        nsharehi: [[0; ENUM_MAXPLAYERS + 1]; ENUM_MAXPLAYERS],
-        nsharelo: [[0; ENUM_MAXPLAYERS + 1]; ENUM_MAXPLAYERS],
-        nshare: [[[0; ENUM_MAXPLAYERS + 1]; ENUM_MAXPLAYERS + 1]; ENUM_MAXPLAYERS],
-        ev: [0.0; ENUM_MAXPLAYERS],
-        ordering: None,
-    };
-    // println!(
-    //     "Après initialisation dans holdem8_exhaustive: {:?}",
-    //     result_exhaustive.game
-    // );
-    // Déterminez le nombre de cartes sur le tableau
-    let nboard = board.num_cards(); // Assurez-vous que la méthode `num_cards` existe
-
-    // Appeler enum_exhaustive ici, assurez-vous que la fonction est accessible
-    let orderflag = false; // Définir selon votre besoin
-
-    match enum_exhaustive(
-        Game::Holdem8,
-        &[hand1, hand2],
-        board,
-        dead,
-        npockets,
-        nboard,
-        orderflag,
-        &mut result_exhaustive,
-    ) {
-        Ok(()) => println!("Évaluation exhaustive terminée."),
-        Err(e) => eprintln!("Erreur lors de l'évaluation exhaustive: {:?}", e),
-    }
-    //println!("game {:?}", Game::Holdem8);
-    //println!("result_exhaustive {:?}", result_exhaustive.game);
-    // Afficher les résultats pour l'évaluation exhaustive
-    println!("\nRésultats Exhaustifs:");
-    result_exhaustive.enum_result_print(&[hand1, hand2], board); // Assurez-vous que `enum_result_print` est correctement implémentée
-}
-
-#[allow(dead_code)]
-fn omaha_exhaustive() {
-    // Initialiser les mains, le tableau, et les cartes mortes
-    let pocket_str1 = "AsKhQsJh";
-    let pocket_str2 = "8h8d7h6d";
-    //let board_str = "2cKdAdTd"; // Modifiez ceci selon le cas de test
-                                //let board_str = "2cKdAs";
-    let hand1 = StdDeck::string_to_mask(pocket_str1).unwrap().0;
-    let hand2 = StdDeck::string_to_mask(pocket_str2).unwrap().0;
-    //let board = StdDeck::string_to_mask(board_str).unwrap().0;
-    let board = StdDeckCardMask::new();
-    let dead = StdDeckCardMask::new(); // Aucune carte morte pour commencer
-    let npockets = 2; // Nombre de mains
-
-    // Initialiser les résultats pour l'évaluation exhaustive
-    let mut result_exhaustive = EnumResult {
-        game: Game::Omaha,
-        sample_type: SampleType::Exhaustive,
-        nsamples: 0,
-        nplayers: npockets as u32,
-        nwinhi: [0; ENUM_MAXPLAYERS],
-        ntiehi: [0; ENUM_MAXPLAYERS],
-        nlosehi: [0; ENUM_MAXPLAYERS],
-        nwinlo: [0; ENUM_MAXPLAYERS],
-        ntielo: [0; ENUM_MAXPLAYERS],
-        nloselo: [0; ENUM_MAXPLAYERS],
-        nscoop: [0; ENUM_MAXPLAYERS],
-        nsharehi: [[0; ENUM_MAXPLAYERS + 1]; ENUM_MAXPLAYERS],
-        nsharelo: [[0; ENUM_MAXPLAYERS + 1]; ENUM_MAXPLAYERS],
-        nshare: [[[0; ENUM_MAXPLAYERS + 1]; ENUM_MAXPLAYERS + 1]; ENUM_MAXPLAYERS],
-        ev: [0.0; ENUM_MAXPLAYERS],
-        ordering: None,
-    };
-    // println!(
-    //     "Après initialisation dans holdem8_exhaustive: {:?}",
-    //     result_exhaustive.game
-    // );
-    // Déterminez le nombre de cartes sur le tableau
-    let nboard = board.num_cards(); // Assurez-vous que la méthode `num_cards` existe
-
-    // Appeler enum_exhaustive ici, assurez-vous que la fonction est accessible
-    let orderflag = false; // Définir selon votre besoin
-
-    match enum_exhaustive(
-        Game::Omaha,
-        &[hand1, hand2],
-        board,
-        dead,
-        npockets,
-        nboard,
-        orderflag,
-        &mut result_exhaustive,
-    ) {
-        Ok(()) => println!("Évaluation exhaustive terminée."),
-        Err(e) => eprintln!("Erreur lors de l'évaluation exhaustive: {:?}", e),
-    }
-    //println!("game {:?}", Game::Holdem8);
-    //println!("result_exhaustive {:?}", result_exhaustive.game);
-    // Afficher les résultats pour l'évaluation exhaustive
-    println!("\nRésultats Exhaustifs:");
-    result_exhaustive.enum_result_print(&[hand1, hand2], board); // Assurez-vous que `enum_result_print` est correctement implémentée
 }

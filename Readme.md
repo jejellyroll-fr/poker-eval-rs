@@ -1,80 +1,105 @@
-## PokerEval-RS
-## Overview
+# PokerEval-RS
 
-PokerEval-RS is a Rust-based library for evaluating poker hands efficiently. This library is a Rust conversion of the original poker_eval library written in C. It provides functionalities to evaluate poker hands, compare them, and perform various card-related operations in the context of poker games.
-## Features
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![Build Status](https://github.com/yourusername/poker-eval-rs/workflows/Rust%20CI/badge.svg)
 
-- Evaluation of poker hands
-- Comparison of different poker hands to determine winners
-- Utility functions for card manipulation and deck management
-- Rust-based implementation ensuring safety and performance
+**PokerEval-RS** is a high-performance, safety-first poker hand evaluation library written in Rust. It is a modern, idiomatic port of the legendary C `poker_eval` library, designed for speed and correctness.
 
-## Getting Started
-### Prerequisites
+It supports **Texas Hold'em**, **Omaha**, **Omaha Hi/Lo**, **Stud**, **Razz**, **Lowball (2-7 & A-5)**, and **Short Deck**.
 
-- Rust programming language setup
-- Cargo, Rust's package manager
+## 🚀 Features
 
-### Installation
+- **Blazing Fast**: Stack-allocated memory, bitwise operations, and optimized lookups.
+- **Verification**: Extensive test suite including property-based testing and regression checks against golden data.
+- **Multi-Game Support**: Evaluate hands for virtually any poker variant.
+- **Python Bindings**: First-class Python support via `PyO3`.
+- **Equity Calculation**: Monte Carlo and exhaustive enumeration engines.
 
-Clone the repository to your local machine:
+## 📦 Installation
 
-bash
-```
-git clone https://github.com/yourusername/poker-eval-rs.git
-```
-Navigate to the cloned directory:
+### Rust
 
-WARNING:
-don't forget to setup your env PYO3_PYTHON to point to your python interpreter
+Add this to your `Cargo.toml`:
 
-bash
-```
-cd poker-eval-rs
-```
-Build the project using Cargo:
-
-bash
-```
-cargo build
+```toml
+[dependencies]
+poker-eval-rs = "0.1.0"
 ```
 
-## examples
-for python example to evaluate hand:
-# Install maturin
-bash
-```
-cargo install maturin
-maturin build
-```
-# install the created lib
-bash
-```
-pip install target/wheels/poker_eval_rs-0.1.0-cp311-cp311-manylinux_2_34_x86_64.whl 
-```
-# use python script as a cli
-bash
-```
-python eval.py -h
-python eval.py -hilo 2h4d5s6h7d
-```
-## Usage
+### Python
 
-To use PokerEval-RS in your Rust project, include it as a dependency in your Cargo.toml file.
+You can build and install the bindings using `maturin`:
 
-Example of using PokerEval-RS to evaluate a poker hand:
-
-## rust
+```bash
+# Requires Rust toolchain installed
+pip install maturin
+maturin develop --release --features python
 ```
 
+## 🛠 Usage
+
+### Rust Evaluator
+
+```rust
+use poker_eval_rs::deck::StdDeck;
+use poker_eval_rs::evaluators::{HoldemEvaluator, OmahaHiEvaluator, HandEvaluator};
+
+fn main() {
+    // Texas Hold'em (Royal Flush)
+    let (hole, _) = StdDeck::string_to_mask("AsKs").unwrap();
+    let (board, _) = StdDeck::string_to_mask("QsJsTs").unwrap();
+    let val = HoldemEvaluator::evaluate_hand(&hole, &board).unwrap();
+    println!("Hold'em Val: {}", val); // Full display string
+
+    // Omaha Hi (Quads)
+    let (omaha_hole, _) = StdDeck::string_to_mask("AsKs2h2d").unwrap();
+    let (omaha_board, _) = StdDeck::string_to_mask("AcAhAd").unwrap();
+    let omaha_val = OmahaHiEvaluator::evaluate_hand(&omaha_hole, &omaha_board).unwrap().unwrap();
+    println!("Omaha Val: {}", omaha_val);
+}
 ```
-## Contributing
 
-Contributions to PokerEval-RS are welcome. Please ensure to follow the contribution guidelines outlined in CONTRIBUTING.md.
-## License
+### Python Bindings
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+```python
+import poker_eval_rs
 
-## Acknowledgments
-- Original poker_eval library authors
-- Rust community for continuous support
+# Evaluate a single hand
+hand_rank = poker_eval_rs.eval_n("As Ks Qs Js Ts")
+print(f"Hand Rank: {hand_rank}")
+
+# Omaha Hi/Lo
+hi, lo = poker_eval_rs.eval_omaha_hi_lo("As 2s 3d 4d", "5s 6s 7s 8d 9d")
+print(f"Hi: {hi}, Lo: {lo}")
+
+# Equity Calculator
+result = poker_eval_rs.calculate_equity(
+    hands=["AsKs", "2h2d"],
+    board="",
+    game="holdem",
+    monte_carlo=True,
+    iterations=100000
+)
+
+print(f"Win Probability: {result['players'][0]['win']}%")
+```
+
+## ⚡ Performance
+
+PokerEval-RS utilizes pre-computed lookup tables and efficient bitmask operations.
+- **Zero Allocation** during evaluation hot paths.
+- **Rayon** support for parallel equity calculation (in progress).
+
+## 🤝 Contributing
+
+Contributions are welcome! Please run tests and formatting before submitting a PR:
+
+```bash
+cargo test
+cargo fmt
+cargo clippy
+```
+
+## 📜 License
+
+This project is licensed under the MIT License.
