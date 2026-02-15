@@ -1,5 +1,6 @@
 use super::std_deck::*;
 use crate::tables::t_cardmasks::StdDeckCardMask;
+pub use crate::tables::t_jokercardmasks::JokerDeckCardMask;
 use crate::tables::t_jokercardmasks::*;
 
 // Constants

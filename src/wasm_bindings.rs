@@ -9,11 +9,8 @@ use crate::deck::{JokerDeckCardMask, StdDeckCardMask};
 use crate::enumdefs::{EnumResult, Game, SampleType};
 use crate::enumerate::evaluation::{enum_exhaustive, enum_sample};
 use crate::evaluators::{
-    joker_lowball_eval, EvalJoker, HandEvaluator, LowballEvaluator, OmahaHiEvaluator,
-    ShortDeckEvaluator,
+    EvalJoker, HandEvaluator, LowballEvaluator, OmahaHiEvaluator, ShortDeckEvaluator,
 };
-use crate::handval::HandVal;
-use crate::handval_low::LowHandVal;
 use serde::Serialize;
 use serde_wasm_bindgen;
 use wasm_bindgen::prelude::*;
@@ -49,7 +46,7 @@ pub fn eval_omaha_hi(hand: &str, board: &str) -> Result<String, JsValue> {
         ));
     }
 
-    if let Some(val) = OmahaHiEvaluator::evaluate_hand(&h_mask, &b_mask) {
+    if let Ok(Some(val)) = OmahaHiEvaluator::evaluate_hand(&h_mask, &b_mask) {
         Ok(val.std_rules_hand_val_to_string())
     } else {
         Ok("No Hand".to_string())
@@ -230,7 +227,7 @@ pub fn calculate_equity(
 
             let output = WasmEquityResult {
                 game: game.to_string(),
-                samples: result.nsamples,
+                samples: result.nsamples as u64,
                 players: player_stats,
             };
 
