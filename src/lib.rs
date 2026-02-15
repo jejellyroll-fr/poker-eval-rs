@@ -44,11 +44,14 @@ pub mod enumerate;
 pub(crate) mod enumord;
 pub mod errors;
 pub mod evaluators;
+pub mod gpu;
 pub mod handval;
 pub mod handval_low;
 pub mod range;
 pub mod rules;
+pub mod solvers;
 pub(crate) mod tables;
+pub mod tournament;
 
 // ===== Python Bindings (optional, enabled with "python" feature) =====
 #[cfg(feature = "python")]

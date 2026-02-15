@@ -1,4 +1,4 @@
-use poker_eval_rs::deck::{Rank, StdDeck, StdDeckCardMask};
+use poker_eval_rs::deck::{Deck, Rank, StdDeck, StdDeckCardMask};
 use poker_eval_rs::evaluators::{
     Eval, HandEvaluator, HoldemEvaluator, LowballEvaluator, OmahaHiEvaluator,
 };
@@ -183,4 +183,52 @@ fn regression_stud8_qualifier() {
     let lo_val_q = poker_eval_rs::evaluators::std_deck_lowball8_eval(&mask_q, count_q).unwrap();
 
     assert_ne!(lo_val_q.value, LOW_HAND_VAL_NOTHING, "8-low should qualify");
+}
+
+#[test]
+fn regression_manila_rules() {
+    use poker_eval_rs::deck::ManilaDeck;
+    // Manila: 32 cards (7-A), Flush beats Full House
+    // 7s 8s 9s Ts Js (Flush)
+    let (flush_mask, _) = ManilaDeck::string_to_mask("7s 8s 9s Ts Js").unwrap();
+    // 7s 7h 7d 8s 8h (Full House)
+    let (fh_mask, _) = ManilaDeck::string_to_mask("7s 7h 7d 8s 8h").unwrap();
+
+    // Convert to StdDeck masks for the evaluator (currently evaluations use StdDeck masks internally)
+    let std_flush = flush_mask.to_std_mask();
+    let std_fh = fh_mask.to_std_mask();
+
+    // We use the same logic as Short Deck for Manila (Flush > FH)
+    let val_flush = poker_eval_rs::evaluators::ShortDeckEvaluator::evaluate_hand(
+        &std_flush,
+        &StdDeckCardMask::new(),
+    )
+    .unwrap();
+    let val_fh = poker_eval_rs::evaluators::ShortDeckEvaluator::evaluate_hand(
+        &std_fh,
+        &StdDeckCardMask::new(),
+    )
+    .unwrap();
+
+    assert!(
+        val_flush > val_fh,
+        "In Manila, Flush should beat Full House"
+    );
+}
+
+#[test]
+fn regression_ofc_royalties() {
+    use poker_eval_rs::evaluators::OFCBoard;
+    let board = OFCBoard {
+        top: StdDeck::string_to_mask("6s 6h 6d").unwrap().0,
+        middle: StdDeck::string_to_mask("7s 7h 7d 8s 8h").unwrap().0,
+        bottom: StdDeck::string_to_mask("As Ks Qs Js Ts").unwrap().0,
+    };
+
+    let result = board.evaluate();
+    assert!(!result.is_foul, "OFC board should not be foul");
+    assert!(
+        result.royalties > 0,
+        "OFC board should have significant royalties"
+    );
 }

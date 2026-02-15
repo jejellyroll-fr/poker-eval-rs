@@ -1,8 +1,11 @@
-//! Deck implementations and card mask utilities.
-//!
-//! Provides standard 52-card decks and joker decks.
 pub mod joker;
+pub mod manila;
+pub mod short_deck;
 pub mod std_deck;
+pub mod traits;
 
 pub use joker::*;
+pub use manila::*;
+pub use short_deck::*;
 pub use std_deck::*;
+pub use traits::*;

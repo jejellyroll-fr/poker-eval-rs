@@ -42,6 +42,9 @@ pub fn enum_sample(
         return Err(PokerError::TooManyPlayers);
     }
     result.clear();
+    result.game = game;
+    result.sample_type = crate::enumdefs::SampleType::Sample;
+    result.nplayers = npockets as u32;
 
     let mode = match game {
         Game::Holdem
@@ -125,6 +128,59 @@ pub fn enum_sample(
     Ok(())
 }
 
+/// Runs a Quasi-Monte Carlo (Sobol sequence) sample evaluation for the given game and player hands.
+#[allow(clippy::too_many_arguments)]
+pub fn enum_qmc(
+    game: Game,
+    pockets: &[StdDeckCardMask],
+    board: StdDeckCardMask,
+    dead: StdDeckCardMask,
+    npockets: usize,
+    nboard: usize,
+    niter: usize,
+    orderflag: bool,
+    result: &mut EnumResult,
+) -> Result<(), PokerError> {
+    if npockets > ENUM_MAXPLAYERS {
+        return Err(PokerError::TooManyPlayers);
+    }
+    result.clear();
+    result.game = game;
+    result.sample_type = crate::enumdefs::SampleType::QuasiMonteCarlo;
+    result.nplayers = npockets as u32;
+
+    let mode = match game {
+        Game::Holdem
+        | Game::Omaha
+        | Game::Omaha5
+        | Game::Omaha6
+        | Game::Stud7
+        | Game::Draw5
+        | Game::ShortDeck => EnumOrderingMode::Hi,
+        Game::Razz | Game::Lowball | Game::Lowball27 => EnumOrderingMode::Lo,
+        Game::Holdem8
+        | Game::Omaha8
+        | Game::Omaha85
+        | Game::Stud78
+        | Game::Stud7nsq
+        | Game::Draw58
+        | Game::Draw5nsq => EnumOrderingMode::Hilo,
+        _ => return Err(PokerError::UnsupportedGameType),
+    };
+
+    if orderflag {
+        result.allocate_resources(npockets, mode)?;
+    }
+
+    match game {
+        Game::Holdem => {
+            result.simulate_holdem_game_qmc(pockets, board, dead, npockets, nboard, niter)?;
+        }
+        _ => return Err(PokerError::UnsupportedGameType),
+    }
+    Ok(())
+}
+
 /// Runs an exhaustive (all possible boards) evaluation for the given game and player hands.
 ///
 /// Enumerates every possible board runout and aggregates win/tie/loss/equity statistics.
@@ -159,6 +215,9 @@ pub fn enum_exhaustive(
     result: &mut EnumResult,
 ) -> Result<(), PokerError> {
     result.clear();
+    result.game = game;
+    result.sample_type = crate::enumdefs::SampleType::Exhaustive;
+    result.nplayers = npockets as u32;
 
     if npockets > ENUM_MAXPLAYERS {
         return Err(PokerError::TooManyPlayers);
@@ -204,4 +263,37 @@ pub fn enum_exhaustive(
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::deck::StdDeck;
+    use crate::enumdefs::{EnumResult, Game};
+
+    #[test]
+    fn test_enum_qmc() {
+        let (pocket1, _) = StdDeck::string_to_mask("As Ks").unwrap();
+        let (pocket2, _) = StdDeck::string_to_mask("2s 2d").unwrap();
+        let pockets = vec![pocket1, pocket2];
+        let board = StdDeck::string_to_mask("").unwrap().0;
+        let dead = StdDeck::string_to_mask("").unwrap().0;
+        let mut result = EnumResult::new(Game::Holdem);
+
+        enum_qmc(
+            Game::Holdem,
+            &pockets,
+            board,
+            dead,
+            2,
+            0,
+            1000,
+            true,
+            &mut result,
+        )
+        .unwrap();
+        assert_eq!(result.nsamples, 1000);
+        assert!(result.ev[0] > 0.0);
+        assert!(result.ev[1] > 0.0);
+    }
 }

@@ -10,6 +10,7 @@ use crate::evaluators::{
 };
 use crate::range::HandRange;
 use crate::tables::t_cardmasks::StdDeckCardMask;
+use crate::tournament::calculate_icm as calculate_icm_rust;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use std::str::FromStr;
@@ -614,6 +615,17 @@ pub fn calculate_range_equity(
     }
 }
 
+/// Calculate Independent Chip Model (ICM) equities.
+///
+/// `stacks` are chip counts per player, `prizes` are payout amounts ordered from
+/// first place downward.
+#[pyfunction]
+pub fn calculate_icm(stacks: Vec<f64>, prizes: Vec<f64>) -> PyResult<Vec<f64>> {
+    calculate_icm_rust(&stacks, &prizes).map_err(|e| {
+        PyErr::new::<pyo3::exceptions::PyValueError, _>(format!("ICM calculation error: {}", e))
+    })
+}
+
 /// Exposure of BoardTexture to Python
 #[pyclass(name = "BoardTexture")]
 #[derive(Clone)]
@@ -728,6 +740,7 @@ pub fn poker_eval_rs(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(eval_omaha_hi, m)?)?;
     m.add_function(wrap_pyfunction!(eval_omaha_hi_lo, m)?)?;
     m.add_function(wrap_pyfunction!(calculate_equity, m)?)?;
+    m.add_function(wrap_pyfunction!(calculate_icm, m)?)?;
     m.add_function(wrap_pyfunction!(calculate_range_equity, m)?)?;
     m.add_class::<PyHandRange>()?;
     m.add_class::<PyBoardTexture>()?;

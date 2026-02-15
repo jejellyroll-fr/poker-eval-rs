@@ -5,3 +5,4 @@
 # It is recommended to check this file in to source control so that
 # everyone who runs the test benefits from these saved cases.
 cc eec2be32854b7c108f2a89c26d3ceb9eb6fb89d6313ebe652c0a866cfd067fd8 # shrinks to cards = [50, 51]
+cc 34a95a03f266490744b61dd6a3686b1b269e93d1c2bed237e330a80ff9357342 # shrinks to cards1 = [0, 1], cards2 = [2, 3]

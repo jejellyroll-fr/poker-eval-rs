@@ -1,4 +1,5 @@
 use super::std_deck::*;
+use super::traits::{CardMask, Deck};
 use crate::tables::t_cardmasks::StdDeckCardMask;
 pub use crate::tables::t_jokercardmasks::JokerDeckCardMask;
 use crate::tables::t_jokercardmasks::*;
@@ -73,26 +74,18 @@ impl JokerDeckCardMask {
     pub fn diamonds(&self) -> u64 {
         self.cards_n & 0x1FFF
     }
-    // Other mask operations (e.g., OR, AND, etc.)
-    pub fn or(&self, other: Self) -> Self {
-        JokerDeckCardMask {
-            cards_n: self.cards_n | other.cards_n,
-        }
+    // Other mask operations
+    pub fn or(&mut self, other: &Self) {
+        self.cards_n |= other.cards_n;
     }
-    pub fn and(&self, other: Self) -> Self {
-        JokerDeckCardMask {
-            cards_n: self.cards_n & other.cards_n,
-        }
+    pub fn and(&mut self, other: &Self) {
+        self.cards_n &= other.cards_n;
     }
-    pub fn not(&self) -> Self {
-        JokerDeckCardMask {
-            cards_n: !self.cards_n,
-        }
+    pub fn not(&mut self) {
+        self.cards_n = !self.cards_n;
     }
-    pub fn xor(&self, other: Self) -> Self {
-        JokerDeckCardMask {
-            cards_n: self.cards_n ^ other.cards_n,
-        }
+    pub fn xor(&mut self, other: &Self) {
+        self.cards_n ^= other.cards_n;
     }
     /// Returns the mask for a specific card index.
     pub fn get_mask(index: usize) -> JokerDeckCardMask {
@@ -178,6 +171,48 @@ impl JokerDeckCardMask {
     }
 }
 
+impl CardMask for JokerDeckCardMask {
+    fn new() -> Self {
+        Self::new()
+    }
+
+    fn is_empty(&self) -> bool {
+        self.is_empty()
+    }
+
+    fn and(&mut self, other: &Self) {
+        self.and(other)
+    }
+
+    fn or(&mut self, other: &Self) {
+        self.or(other)
+    }
+
+    fn xor(&mut self, other: &Self) {
+        self.xor(other)
+    }
+
+    fn not(&mut self) {
+        self.not()
+    }
+
+    fn num_cards(&self) -> usize {
+        self.num_cards()
+    }
+
+    fn card_is_set(&self, index: usize) -> bool {
+        self.card_is_set(index)
+    }
+
+    fn set(&mut self, index: usize) {
+        self.set(index)
+    }
+
+    fn mask_to_string(&self) -> String {
+        self.mask_to_string()
+    }
+}
+
 /// Joker Deck utilities.
 pub struct JokerDeck;
 
@@ -249,5 +284,22 @@ impl JokerDeck {
         }
 
         Ok((out_mask, n))
+    }
+}
+
+impl Deck for JokerDeck {
+    type Mask = JokerDeckCardMask;
+    const N_CARDS: usize = JOKER_DECK_N_CARDS;
+
+    fn card_to_string(card_index: usize) -> String {
+        Self::card_to_string(card_index)
+    }
+
+    fn string_to_card(card_str: &str) -> Option<usize> {
+        Self::string_to_card(card_str)
+    }
+
+    fn string_to_mask(cards_str: &str) -> Result<(Self::Mask, usize), String> {
+        Self::string_to_mask(cards_str)
     }
 }

@@ -41,8 +41,9 @@ pub struct GameParams {
 // Enumeration defining the sampling types for evaluation
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum SampleType {
-    Exhaustive, // Exhaustive evaluation of all possible hands
-    Sample,     // Evaluation based on a sample of hands
+    Exhaustive,      // Exhaustive evaluation of all possible hands
+    Sample,          // Evaluation based on a Monte Carlo sample
+    QuasiMonteCarlo, // Evaluation based on a Quasi-Monte Carlo sample (Sobol)
 }
 // Structure storing the evaluation results of a game
 #[derive(Debug, Serialize, Deserialize)]

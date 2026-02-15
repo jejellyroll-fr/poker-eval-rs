@@ -1,3 +1,4 @@
+use super::traits::{CardMask, Deck};
 pub use crate::tables::t_cardmasks::StdDeckCardMask;
 use crate::tables::t_cardmasks::STD_DECK_CARD_MASKS_TABLE;
 
@@ -315,6 +316,48 @@ impl StdDeckCardMask {
     }
 }
 
+impl CardMask for StdDeckCardMask {
+    fn new() -> Self {
+        Self::new()
+    }
+
+    fn is_empty(&self) -> bool {
+        self.is_empty()
+    }
+
+    fn and(&mut self, other: &Self) {
+        self.and(other)
+    }
+
+    fn or(&mut self, other: &Self) {
+        self.or(other)
+    }
+
+    fn xor(&mut self, other: &Self) {
+        self.xor(other)
+    }
+
+    fn not(&mut self) {
+        self.not()
+    }
+
+    fn num_cards(&self) -> usize {
+        self.num_cards()
+    }
+
+    fn card_is_set(&self, index: usize) -> bool {
+        self.card_is_set(index)
+    }
+
+    fn set(&mut self, index: usize) {
+        self.set(index)
+    }
+
+    fn mask_to_string(&self) -> String {
+        self.mask_to_string()
+    }
+}
+
 impl TryFrom<&str> for StdDeckCardMask {
     type Error = String;
 
@@ -423,6 +466,23 @@ impl StdDeck {
         }
 
         Ok((out_mask, n))
+    }
+}
+
+impl Deck for StdDeck {
+    type Mask = StdDeckCardMask;
+    const N_CARDS: usize = STD_DECK_N_CARDS;
+
+    fn card_to_string(card_index: usize) -> String {
+        Self::card_to_string(card_index)
+    }
+
+    fn string_to_card(card_str: &str) -> Option<usize> {
+        Self::string_to_card(card_str)
+    }
+
+    fn string_to_mask(cards_str: &str) -> Result<(Self::Mask, usize), String> {
+        Self::string_to_mask(cards_str)
     }
 }
 

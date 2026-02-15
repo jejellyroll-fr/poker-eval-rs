@@ -1,5 +1,6 @@
 //! Evaluation algorithms and HandEvaluator trait implementations.
 
+pub mod badugi;
 pub mod holdem;
 pub mod joker;
 pub mod joker_low;
@@ -8,6 +9,7 @@ pub mod lowball;
 pub mod lowball27;
 pub mod lowball8;
 pub mod lowball_variants;
+pub mod ofc;
 pub mod omaha;
 pub mod range_equity;
 
@@ -15,6 +17,7 @@ use crate::errors::PokerError;
 use crate::handval::HandVal;
 use crate::handval_low::LowHandVal;
 use crate::tables::t_cardmasks::StdDeckCardMask;
+pub use badugi::badugi_eval;
 pub use holdem::Eval;
 pub use joker::EvalJoker;
 pub use joker_low::joker_lowball_eval;
@@ -22,6 +25,7 @@ pub use joker_low8::joker_lowball8_eval;
 pub use lowball::std_deck_lowball_eval;
 pub use lowball27::std_deck_lowball27_eval;
 pub use lowball8::std_deck_lowball8_eval;
+pub use ofc::OFCBoard;
 pub use omaha::{std_deck_omaha_hi_eval, std_deck_omaha_hi_low8_eval};
 
 /// Trait for evaluating poker hands.
@@ -138,6 +142,38 @@ impl HandEvaluator for LowballEvaluator {
         let mut hand = *hole;
         hand.or(board);
         Ok(std_deck_lowball_eval(&hand, hand.num_cards()))
+    }
+}
+
+/// Evaluator for Badugi.
+pub struct BadugiEvaluator;
+
+impl HandEvaluator for BadugiEvaluator {
+    type Output = LowHandVal;
+
+    fn evaluate_hand(
+        hole: &StdDeckCardMask,
+        board: &StdDeckCardMask,
+    ) -> Result<Self::Output, PokerError> {
+        let mut hand = *hole;
+        hand.or(board);
+        Ok(badugi_eval(&hand))
+    }
+}
+
+/// Evaluator for 5-card Draw and other draw variants.
+pub struct DrawEvaluator;
+
+impl HandEvaluator for DrawEvaluator {
+    type Output = HandVal;
+
+    fn evaluate_hand(
+        hole: &StdDeckCardMask,
+        board: &StdDeckCardMask,
+    ) -> Result<Self::Output, PokerError> {
+        let mut hand = *hole;
+        hand.or(board);
+        Ok(Eval::eval_n(&hand, hand.num_cards()))
     }
 }
 

@@ -11,6 +11,7 @@ use crate::enumerate::evaluation::{enum_exhaustive, enum_sample};
 use crate::evaluators::{
     EvalJoker, HandEvaluator, LowballEvaluator, OmahaHiEvaluator, ShortDeckEvaluator,
 };
+use crate::tournament::calculate_icm as calculate_icm_rust;
 use serde::Serialize;
 use serde_wasm_bindgen;
 use wasm_bindgen::prelude::*;
@@ -235,4 +236,12 @@ pub fn calculate_equity(
         }
         Err(e) => Err(JsValue::from_str(&format!("Calculation error: {:?}", e))),
     }
+}
+
+/// Calculates Independent Chip Model (ICM) equities.
+#[wasm_bindgen]
+pub fn calculate_icm(stacks: Vec<f64>, prizes: Vec<f64>) -> Result<JsValue, JsValue> {
+    let equities = calculate_icm_rust(&stacks, &prizes)
+        .map_err(|e| JsValue::from_str(&format!("ICM calculation error: {}", e)))?;
+    Ok(serde_wasm_bindgen::to_value(&equities)?)
 }

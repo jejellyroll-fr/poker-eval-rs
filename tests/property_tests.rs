@@ -87,4 +87,54 @@ proptest! {
             }
         }
     }
+
+    #[test]
+    fn test_enum_result_merge_properties(
+        ns1 in 0u32..1000,
+        ns2 in 0u32..1000,
+        win1 in 0u32..1000,
+        win2 in 0u32..1000,
+    ) {
+        use poker_eval_rs::enumdefs::{EnumResult, Game};
+        let mut res1 = EnumResult::new(Game::Holdem);
+        res1.nsamples = ns1;
+        res1.nwinhi[0] = win1;
+
+        let mut res2 = EnumResult::new(Game::Holdem);
+        res2.nsamples = ns2;
+        res2.nwinhi[0] = win2;
+
+        res1.merge(&res2);
+        assert_eq!(res1.nsamples, ns1 + ns2);
+        assert_eq!(res1.nwinhi[0], win1 + win2);
+    }
+
+    #[test]
+    fn test_equity_sum_is_one(
+        cards1 in proptest::collection::vec(0u8..52, 2),
+        cards2 in proptest::collection::vec(0u8..52, 2),
+    ) {
+        use poker_eval_rs::enumerate::enum_sample;
+        use poker_eval_rs::enumdefs::{EnumResult, Game};
+
+        let m1 = mask_from_indices(&cards1);
+        let m2 = mask_from_indices(&cards2);
+
+        // Ensure distinct pockets
+        let mut intersection = m1;
+        intersection.and(&m2);
+        if intersection.is_empty() && m1.num_cards() == 2 && m2.num_cards() == 2 {
+            let pockets = vec![m1, m2];
+            let board = StdDeckCardMask::new();
+            let dead = StdDeckCardMask::new();
+            let mut result = EnumResult::new(Game::Holdem);
+
+            if enum_sample(Game::Holdem, &pockets, board, dead, 2, 0, 100, false, &mut result).is_ok()
+                && result.nsamples > 0
+            {
+                let total_ev: f64 = result.ev.iter().sum::<f64>() / result.nsamples as f64;
+                assert!((total_ev - 1.0).abs() < 1e-6, "Total EV should be 1.0, got {}", total_ev);
+            }
+        }
+    }
 }

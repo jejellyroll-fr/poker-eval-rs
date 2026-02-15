@@ -8,6 +8,7 @@ pub mod evaluation;
 pub mod game_params;
 pub mod inner_loops;
 mod montecarlo;
+pub mod qmc;
 pub mod result;
 
 pub use crate::errors::PokerError;

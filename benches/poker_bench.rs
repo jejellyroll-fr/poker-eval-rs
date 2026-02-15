@@ -75,7 +75,7 @@ fn bench_equity(c: &mut Criterion) {
     group.bench_function("aa_vs_kk_preflop", |b| {
         b.iter(|| {
             let mut result = create_empty_result(2);
-            let pockets = vec![aa.clone(), kk.clone()];
+            let pockets = vec![aa, kk];
             let _ = enum_exhaustive(
                 Game::Holdem,
                 &pockets,
@@ -95,11 +95,11 @@ fn bench_equity(c: &mut Criterion) {
     group.bench_function("aa_vs_kk_flop", |b| {
         b.iter(|| {
             let mut result = create_empty_result(2);
-            let pockets = vec![aa.clone(), kk.clone()];
+            let pockets = vec![aa, kk];
             let _ = enum_exhaustive(
                 Game::Holdem,
                 &pockets,
-                board3.clone(),
+                board3,
                 StdDeckCardMask::new(),
                 2,
                 3,

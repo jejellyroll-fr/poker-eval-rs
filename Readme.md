@@ -125,6 +125,9 @@ cargo test --all-features
 cargo clippy --all-targets --all-features
 ```
 
+CI enforces a minimum code coverage gate (Tarpaulin) currently set to `40%`, and this threshold is intended to be raised progressively.
+CI also generates and uploads a `cfr-convergence-report` JSON artifact from `examples/cfr_convergence_report.rs` in the benchmark job.
+
 ## 📜 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

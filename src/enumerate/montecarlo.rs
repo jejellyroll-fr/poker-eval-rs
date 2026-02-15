@@ -44,6 +44,52 @@ pub(crate) fn deck_montecarlo_n_cards_d<F>(
     }
 }
 
+/// Draws `num_cards` random cards using Quasi-Monte Carlo (Sobol sequence).
+pub(crate) fn deck_qmc_n_cards_d<F>(
+    deck: &[StdDeckCardMask],
+    dead_cards: StdDeckCardMask,
+    num_cards: usize,
+    num_iter: usize,
+    mut action: F,
+) where
+    F: FnMut(&[StdDeckCardMask]),
+{
+    use super::qmc::SobolGenerator;
+    let mut sobol = SobolGenerator::new(num_cards);
+
+    let live_deck_base: Vec<StdDeckCardMask> = deck
+        .iter()
+        .filter(|card| !card.is_empty() && !dead_cards.overlaps(card))
+        .copied()
+        .collect();
+
+    let live_len = live_deck_base.len();
+    if num_cards > live_len {
+        return;
+    }
+
+    let mut drawn_cards = vec![StdDeckCardMask::new(); num_cards];
+
+    for _ in 0..num_iter {
+        let point = sobol.next_point();
+        let mut current_deck = live_deck_base.clone();
+
+        for i in 0..num_cards {
+            let remaining_len = current_deck.len();
+            let idx = (point[i] * remaining_len as f64) as usize;
+            let actual_idx = if idx >= remaining_len {
+                remaining_len - 1
+            } else {
+                idx
+            };
+
+            drawn_cards[i] = current_deck.remove(actual_idx);
+        }
+
+        action(&drawn_cards);
+    }
+}
+
 /// Identical to deck_montecarlo_n_cards_d but for JokerDeckCardMask.
 pub(crate) fn deck_montecarlo_n_cards_joker<F>(
     deck: &[crate::tables::t_jokercardmasks::JokerDeckCardMask],

@@ -1,0 +1,146 @@
+{
+  "single_cases": [
+    {
+      "id": "holdem_royal_flush",
+      "variant": "holdem",
+      "cards": "As Ks Qs Js Ts",
+      "expected_hand_type": "StFlush"
+    },
+    {
+      "id": "holdem_quads",
+      "variant": "holdem",
+      "cards": "As Ah Ad Ac Kd",
+      "expected_hand_type": "Quads"
+    },
+    {
+      "id": "shortdeck_flush",
+      "variant": "shortdeck",
+      "cards": "6s 7s 8s 9s Js",
+      "expected_hand_type": "FullHouse"
+    },
+    {
+      "id": "shortdeck_full_house",
+      "variant": "shortdeck",
+      "cards": "As Ah Ad Ks Kh",
+      "expected_hand_type": "Flush"
+    },
+    {
+      "id": "shortdeck_a6789_straight",
+      "variant": "shortdeck",
+      "cards": "As 6s 7h 8d 9c",
+      "expected_hand_type": "Straight"
+    },
+    {
+      "id": "manila_flush",
+      "variant": "manila",
+      "cards": "7s 8s 9s Ts Js"
+    },
+    {
+      "id": "manila_full_house",
+      "variant": "manila",
+      "cards": "7s 7h 7d 8s 8h"
+    },
+    {
+      "id": "badugi_4_card",
+      "variant": "badugi",
+      "cards": "As 2d 3c 4h",
+      "expected_low_hand_type": 0
+    },
+    {
+      "id": "badugi_3_card",
+      "variant": "badugi",
+      "cards": "As 2s 3c 4h",
+      "expected_low_hand_type": 1
+    },
+    {
+      "id": "omaha_hi_straight_flush",
+      "variant": "omaha_hi",
+      "hole": "As Ks Qh Jh",
+      "board": "Qs Js Ts 2d 3c",
+      "expected_hand_type": "StFlush"
+    },
+    {
+      "id": "omaha_hilo_has_low",
+      "variant": "omaha_hilo",
+      "hole": "As 2d Kc Qh",
+      "board": "3c 4d 5h 9s Td",
+      "expected_has_low": true
+    },
+    {
+      "id": "omaha_hilo_no_low",
+      "variant": "omaha_hilo",
+      "hole": "As Kd Qc Jh",
+      "board": "9c Td Jd Qs Ks",
+      "expected_has_low": false
+    },
+    {
+      "id": "lowball_a5_wheel",
+      "variant": "lowball_a5",
+      "cards": "As 2d 3c 4h 5s",
+      "expected_low_hand_type": 0
+    },
+    {
+      "id": "lowball_a5_rough7",
+      "variant": "lowball_a5",
+      "cards": "2s 3d 4c 5h 7s",
+      "expected_low_hand_type": 0
+    },
+    {
+      "id": "lowball27_wheel_bad",
+      "variant": "lowball27",
+      "cards": "As 2s 3s 4s 5s"
+    },
+    {
+      "id": "lowball27_rough7_good",
+      "variant": "lowball27",
+      "cards": "2d 3c 4h 5s 7d"
+    },
+    {
+      "id": "joker_royal_like",
+      "variant": "joker_hi",
+      "cards": "AsKsQsJsXx",
+      "expected_hand_type": "StFlush"
+    },
+    {
+      "id": "ofc_royalties_reference",
+      "variant": "ofc",
+      "top": "Qc Qd 2h",
+      "middle": "Ah Ad As Kh Kd",
+      "bottom": "As Ks Qs Js Ts",
+      "expected_is_foul": false,
+      "expected_royalties": 44
+    }
+  ],
+  "comparison_cases": [
+    {
+      "left_id": "holdem_royal_flush",
+      "right_id": "holdem_quads",
+      "op": "gt"
+    },
+    {
+      "left_id": "shortdeck_flush",
+      "right_id": "shortdeck_full_house",
+      "op": "gt"
+    },
+    {
+      "left_id": "manila_flush",
+      "right_id": "manila_full_house",
+      "op": "gt"
+    },
+    {
+      "left_id": "badugi_4_card",
+      "right_id": "badugi_3_card",
+      "op": "lt"
+    },
+    {
+      "left_id": "lowball_a5_wheel",
+      "right_id": "lowball_a5_rough7",
+      "op": "lt"
+    },
+    {
+      "left_id": "lowball27_rough7_good",
+      "right_id": "lowball27_wheel_bad",
+      "op": "lt"
+    }
+  ]
+}

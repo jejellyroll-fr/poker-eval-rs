@@ -391,6 +391,68 @@ impl EnumResult {
         Ok(())
     }
 
+    /// Simulates a Hold'em game using Quasi-Monte Carlo (Sobol sequence).
+    pub fn simulate_holdem_game_qmc(
+        &mut self,
+        pockets: &[StdDeckCardMask],
+        board: StdDeckCardMask,
+        dead: StdDeckCardMask,
+        npockets: usize,
+        nboard: usize,
+        niter: usize,
+    ) -> Result<(), PokerError> {
+        use crate::enumerate::montecarlo::deck_qmc_n_cards_d;
+
+        if npockets > ENUM_MAXPLAYERS {
+            return Err(PokerError::TooManyPlayers);
+        }
+
+        let mut exclusion_mask = board | dead;
+        for pocket in pockets {
+            exclusion_mask = exclusion_mask | *pocket;
+        }
+        let deck = (0..STD_DECK_N_CARDS)
+            .filter_map(|i| {
+                let card_mask = StdDeckCardMask::get_mask(i);
+                if !card_mask.overlaps(&exclusion_mask) {
+                    Some(*card_mask)
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<StdDeckCardMask>>();
+
+        let num_cards_to_draw = 5 - nboard;
+        let no_dead_cards = StdDeckCardMask::new();
+
+        let mut local_res = EnumResult::new(self.game);
+        local_res.nplayers = npockets as u32;
+        let mut hival = vec![HandVal { value: 0 }; npockets];
+        let mut loval = vec![LowHandVal { value: 0 }; npockets];
+
+        let empty_mask = StdDeckCardMask::new();
+        deck_qmc_n_cards_d(&deck, no_dead_cards, num_cards_to_draw, niter, |combo| {
+            let mut complete_board = board;
+            for &card in combo {
+                complete_board = complete_board | card;
+            }
+
+            if let Ok(()) = inner_loop_holdem(
+                pockets,
+                &complete_board,
+                &empty_mask,
+                &mut hival,
+                &mut loval,
+            ) {
+                local_res.update_statistics_batched(&hival, npockets);
+                local_res.nsamples += 1;
+            }
+        });
+        self.merge(&local_res);
+
+        Ok(())
+    }
+
     /// Simulates an Omaha game using Monte Carlo sampling.
     pub fn simulate_omaha_game(
         &mut self,
@@ -2621,6 +2683,7 @@ impl EnumResult {
                 match self.sample_type {
                     SampleType::Sample => "sampled",
                     SampleType::Exhaustive => "enumerated",
+                    SampleType::QuasiMonteCarlo => "qmc-sampled",
                 },
                 if gp.maxboard > 0 { "board" } else { "outcome" },
                 if self.nsamples == 1 { "" } else { "s" }
