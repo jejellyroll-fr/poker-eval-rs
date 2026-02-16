@@ -1,0 +1,13 @@
+variant,players,profile,repeat,iteration,exploitability,time_sec
+holdem,3,tight,0,1,-inf,0.1528463
+omaha,3,tight,0,1,-inf,0.1606512
+shortdeck,3,tight,0,1,-inf,0.1590561
+holdem,4,tight,0,1,-inf,1.4607767
+omaha,4,tight,0,1,-inf,1.4312242
+shortdeck,4,tight,0,1,-inf,1.4314764
+holdem,5,tight,0,1,-inf,13.2337205
+omaha,5,tight,0,1,-inf,13.5216046
+shortdeck,5,tight,0,1,-inf,13.5216112
+holdem,6,tight,0,1,-inf,110.6938515
+omaha,6,tight,0,1,-inf,110.4877565
+shortdeck,6,tight,0,1,-inf,110.6972075

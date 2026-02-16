@@ -1,4 +1,11 @@
+pub mod adapters;
+pub mod betting;
+pub mod betting_tree;
 pub mod cfr;
+pub mod core;
 pub mod games;
+pub mod holdem_subgame;
 pub mod metrics;
 pub mod ofc_game;
+pub mod stud_draw;
+pub mod variant_tree;

@@ -4,14 +4,20 @@
 
 use clap::{Parser, Subcommand};
 use poker_eval_rs::board::BoardTexture;
-use poker_eval_rs::deck::StdDeck;
 use poker_eval_rs::deck::StdDeckCardMask;
+use poker_eval_rs::deck::{JokerDeck, StdDeck};
 use poker_eval_rs::enumdefs::{EnumResult, Game, SampleType, ENUM_MAXPLAYERS};
+use poker_eval_rs::enumerate::evaluation::{
+    supports_enum_exhaustive, supports_enum_sample, validate_enum_configuration,
+};
 use poker_eval_rs::enumerate::{enum_exhaustive, enum_sample};
 use poker_eval_rs::evaluators::range_equity::calculate_equity;
 use poker_eval_rs::evaluators::{
-    Eval, HandEvaluator, LowballEvaluator, OmahaHiEvaluator, OmahaHiLoEvaluator,
+    joker_lowball8_eval, joker_lowball_eval, std_deck_lowball27_eval, std_deck_lowball8_eval,
+    std_deck_lowball_eval, Eval, EvalJoker, HandEvaluator, LowballEvaluator, OmahaHiEvaluator,
+    OmahaHiLoEvaluator,
 };
+use poker_eval_rs::handval_low::LOW_HAND_VAL_NOTHING;
 use poker_eval_rs::range::HandRange;
 use serde::Serialize;
 use std::str::FromStr;
@@ -81,7 +87,7 @@ enum Commands {
         game: String,
     },
 
-    /// Parse and display card mask information  
+    /// Parse and display card mask information
     Parse {
         /// Cards to parse (e.g., "AsKd")
         cards: String,
@@ -212,6 +218,21 @@ fn cmd_equity(
         }
     };
 
+    if monte_carlo && !supports_enum_sample(game_variant) {
+        eprintln!(
+            "Error: Monte Carlo mode is not supported for game '{}'.",
+            game_str
+        );
+        std::process::exit(1);
+    }
+    if !monte_carlo && !supports_enum_exhaustive(game_variant) {
+        eprintln!(
+            "Error: Exhaustive mode is not supported for game '{}'.",
+            game_str
+        );
+        std::process::exit(1);
+    }
+
     // Parse hands as ranges first
     let mut ranges: Vec<HandRange> = Vec::new();
     let mut is_range_equity = false;
@@ -270,6 +291,14 @@ fn cmd_equity(
     };
 
     let nboard = board_mask.num_cards();
+
+    if let Err(e) = validate_enum_configuration(game_variant, board_mask, nboard, !monte_carlo) {
+        eprintln!(
+            "Error: invalid board configuration for '{}': {}",
+            game_str, e
+        );
+        std::process::exit(1);
+    }
 
     // Initialize result
     let mut result = EnumResult::new(game_variant);
@@ -500,101 +529,10 @@ fn cmd_compare(hands: &[String], board: &str, game_str: &str) {
     let mut results = Vec::new();
 
     for (i, hand_str) in hands.iter().enumerate() {
-        match StdDeck::string_to_mask(hand_str) {
-            Ok((mask, _)) => {
-                let res = match game {
-                    Game::Holdem
-                    | Game::Holdem8
-                    | Game::Stud7
-                    | Game::Stud7nsq
-                    | Game::Draw5
-                    | Game::Draw5nsq => {
-                        let mut combined = mask;
-                        combined.or(&board_mask);
-                        let count = combined.num_cards();
-                        let v = Eval::eval_n(&combined, count);
-                        Ok((v.value, v.std_rules_hand_val_to_string()))
-                    }
-                    Game::Omaha | Game::Omaha5 | Game::Omaha6 => {
-                        OmahaHiEvaluator::evaluate_hand(&mask, &board_mask).map(|v| {
-                            if let Some(val) = v {
-                                (val.value, val.std_rules_hand_val_to_string())
-                            } else {
-                                (0, "No Hand".to_string())
-                            }
-                        })
-                    }
-                    Game::Omaha8 | Game::Omaha85 | Game::Stud78 | Game::Draw58 => {
-                        OmahaHiLoEvaluator::evaluate_hand(&mask, &board_mask).map(|(hi, lo)| {
-                            let hi_desc = if let Some(val) = hi {
-                                val.std_rules_hand_val_to_string()
-                            } else {
-                                "No Hi".to_string()
-                            };
-                            let val_u32 = if let Some(val) = hi { val.value } else { 0 };
-
-                            let lo_desc = if let Some(val) = lo {
-                                if val.value > 0 {
-                                    format!(" / Lo: {}", val)
-                                } else {
-                                    String::new()
-                                }
-                            } else {
-                                String::new()
-                            };
-
-                            (val_u32, format!("{}{}", hi_desc, lo_desc))
-                        })
-                    }
-                    Game::Lowball => LowballEvaluator::evaluate_hand(&mask, &board_mask)
-                        .map(|v| (v.value, v.to_string())),
-                    Game::Razz | Game::Lowball27 => {
-                        let mut combined = mask;
-                        combined.or(&board_mask);
-                        let count = combined.num_cards();
-                        // Uses Lowball27 evaluator logic if available or generic eval_n inverted?
-                        // actually std_deck_lowball27_eval is available in evaluators module but Eval::eval_n is high only?
-                        // Logic in main.rs line 518 uses Eval::eval_n which is High!
-                        // Razz and 2-7 should PROBABLY use specific evaluators if available.
-
-                        // Checking imports: pub use lowball27::std_deck_lowball27_eval; is available in evaluators.
-                        // But Eval::eval_n is strictly High.
-                        // I should fix Razz/Lowball27 here too.
-
-                        if game == Game::Lowball27 {
-                            use poker_eval_rs::evaluators::std_deck_lowball27_eval;
-                            let v = std_deck_lowball27_eval(&combined, count);
-                            Ok((v.value, v.to_string()))
-                        } else {
-                            // Razz (A-5 low 7 cards).
-                            // Eval::eval_n is high.
-                            // Need A-5 low evaluator.
-                            use poker_eval_rs::evaluators::std_deck_lowball_eval;
-                            let v = std_deck_lowball_eval(&combined, count);
-                            Ok((v.value, v.to_string()))
-                        }
-                    }
-                    Game::ShortDeck => {
-                        // ShortDeckEvaluator takes separate hole and board
-                        poker_eval_rs::evaluators::ShortDeckEvaluator::evaluate_hand(
-                            &mask,
-                            &board_mask,
-                        )
-                        .map(|v| (v.value, format_short_deck_hand(v.value)))
-                    }
-                    Game::NumGames => Err(poker_eval_rs::errors::PokerError::UnsupportedGameType),
-                };
-
-                match res {
-                    Ok((val, desc)) => results.push((i, hand_str, val, desc)),
-                    Err(e) => {
-                        eprintln!("Error evaluating hand {}: {:?}", i + 1, e);
-                        std::process::exit(1);
-                    }
-                }
-            }
+        match evaluate_compare_hand(game, hand_str, &board_mask) {
+            Ok((val, desc)) => results.push((i, hand_str, val, desc)),
             Err(e) => {
-                eprintln!("Error parsing hand {}: {}", i + 1, e);
+                eprintln!("Error evaluating hand {}: {}", i + 1, e);
                 std::process::exit(1);
             }
         }
@@ -634,6 +572,150 @@ fn cmd_compare(hands: &[String], board: &str, game_str: &str) {
             hand_str,
             desc
         );
+    }
+}
+
+fn evaluate_compare_hand(
+    game: Game,
+    hand_str: &str,
+    board_mask: &StdDeckCardMask,
+) -> Result<(u32, String), String> {
+    match game {
+        Game::Holdem | Game::Holdem8 | Game::Stud7 => {
+            let (mask, _) = StdDeck::string_to_mask(hand_str)
+                .map_err(|e| format!("Error parsing hand: {}", e))?;
+            let mut combined = mask;
+            combined.or(board_mask);
+            let count = combined.num_cards();
+            let v = Eval::eval_n(&combined, count);
+            Ok((v.value, v.std_rules_hand_val_to_string()))
+        }
+        Game::Stud78 => {
+            let (mask, _) = StdDeck::string_to_mask(hand_str)
+                .map_err(|e| format!("Error parsing hand: {}", e))?;
+            let mut combined = mask;
+            combined.or(board_mask);
+            let count = combined.num_cards();
+            let hi = Eval::eval_n(&combined, count);
+            let lo = std_deck_lowball8_eval(&combined, count);
+            let lo_desc = lo
+                .filter(|l| l.value != LOW_HAND_VAL_NOTHING)
+                .map(|l| format!(" / Lo: {}", l))
+                .unwrap_or_default();
+            Ok((
+                hi.value,
+                format!("{}{}", hi.std_rules_hand_val_to_string(), lo_desc),
+            ))
+        }
+        Game::Stud7nsq => {
+            let (mask, _) = StdDeck::string_to_mask(hand_str)
+                .map_err(|e| format!("Error parsing hand: {}", e))?;
+            let mut combined = mask;
+            combined.or(board_mask);
+            let count = combined.num_cards();
+            let hi = Eval::eval_n(&combined, count);
+            let lo = std_deck_lowball_eval(&combined, count);
+            Ok((
+                hi.value,
+                format!("{} / Lo: {}", hi.std_rules_hand_val_to_string(), lo),
+            ))
+        }
+        Game::Omaha | Game::Omaha5 | Game::Omaha6 => {
+            let (mask, _) = StdDeck::string_to_mask(hand_str)
+                .map_err(|e| format!("Error parsing hand: {}", e))?;
+            OmahaHiEvaluator::evaluate_hand(&mask, board_mask)
+                .map_err(|e| format!("{:?}", e))
+                .map(|v| {
+                    if let Some(val) = v {
+                        (val.value, val.std_rules_hand_val_to_string())
+                    } else {
+                        (0, "No Hand".to_string())
+                    }
+                })
+        }
+        Game::Omaha8 | Game::Omaha85 => {
+            let (mask, _) = StdDeck::string_to_mask(hand_str)
+                .map_err(|e| format!("Error parsing hand: {}", e))?;
+            OmahaHiLoEvaluator::evaluate_hand(&mask, board_mask)
+                .map_err(|e| format!("{:?}", e))
+                .map(|(hi, lo)| {
+                    let hi_desc = if let Some(val) = hi {
+                        val.std_rules_hand_val_to_string()
+                    } else {
+                        "No Hi".to_string()
+                    };
+                    let hi_val = hi.map(|v| v.value).unwrap_or(0);
+                    let lo_desc = lo
+                        .filter(|l| l.value != LOW_HAND_VAL_NOTHING)
+                        .map(|l| format!(" / Lo: {}", l))
+                        .unwrap_or_default();
+                    (hi_val, format!("{}{}", hi_desc, lo_desc))
+                })
+        }
+        Game::Draw5 => {
+            let (mask, n_cards) = JokerDeck::string_to_mask(hand_str)
+                .map_err(|e| format!("Error parsing joker hand: {}", e))?;
+            let hi = EvalJoker::eval_n(mask, n_cards);
+            Ok((hi.value, hi.std_rules_hand_val_to_string()))
+        }
+        Game::Draw58 => {
+            let (mask, n_cards) = JokerDeck::string_to_mask(hand_str)
+                .map_err(|e| format!("Error parsing joker hand: {}", e))?;
+            let hi = EvalJoker::eval_n(mask, n_cards);
+            let lo = joker_lowball8_eval(&mask, n_cards);
+            let lo_desc = if lo.value != LOW_HAND_VAL_NOTHING {
+                format!(" / Lo: {}", lo)
+            } else {
+                String::new()
+            };
+            Ok((
+                hi.value,
+                format!("{}{}", hi.std_rules_hand_val_to_string(), lo_desc),
+            ))
+        }
+        Game::Draw5nsq => {
+            let (mask, n_cards) = JokerDeck::string_to_mask(hand_str)
+                .map_err(|e| format!("Error parsing joker hand: {}", e))?;
+            let hi = EvalJoker::eval_n(mask, n_cards);
+            let lo = joker_lowball_eval(&mask, n_cards);
+            Ok((
+                hi.value,
+                format!("{} / Lo: {}", hi.std_rules_hand_val_to_string(), lo),
+            ))
+        }
+        Game::Lowball => {
+            let (mask, _) = StdDeck::string_to_mask(hand_str)
+                .map_err(|e| format!("Error parsing hand: {}", e))?;
+            LowballEvaluator::evaluate_hand(&mask, board_mask)
+                .map_err(|e| format!("{:?}", e))
+                .map(|v| (v.value, v.to_string()))
+        }
+        Game::Razz => {
+            let (mask, _) = StdDeck::string_to_mask(hand_str)
+                .map_err(|e| format!("Error parsing hand: {}", e))?;
+            let mut combined = mask;
+            combined.or(board_mask);
+            let count = combined.num_cards();
+            let v = std_deck_lowball_eval(&combined, count);
+            Ok((v.value, v.to_string()))
+        }
+        Game::Lowball27 => {
+            let (mask, _) = StdDeck::string_to_mask(hand_str)
+                .map_err(|e| format!("Error parsing hand: {}", e))?;
+            let mut combined = mask;
+            combined.or(board_mask);
+            let count = combined.num_cards();
+            let v = std_deck_lowball27_eval(&combined, count);
+            Ok((v.value, v.to_string()))
+        }
+        Game::ShortDeck => {
+            let (mask, _) = StdDeck::string_to_mask(hand_str)
+                .map_err(|e| format!("Error parsing hand: {}", e))?;
+            poker_eval_rs::evaluators::ShortDeckEvaluator::evaluate_hand(&mask, board_mask)
+                .map_err(|e| format!("{:?}", e))
+                .map(|v| (v.value, format_short_deck_hand(v.value)))
+        }
+        Game::NumGames => Err("Unsupported game type".to_string()),
     }
 }
 
@@ -761,5 +843,32 @@ fn format_short_deck_hand(val: u32) -> String {
     } else {
         // Standard display for others (Straight, StFlush, Quads, Trips, etc.)
         hv.to_string()
+    }
+}
+
+#[cfg(test)]
+mod compare_tests {
+    use super::*;
+
+    #[test]
+    fn compare_stud78_uses_stud_logic_not_omaha_logic() {
+        let board = StdDeckCardMask::new();
+        let res = evaluate_compare_hand(Game::Stud78, "As2h3d4c5sKhQd", &board)
+            .expect("stud78 compare evaluation should succeed");
+        assert!(
+            res.1.contains("Lo:"),
+            "Stud78 compare should include low-hand description"
+        );
+    }
+
+    #[test]
+    fn compare_draw58_uses_joker_eval() {
+        let board = StdDeckCardMask::new();
+        let res = evaluate_compare_hand(Game::Draw58, "As2h3d4cXx", &board)
+            .expect("draw58 compare evaluation should succeed");
+        assert!(
+            res.1.contains("Lo:"),
+            "Draw58 compare should include low-hand description"
+        );
     }
 }

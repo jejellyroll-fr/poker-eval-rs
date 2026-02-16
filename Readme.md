@@ -13,7 +13,7 @@ It supports **Texas Hold'em**, **Omaha (4, 5, 6 cards)**, **Stud**, **Razz**, **
 
 - **Blazing Fast**: Evaluates Hold'em hands in ~1-3 nanoseconds depending on the chosen lookup table.
 - **Multi-Platform**: First-class support for **Rust**, **Python** (via PyO3), and **WebAssembly**.
-- **Flexible Lookups**: Choose between a 32KB cache-friendly table or a 65MB high-throughput table.
+- **Flexible Lookups**: Choose between a ~200KB cache-friendly table or a ~9.6MB high-throughput table.
 - **SIMD Optimized**: Batch evaluation using AVX2 for massive throughput.
 - **Parallelism**: Thread-safe equity calculations powered by `rayon`.
 
@@ -39,15 +39,15 @@ fn main() {
     // Evaluation returns a HandVal which can be compared or displayed
     let (mask, count) = StdDeck::string_to_mask("As Ks Qs Js Ts").unwrap();
     let val = Eval::eval_n(&mask, count);
-    
+
     println!("Type: {}", val.hand_type()); // 8 (Straight Flush)
     println!("Description: {}", val);      // "Straight Flush, Ace-high"
 }
 ```
 
 #### Feature Flags
-- `compact-table` (Default): Uses a 32KB table with a perfect hash. Fits in L1/L2 cache.
-- `large-table`: Use a ~65MB sparse table for raw indexing speed (style OMPEval). (~1.8x faster single-thread).
+- `compact-table` (Default): Uses a compact perfect-hash layout (~200KB total tables).
+- `large-table`: Use a ~9.6MB sparse table for raw indexing speed (style OMPEval). (~1.8x faster single-thread).
 - `simd`: Enables `eval_8_hands` (AVX2) for batch processing.
 - `parallel`: Enables multi-threaded equity calculations using `rayon`.
 
@@ -106,10 +106,10 @@ console.log(`P1 Equity: ${equity.players[0].win_pct}%`);
 ## ⚡ Technical Choices & Inspirations
 
 ### The OMPEval Legacy
-This library's high-speed evaluation is inspired by **OMPEval**. When the `large-table` feature is enabled, the library generates a 65MB lookup table using the exact same multiplier constants and indexing logic as OMPEval, allowing for O(1) evaluation with minimal CPU cycles.
+This library's high-speed evaluation is inspired by **OMPEval**. When the `large-table` feature is enabled, the library generates a ~9.6MB sparse lookup table using the same multiplier constants and indexing logic style as OMPEval, allowing for O(1) evaluation with minimal CPU cycles.
 
 ### Perfect Hashing (Compact Mode)
-To support memory-constrained environments (like mobile or WebAssembly), we implemented a **Compact Mode**. It uses a tiny 32KB table combined with a custom perfect hash function. This fits entirely in the CPU's L1 or L2 cache, offering a great balance between memory footprint and speed (~3.7ns vs ~2.0ns for the large table).
+To support memory-constrained environments (like mobile or WebAssembly), we implemented a **Compact Mode**. It uses compact perfect-hash tables (~200KB total) and remains cache-friendly while keeping strong speed/footprint trade-offs.
 
 ### Batch SIMD Evaluation
 For scenarios involving millions of evaluations (simulations, solvers), `poker-eval-rs` provides AVX2-accelerated functions that evaluate 8 hands in parallel, drastically reducing the overhead for non-flush hands.
@@ -128,6 +128,26 @@ cargo clippy --all-targets --all-features
 CI enforces a minimum code coverage gate (Tarpaulin) currently set to `40%`, and this threshold is intended to be raised progressively.
 CI also generates and uploads a `cfr-convergence-report` JSON artifact from `examples/cfr_convergence_report.rs` in the benchmark job.
 
-## 📜 License
+### CI Workflow
+
+The GitHub Actions workflow (`Rust CI`) runs on:
+- `push` to `main` / `master`
+- `pull_request` to `main` / `master`
+- manual trigger (`workflow_dispatch`)
+
+Heavy jobs are optimized:
+- `coverage`, `benchmark`, and `audit` run automatically only on `push` to `main` / `master`.
+- On manual trigger (`workflow_dispatch`), these jobs run only if their inputs are enabled:
+  - `run_coverage`
+  - `run_benchmark`
+  - `run_audit`
+
+WASM coverage in CI:
+- `wasm` job builds the wasm target.
+- `wasm-test` job runs wasm tests via `wasm-pack test --node`.
+
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+

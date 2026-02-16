@@ -104,8 +104,16 @@ fn test_unsupported_game_type_exhaustive() {
     let dead = StdDeckCardMask::new();
     let mut result = EnumResult::default();
 
-    // Razz is not supported in exhaustive holdem/omaha branching in evaluation.rs
-    let res = enum_exhaustive(Game::Razz, &pockets, board, dead, 2, 0, false, &mut result);
+    let res = enum_exhaustive(
+        Game::NumGames,
+        &pockets,
+        board,
+        dead,
+        2,
+        0,
+        false,
+        &mut result,
+    );
 
     assert!(res.is_err());
 }

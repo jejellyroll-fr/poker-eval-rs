@@ -233,6 +233,15 @@ impl Game {
                 hashipot: 0,
                 name: "5-card Draw 2-7 Lowball",
             }),
+            Game::ShortDeck => Some(GameParams {
+                game: Game::ShortDeck,
+                minpocket: 2,
+                maxpocket: 2,
+                maxboard: 5,
+                haslopot: 0,
+                hashipot: 1,
+                name: "Short Deck Hold'em",
+            }),
             _ => None,
         }
     }

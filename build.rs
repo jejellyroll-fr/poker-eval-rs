@@ -255,20 +255,6 @@ fn main() {
                 }
             }
             flush_lookup[mask as usize] = best;
-            if mask == 4592 {
-                println!("cargo:warning=FLUSH_LOOKUP[4592] (As6s7s8s9sTs) = {} (best from 5-card subsets)", best);
-                // Print all 5-card subsets
-                for i in 0..13u16 {
-                    if (mask & (1 << i)) == 0 {
-                        continue;
-                    }
-                    let m5 = mask ^ (1 << i);
-                    println!(
-                        "cargo:warning=  Removing bit {}: mask {} -> FLUSH_LOOKUP[{}] = {}",
-                        i, m5, m5, flush_lookup[m5 as usize]
-                    );
-                }
-            }
         }
     }
 

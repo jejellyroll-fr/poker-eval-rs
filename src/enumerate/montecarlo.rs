@@ -132,6 +132,53 @@ pub(crate) fn deck_montecarlo_n_cards_joker<F>(
     }
 }
 
+/// Draws `num_cards` cards for Joker deck using Quasi-Monte Carlo (Sobol sequence).
+pub(crate) fn deck_qmc_n_cards_joker<F>(
+    deck: &[crate::tables::t_jokercardmasks::JokerDeckCardMask],
+    dead_cards: crate::tables::t_jokercardmasks::JokerDeckCardMask,
+    num_cards: usize,
+    num_iter: usize,
+    mut action: F,
+) where
+    F: FnMut(&[crate::tables::t_jokercardmasks::JokerDeckCardMask]),
+{
+    use super::qmc::SobolGenerator;
+    use crate::tables::t_jokercardmasks::JokerDeckCardMask;
+
+    let mut sobol = SobolGenerator::new(num_cards);
+
+    let live_deck_base: Vec<JokerDeckCardMask> = deck
+        .iter()
+        .filter(|card| (card.cards_n & dead_cards.cards_n) == 0 && card.cards_n != 0)
+        .copied()
+        .collect();
+
+    let live_len = live_deck_base.len();
+    if num_cards > live_len {
+        return;
+    }
+
+    let mut drawn_cards = vec![JokerDeckCardMask { cards_n: 0 }; num_cards];
+
+    for _ in 0..num_iter {
+        let point = sobol.next_point();
+        let mut current_deck = live_deck_base.clone();
+
+        for i in 0..num_cards {
+            let remaining_len = current_deck.len();
+            let idx = (point[i] * remaining_len as f64) as usize;
+            let actual_idx = if idx >= remaining_len {
+                remaining_len - 1
+            } else {
+                idx
+            };
+            drawn_cards[i] = current_deck.remove(actual_idx);
+        }
+
+        action(&drawn_cards);
+    }
+}
+
 /// Draws random permutations of cards from multiple decks, excluding dead cards.
 ///
 /// Each deck has a corresponding set size; cards are drawn without replacement across all sets.

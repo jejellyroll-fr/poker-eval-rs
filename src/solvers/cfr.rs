@@ -5,6 +5,9 @@
 
 use crate::deck::StdDeckCardMask;
 use crate::gpu::GPUEvaluator;
+use crate::solvers::core::{
+    cfr_plus_traverse, run_cfr_plus_iteration, GameTree, InfosetValues, NodeKind, TraversalCaches,
+};
 use crate::solvers::games::HoldemPushFoldState;
 use rand::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -168,6 +171,58 @@ fn default_linear_avg_power() -> f64 {
     1.0
 }
 
+#[derive(Clone)]
+struct LegacyDecisionState<'a, G: GameState> {
+    inner: G,
+    abstraction: &'a dyn Abstraction,
+    num_players: usize,
+}
+
+impl<'a, G: GameState> LegacyDecisionState<'a, G> {
+    fn new(inner: G, num_players: usize, abstraction: &'a dyn Abstraction) -> Self {
+        Self {
+            inner,
+            abstraction,
+            num_players,
+        }
+    }
+}
+
+impl<G: GameState> GameTree for LegacyDecisionState<'_, G> {
+    fn num_players(&self) -> usize {
+        self.num_players
+    }
+
+    fn node_kind(&self) -> NodeKind {
+        if self.inner.is_terminal() {
+            NodeKind::Terminal
+        } else {
+            NodeKind::Decision {
+                player: self.inner.current_player(),
+                infoset: self
+                    .abstraction
+                    .abstract_key(&self.inner.information_set_key()),
+            }
+        }
+    }
+
+    fn legal_actions(&self) -> Vec<usize> {
+        self.inner.legal_actions()
+    }
+
+    fn apply_action(&self, action: usize) -> Self {
+        Self::new(self.inner.act(action), self.num_players, self.abstraction)
+    }
+
+    fn chance_outcomes(&self) -> Vec<(f64, Self)> {
+        Vec::new()
+    }
+
+    fn terminal_utility(&self) -> Vec<f64> {
+        self.inner.terminal_utility()
+    }
+}
+
 impl CFRSolver {
     pub fn new(num_players: usize) -> Self {
         Self {
@@ -184,10 +239,6 @@ impl CFRSolver {
         }
     }
 
-    fn averaging_weight(&self) -> f64 {
-        (self.iteration as f64).powf(self.linear_avg_power.max(0.0))
-    }
-
     fn apply_discounts(&mut self) {
         let alpha = self.alpha;
         let beta = self.beta;
@@ -200,6 +251,7 @@ impl CFRSolver {
 
     /// Trains the solver for a number of iterations.
     pub fn train<G: GameState>(&mut self, initial_state: &G, iterations: usize) {
+        let mut table = self.to_core_table();
         for _ in 0..iterations {
             self.iteration += 1;
             // Apply discounting to all nodes at the start of each iteration for DCFR
@@ -207,11 +259,22 @@ impl CFRSolver {
 
             // Sample a new chance state for this iteration (e.g., deal new cards)
             let sampled_state = initial_state.sample_chance();
-
-            for player in 0..self.num_players {
-                self.cfr(&sampled_state, player, 1.0, 1.0);
-            }
+            let root = LegacyDecisionState::new(
+                sampled_state,
+                self.num_players,
+                self.abstraction.as_ref(),
+            );
+            run_cfr_plus_iteration(
+                &root,
+                &mut table,
+                self.iteration,
+                self.linear_avg_power > 0.0,
+                true,
+                true,
+                false,
+            );
         }
+        self.replace_from_core_table(table);
     }
 
     /// Trains CFR on a toy Hold'em push/fold game using GPU-resident terminal strength batches.
@@ -229,6 +292,7 @@ impl CFRSolver {
             return;
         }
 
+        let mut table = self.to_core_table();
         let batch_size = batch_size.max(1);
         let mut remaining = iterations;
         while remaining > 0 {
@@ -245,9 +309,17 @@ impl CFRSolver {
                 self.iteration += 1;
                 self.apply_discounts();
                 let state = HoldemPushFoldState::new(p0_ranks[i], p1_ranks[i]);
-                for player in 0..2 {
-                    self.cfr(&state, player, 1.0, 1.0);
-                }
+                let root =
+                    LegacyDecisionState::new(state, self.num_players, self.abstraction.as_ref());
+                run_cfr_plus_iteration(
+                    &root,
+                    &mut table,
+                    self.iteration,
+                    self.linear_avg_power > 0.0,
+                    true,
+                    true,
+                    false,
+                );
             }
 
             if count == 0 {
@@ -255,6 +327,7 @@ impl CFRSolver {
             }
             remaining -= count;
         }
+        self.replace_from_core_table(table);
     }
 
     /// Recursive CFR traversal.
@@ -265,55 +338,32 @@ impl CFRSolver {
     /// * `p_i` - Reach probability of the current player.
     /// * `p_o` - Reach probability of all other players.
     pub fn cfr<G: GameState>(&mut self, state: &G, player_idx: usize, p_i: f64, p_o: f64) -> f64 {
-        if state.is_terminal() {
-            return state.terminal_utility()[player_idx];
-        }
-
-        let actions = state.legal_actions();
-        let raw_key = state.information_set_key();
-        let info_set_key = self.abstraction.abstract_key(&raw_key);
-
-        let node = self
-            .nodes
-            .entry(info_set_key.clone())
-            .or_insert_with(|| CFRNode::new(actions.len()));
-        let strategy = node.get_strategy(self.use_ecfr);
-
-        let mut action_utils = vec![0.0; actions.len()];
-        let mut node_util = 0.0;
-
-        let current_player = state.current_player();
-
-        if current_player == player_idx {
-            for (i, &action) in actions.iter().enumerate() {
-                let next_state = state.act(action);
-                action_utils[i] = self.cfr(&next_state, player_idx, p_i * strategy[i], p_o);
-                node_util += strategy[i] * action_utils[i];
-            }
-
-            // Update regrets
-            let node = self.nodes.get_mut(&info_set_key).unwrap();
-            let weight = if self.use_mccfvfp { p_i * p_o } else { p_o };
-            for (i, _) in actions.iter().enumerate() {
-                let regret = action_utils[i] - node_util;
-                node.regrets[i] += weight * regret;
-            }
-        } else {
-            for (i, &action) in actions.iter().enumerate() {
-                let next_state = state.act(action);
-                action_utils[i] = self.cfr(&next_state, player_idx, p_i, p_o * strategy[i]);
-                node_util += strategy[i] * action_utils[i];
-            }
-
-            // Update strategy sum for average strategy calculation
-            let w = self.averaging_weight();
-            let node = self.nodes.get_mut(&info_set_key).unwrap();
-            for (i, _) in actions.iter().enumerate() {
-                node.strategy_sum[i] += w * p_i * strategy[i];
+        let mut table = self.to_core_table();
+        let root =
+            LegacyDecisionState::new(state.clone(), self.num_players, self.abstraction.as_ref());
+        let mut reach = vec![1.0; self.num_players];
+        if player_idx < self.num_players {
+            reach[player_idx] = p_i;
+            for (idx, r) in reach.iter_mut().enumerate() {
+                if idx != player_idx {
+                    *r = p_o;
+                }
             }
         }
-
-        node_util
+        let util = cfr_plus_traverse(
+            &root,
+            player_idx,
+            &mut reach,
+            &mut table,
+            self.iteration.max(1),
+            self.linear_avg_power > 0.0,
+            true,
+            true,
+            false,
+            &mut TraversalCaches::default(),
+        );
+        self.replace_from_core_table(table);
+        util
     }
 
     /// Returns the average strategy for an information set if it exists.
@@ -366,6 +416,38 @@ impl CFRSolver {
         // Abstraction is not serialized, so we reset it to IdentityAbstraction
         solver.abstraction = Box::new(IdentityAbstraction);
         Ok(solver)
+    }
+
+    fn to_core_table(&self) -> HashMap<String, InfosetValues> {
+        self.nodes
+            .iter()
+            .map(|(k, n)| {
+                (
+                    k.clone(),
+                    InfosetValues {
+                        regrets: n.regrets.clone(),
+                        strategy_sum: n.strategy_sum.clone(),
+                    },
+                )
+            })
+            .collect()
+    }
+
+    fn replace_from_core_table(&mut self, table: HashMap<String, InfosetValues>) {
+        self.nodes = table
+            .into_iter()
+            .map(|(k, n)| {
+                let num_actions = n.regrets.len().max(n.strategy_sum.len());
+                (
+                    k,
+                    CFRNode {
+                        regrets: n.regrets,
+                        strategy_sum: n.strategy_sum,
+                        num_actions,
+                    },
+                )
+            })
+            .collect();
     }
 }
 

@@ -6,7 +6,10 @@ use super::CardMask;
 use crate::deck::StdDeck;
 use crate::deck::STD_DECK_N_CARDS;
 use crate::enumdefs::{EnumResult, Game, SampleType, ENUM_MAXPLAYERS};
-use crate::enumerate::montecarlo::{deck_montecarlo_n_cards_d, deck_montecarlo_n_cards_joker};
+use crate::enumerate::montecarlo::{
+    deck_montecarlo_n_cards_d, deck_montecarlo_n_cards_joker, deck_qmc_n_cards_d,
+    deck_qmc_n_cards_joker,
+};
 use crate::enumord::EnumOrdering;
 use crate::enumord::EnumOrderingMode;
 use crate::enumord::{
@@ -447,6 +450,270 @@ impl EnumResult {
                 local_res.update_statistics_batched(&hival, npockets);
                 local_res.nsamples += 1;
             }
+        });
+        self.merge(&local_res);
+
+        Ok(())
+    }
+
+    /// Simulates a Hold'em Hi/Lo 8-or-better game using Quasi-Monte Carlo (Sobol sequence).
+    pub fn simulate_holdem8_game_qmc(
+        &mut self,
+        pockets: &[StdDeckCardMask],
+        board: StdDeckCardMask,
+        dead: StdDeckCardMask,
+        npockets: usize,
+        nboard: usize,
+        niter: usize,
+    ) -> Result<(), PokerError> {
+        use crate::enumerate::montecarlo::deck_qmc_n_cards_d;
+
+        if npockets > ENUM_MAXPLAYERS {
+            return Err(PokerError::TooManyPlayers);
+        }
+
+        let mut exclusion_mask = board | dead;
+        for pocket in pockets {
+            exclusion_mask = exclusion_mask | *pocket;
+        }
+        let deck = (0..STD_DECK_N_CARDS)
+            .filter_map(|i| {
+                let card_mask = StdDeckCardMask::get_mask(i);
+                if !card_mask.overlaps(&exclusion_mask) {
+                    Some(*card_mask)
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<StdDeckCardMask>>();
+
+        let num_cards_to_draw = 5 - nboard;
+        let no_dead_cards = StdDeckCardMask::new();
+
+        let mut local_res = EnumResult::new(self.game);
+        local_res.nplayers = npockets as u32;
+
+        let mut hival = vec![HandVal { value: 0 }; npockets];
+        let mut loval = vec![LowHandVal { value: 0 }; npockets];
+
+        deck_qmc_n_cards_d(&deck, no_dead_cards, num_cards_to_draw, niter, |combo| {
+            let mut complete_board = board;
+            for &card in combo {
+                complete_board = complete_board | card;
+            }
+
+            for i in 0..npockets {
+                let hand = pockets[i] | complete_board;
+                hival[i] = Eval::eval_n(&hand, 7);
+                loval[i] = std_deck_lowball8_eval(&hand, 7).unwrap_or(LowHandVal { value: 0 });
+            }
+            local_res.update_statistics_batched_hilo(&hival, &loval, npockets);
+            local_res.nsamples += 1;
+        });
+        self.merge(&local_res);
+
+        Ok(())
+    }
+
+    /// Simulates a Short Deck game using Quasi-Monte Carlo (Sobol sequence).
+    pub fn simulate_short_deck_game_qmc(
+        &mut self,
+        pockets: &[StdDeckCardMask],
+        board: StdDeckCardMask,
+        dead: StdDeckCardMask,
+        npockets: usize,
+        nboard: usize,
+        niter: usize,
+    ) -> Result<(), PokerError> {
+        use crate::enumerate::inner_loops::inner_loop_short_deck;
+        use crate::enumerate::montecarlo::deck_qmc_n_cards_d;
+
+        if npockets > ENUM_MAXPLAYERS {
+            return Err(PokerError::TooManyPlayers);
+        }
+
+        let mut exclusion_mask = board | dead;
+        for pocket in pockets {
+            exclusion_mask = exclusion_mask | *pocket;
+        }
+
+        // Short Deck: ranks 6..A only.
+        let deck = (0..STD_DECK_N_CARDS)
+            .filter_map(|i| {
+                let rank = i / 4;
+                if rank < 4 {
+                    return None;
+                }
+                let card_mask = StdDeckCardMask::get_mask(i);
+                if !card_mask.overlaps(&exclusion_mask) {
+                    Some(*card_mask)
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<StdDeckCardMask>>();
+
+        let num_cards_to_draw = 5 - nboard;
+        let no_dead_cards = StdDeckCardMask::new();
+
+        let mut local_res = EnumResult::new(self.game);
+        local_res.nplayers = npockets as u32;
+
+        let mut hival = vec![HandVal::new(0, 0, 0, 0, 0, 0); npockets];
+        let mut loval = vec![LowHandVal::new(0, 0, 0, 0, 0, 0); npockets];
+        let empty_mask = StdDeckCardMask::new();
+
+        deck_qmc_n_cards_d(&deck, no_dead_cards, num_cards_to_draw, niter, |combo| {
+            let mut complete_board = board;
+            for &card in combo {
+                complete_board = complete_board | card;
+            }
+
+            if inner_loop_short_deck(
+                pockets,
+                &complete_board,
+                &empty_mask,
+                &mut hival,
+                &mut loval,
+            )
+            .is_ok()
+            {
+                local_res.update_statistics_batched(&hival, npockets);
+                local_res.nsamples += 1;
+            }
+        });
+        self.merge(&local_res);
+
+        Ok(())
+    }
+
+    /// Simulates an Omaha game using Quasi-Monte Carlo (Sobol sequence).
+    pub fn simulate_omaha_game_qmc(
+        &mut self,
+        pockets: &[StdDeckCardMask],
+        board: StdDeckCardMask,
+        dead: StdDeckCardMask,
+        npockets: usize,
+        nboard: usize,
+        niter: usize,
+    ) -> Result<(), PokerError> {
+        use crate::enumerate::montecarlo::deck_qmc_n_cards_d;
+
+        if npockets > ENUM_MAXPLAYERS {
+            return Err(PokerError::TooManyPlayers);
+        }
+
+        let mut exclusion_mask = board | dead;
+        for pocket in pockets {
+            exclusion_mask = exclusion_mask | *pocket;
+        }
+        let deck = (0..STD_DECK_N_CARDS)
+            .filter_map(|i| {
+                let card_mask = StdDeckCardMask::get_mask(i);
+                if !card_mask.overlaps(&exclusion_mask) {
+                    Some(*card_mask)
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<StdDeckCardMask>>();
+
+        let num_cards_to_draw = 5 - nboard;
+        let no_dead_cards = StdDeckCardMask::new();
+
+        let mut local_res = EnumResult::new(self.game);
+        local_res.nplayers = npockets as u32;
+        let mut hival = [HandVal { value: 0 }; ENUM_MAXPLAYERS];
+
+        let board_raw = board.as_raw();
+        deck_qmc_n_cards_d(&deck, no_dead_cards, num_cards_to_draw, niter, |combo| {
+            let mut raw = board_raw;
+            for &card in combo {
+                raw |= card.as_raw();
+            }
+            let complete_board = StdDeckCardMask::from_raw(raw);
+
+            for i in 0..npockets {
+                let mut val: Option<HandVal> = None;
+                let _ = crate::evaluators::omaha::std_deck_omaha_hi_eval(
+                    pockets[i],
+                    complete_board,
+                    &mut val,
+                );
+                hival[i] = val.unwrap_or(HandVal { value: 0 });
+            }
+            local_res.update_statistics_batched(&hival[..npockets], npockets);
+            local_res.nsamples += 1;
+        });
+        self.merge(&local_res);
+
+        Ok(())
+    }
+
+    /// Simulates an Omaha Hi/Lo 8-or-better game using Quasi-Monte Carlo (Sobol sequence).
+    pub fn simulate_omaha8_game_qmc(
+        &mut self,
+        pockets: &[StdDeckCardMask],
+        board: StdDeckCardMask,
+        dead: StdDeckCardMask,
+        npockets: usize,
+        nboard: usize,
+        niter: usize,
+    ) -> Result<(), PokerError> {
+        use crate::enumerate::montecarlo::deck_qmc_n_cards_d;
+        use crate::evaluators::omaha::std_deck_omaha_hi_low8_eval;
+
+        if npockets > ENUM_MAXPLAYERS {
+            return Err(PokerError::TooManyPlayers);
+        }
+
+        let mut exclusion_mask = board | dead;
+        for pocket in pockets {
+            exclusion_mask = exclusion_mask | *pocket;
+        }
+        let deck = (0..STD_DECK_N_CARDS)
+            .filter_map(|i| {
+                let card_mask = StdDeckCardMask::get_mask(i);
+                if !card_mask.overlaps(&exclusion_mask) {
+                    Some(*card_mask)
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<StdDeckCardMask>>();
+
+        let num_cards_to_draw = 5 - nboard;
+        let no_dead_cards = StdDeckCardMask::new();
+
+        let mut local_res = EnumResult::new(self.game);
+        local_res.nplayers = npockets as u32;
+        let mut hival = vec![HandVal { value: 0 }; npockets];
+        let mut loval = vec![
+            LowHandVal {
+                value: LOW_HAND_VAL_NOTHING,
+            };
+            npockets
+        ];
+
+        let board_raw = board.as_raw();
+        deck_qmc_n_cards_d(&deck, no_dead_cards, num_cards_to_draw, niter, |combo| {
+            let mut raw = board_raw;
+            for &card in combo {
+                raw |= card.as_raw();
+            }
+            let complete_board = StdDeckCardMask::from_raw(raw);
+
+            for i in 0..npockets {
+                let mut hi: Option<HandVal> = None;
+                let mut lo: Option<LowHandVal> = None;
+                let _ = std_deck_omaha_hi_low8_eval(pockets[i], complete_board, &mut hi, &mut lo);
+                hival[i] = hi.unwrap_or(HandVal { value: 0 });
+                loval[i] = lo.unwrap_or(LowHandVal {
+                    value: LOW_HAND_VAL_NOTHING,
+                });
+            }
+            local_res.update_statistics_batched_hilo(&hival, &loval, npockets);
+            local_res.nsamples += 1;
         });
         self.merge(&local_res);
 
@@ -995,6 +1262,207 @@ impl EnumResult {
         Ok(())
     }
 
+    /// Simulates a game where each player receives independent cards (e.g. Stud) using
+    /// Quasi-Monte Carlo (Sobol sequence).
+    fn simulate_independent_game_qmc<F>(
+        &mut self,
+        pockets: &[StdDeckCardMask],
+        dead: StdDeckCardMask,
+        npockets: usize,
+        target_hand_size: usize,
+        niter: usize,
+        eval_func: F,
+    ) -> Result<(), PokerError>
+    where
+        F: Fn(&[StdDeckCardMask], &mut [HandVal], &mut [LowHandVal]) -> Result<(), PokerError>
+            + Copy,
+    {
+        if npockets > ENUM_MAXPLAYERS {
+            return Err(PokerError::TooManyPlayers);
+        }
+
+        let mut exclusion_mask = dead;
+        let mut cards_needed_per_player = [0; ENUM_MAXPLAYERS];
+        let mut total_draw_needed = 0;
+
+        for i in 0..npockets {
+            exclusion_mask = exclusion_mask | pockets[i];
+            let current_len = pockets[i].num_cards();
+            if current_len < target_hand_size {
+                let needed = target_hand_size - current_len;
+                cards_needed_per_player[i] = needed;
+                total_draw_needed += needed;
+            }
+        }
+
+        let deck_mask = (0..STD_DECK_N_CARDS)
+            .filter_map(|i| {
+                let card_mask = StdDeckCardMask::get_mask(i);
+                if !card_mask.overlaps(&exclusion_mask) {
+                    Some(*card_mask)
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<StdDeckCardMask>>();
+
+        if deck_mask.len() < total_draw_needed {
+            return Err(PokerError::InvalidCardConfiguration(format!(
+                "Not enough cards in deck. Needed {}, available {}",
+                total_draw_needed,
+                deck_mask.len()
+            )));
+        }
+
+        let no_dead_cards = StdDeckCardMask::new();
+        let mut local_res = EnumResult::new(self.game);
+        local_res.nplayers = npockets as u32;
+
+        let mut hival = vec![HandVal::new(0, 0, 0, 0, 0, 0); npockets];
+        let mut loval = vec![LowHandVal::new(0, 0, 0, 0, 0, 0); npockets];
+        let mut player_hands = vec![StdDeckCardMask::new(); npockets];
+
+        deck_qmc_n_cards_d(
+            &deck_mask,
+            no_dead_cards,
+            total_draw_needed,
+            niter,
+            |combo| {
+                let mut card_idx = 0;
+                for i in 0..npockets {
+                    let mut hand = pockets[i];
+                    let needed = cards_needed_per_player[i];
+                    for _ in 0..needed {
+                        hand = hand | combo[card_idx];
+                        card_idx += 1;
+                    }
+                    player_hands[i] = hand;
+                }
+
+                if eval_func(&player_hands, &mut hival, &mut loval).is_ok() {
+                    match local_res.game {
+                        Game::Razz | Game::Lowball | Game::Lowball27 => {
+                            local_res.update_statistics_batched_lo(&loval, npockets);
+                        }
+                        Game::Stud78
+                        | Game::Stud7nsq
+                        | Game::Omaha8
+                        | Game::Omaha85
+                        | Game::Draw58
+                        | Game::Draw5nsq => {
+                            local_res.update_statistics_batched_hilo(&hival, &loval, npockets);
+                        }
+                        _ => {
+                            local_res.update_statistics_batched(&hival, npockets);
+                        }
+                    }
+                    local_res.nsamples += 1;
+                }
+            },
+        );
+        self.merge(&local_res);
+
+        Ok(())
+    }
+
+    /// Exhaustive variant for games where each player receives independent cards
+    /// and there is no shared board (e.g. Stud, Razz, 2-7 Lowball).
+    fn exhaustive_independent_game<F>(
+        &mut self,
+        pockets: &[StdDeckCardMask],
+        dead: StdDeckCardMask,
+        npockets: usize,
+        target_hand_size: usize,
+        eval_func: F,
+    ) -> Result<(), PokerError>
+    where
+        F: Fn(&[StdDeckCardMask], &mut [HandVal], &mut [LowHandVal]) -> Result<(), PokerError>
+            + Copy,
+    {
+        if npockets > ENUM_MAXPLAYERS {
+            return Err(PokerError::TooManyPlayers);
+        }
+
+        self.nplayers = npockets as u32;
+
+        let mut exclusion_mask = dead;
+        let mut cards_needed_per_player = [0; ENUM_MAXPLAYERS];
+        let mut total_draw_needed = 0;
+
+        for i in 0..npockets {
+            exclusion_mask = exclusion_mask | pockets[i];
+            let current_len = pockets[i].num_cards();
+            if current_len < target_hand_size {
+                let needed = target_hand_size - current_len;
+                cards_needed_per_player[i] = needed;
+                total_draw_needed += needed;
+            }
+        }
+
+        let deck_mask = (0..STD_DECK_N_CARDS)
+            .filter_map(|i| {
+                let card_mask = StdDeckCardMask::get_mask(i);
+                if !card_mask.overlaps(&exclusion_mask) {
+                    Some(*card_mask)
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<StdDeckCardMask>>();
+
+        if deck_mask.len() < total_draw_needed {
+            return Err(PokerError::InvalidCardConfiguration(format!(
+                "Not enough cards in deck. Needed {}, available {}",
+                total_draw_needed,
+                deck_mask.len()
+            )));
+        }
+
+        let mut hival = vec![HandVal::new(0, 0, 0, 0, 0, 0); npockets];
+        let mut loval = vec![LowHandVal::new(0, 0, 0, 0, 0, 0); npockets];
+        let mut player_hands = vec![StdDeckCardMask::new(); npockets];
+
+        enumerate_n_cards_d(
+            &deck_mask,
+            StdDeckCardMask::new(),
+            total_draw_needed,
+            |combo| {
+                let mut card_idx = 0;
+                for i in 0..npockets {
+                    let mut hand = pockets[i];
+                    let needed = cards_needed_per_player[i];
+                    for _ in 0..needed {
+                        hand = hand | combo[card_idx];
+                        card_idx += 1;
+                    }
+                    player_hands[i] = hand;
+                }
+
+                if eval_func(&player_hands, &mut hival, &mut loval).is_ok() {
+                    match self.game {
+                        Game::Razz | Game::Lowball | Game::Lowball27 => {
+                            self.update_statistics_batched_lo(&loval, npockets);
+                        }
+                        Game::Stud78
+                        | Game::Stud7nsq
+                        | Game::Omaha8
+                        | Game::Omaha85
+                        | Game::Draw58
+                        | Game::Draw5nsq => {
+                            self.update_statistics_batched_hilo(&hival, &loval, npockets);
+                        }
+                        _ => {
+                            self.update_statistics_batched(&hival, npockets);
+                        }
+                    }
+                    self.nsamples += 1;
+                }
+            },
+        );
+
+        Ok(())
+    }
+
     pub fn simulate_stud_game(
         &mut self,
         pockets: &[StdDeckCardMask],
@@ -1009,6 +1477,37 @@ impl EnumResult {
                 inner_loop_7stud(hands, &empty_masks, hival, loval)
             };
         self.simulate_independent_game(pockets, dead, npockets, 7, niter, eval_wrapper)
+    }
+
+    pub fn exhaustive_stud_evaluation(
+        &mut self,
+        pockets: &[StdDeckCardMask],
+        dead: StdDeckCardMask,
+        npockets: usize,
+    ) -> Result<(), PokerError> {
+        use crate::enumerate::inner_loops::inner_loop_7stud;
+        let eval_wrapper =
+            |hands: &[StdDeckCardMask], hival: &mut [HandVal], loval: &mut [LowHandVal]| {
+                let empty_masks = vec![StdDeckCardMask::new(); hands.len()];
+                inner_loop_7stud(hands, &empty_masks, hival, loval)
+            };
+        self.exhaustive_independent_game(pockets, dead, npockets, 7, eval_wrapper)
+    }
+
+    pub fn simulate_stud_game_qmc(
+        &mut self,
+        pockets: &[StdDeckCardMask],
+        dead: StdDeckCardMask,
+        npockets: usize,
+        niter: usize,
+    ) -> Result<(), PokerError> {
+        use crate::enumerate::inner_loops::inner_loop_7stud;
+        let eval_wrapper =
+            |hands: &[StdDeckCardMask], hival: &mut [HandVal], loval: &mut [LowHandVal]| {
+                let empty_masks = vec![StdDeckCardMask::new(); hands.len()];
+                inner_loop_7stud(hands, &empty_masks, hival, loval)
+            };
+        self.simulate_independent_game_qmc(pockets, dead, npockets, 7, niter, eval_wrapper)
     }
 
     pub fn simulate_stud8_game(
@@ -1034,6 +1533,43 @@ impl EnumResult {
         self.simulate_independent_game(pockets, dead, npockets, 7, niter, eval_wrapper)
     }
 
+    pub fn exhaustive_stud8_evaluation(
+        &mut self,
+        pockets: &[StdDeckCardMask],
+        dead: StdDeckCardMask,
+        npockets: usize,
+    ) -> Result<(), PokerError> {
+        let eval_wrapper =
+            |hands: &[StdDeckCardMask], hival: &mut [HandVal], loval: &mut [LowHandVal]| {
+                for (i, hand) in hands.iter().enumerate() {
+                    hival[i] = Eval::eval_n(hand, hand.num_cards());
+                    loval[i] = std_deck_lowball8_eval(hand, hand.num_cards())
+                        .unwrap_or(LowHandVal { value: 0 });
+                }
+                Ok(())
+            };
+        self.exhaustive_independent_game(pockets, dead, npockets, 7, eval_wrapper)
+    }
+
+    pub fn simulate_stud8_game_qmc(
+        &mut self,
+        pockets: &[StdDeckCardMask],
+        dead: StdDeckCardMask,
+        npockets: usize,
+        niter: usize,
+    ) -> Result<(), PokerError> {
+        let eval_wrapper =
+            |hands: &[StdDeckCardMask], hival: &mut [HandVal], loval: &mut [LowHandVal]| {
+                for (i, hand) in hands.iter().enumerate() {
+                    hival[i] = Eval::eval_n(hand, hand.num_cards());
+                    loval[i] = std_deck_lowball8_eval(hand, hand.num_cards())
+                        .unwrap_or(LowHandVal { value: 0 });
+                }
+                Ok(())
+            };
+        self.simulate_independent_game_qmc(pockets, dead, npockets, 7, niter, eval_wrapper)
+    }
+
     pub fn simulate_studnsq_game(
         &mut self,
         pockets: &[StdDeckCardMask],
@@ -1048,6 +1584,37 @@ impl EnumResult {
                 inner_loop_7studnsq(hands, &empty_masks, hival, loval)
             };
         self.simulate_independent_game(pockets, dead, npockets, 7, niter, eval_wrapper)
+    }
+
+    pub fn exhaustive_studnsq_evaluation(
+        &mut self,
+        pockets: &[StdDeckCardMask],
+        dead: StdDeckCardMask,
+        npockets: usize,
+    ) -> Result<(), PokerError> {
+        use crate::enumerate::inner_loops::inner_loop_7studnsq;
+        let eval_wrapper =
+            |hands: &[StdDeckCardMask], hival: &mut [HandVal], loval: &mut [LowHandVal]| {
+                let empty_masks = vec![StdDeckCardMask::new(); hands.len()];
+                inner_loop_7studnsq(hands, &empty_masks, hival, loval)
+            };
+        self.exhaustive_independent_game(pockets, dead, npockets, 7, eval_wrapper)
+    }
+
+    pub fn simulate_studnsq_game_qmc(
+        &mut self,
+        pockets: &[StdDeckCardMask],
+        dead: StdDeckCardMask,
+        npockets: usize,
+        niter: usize,
+    ) -> Result<(), PokerError> {
+        use crate::enumerate::inner_loops::inner_loop_7studnsq;
+        let eval_wrapper =
+            |hands: &[StdDeckCardMask], hival: &mut [HandVal], loval: &mut [LowHandVal]| {
+                let empty_masks = vec![StdDeckCardMask::new(); hands.len()];
+                inner_loop_7studnsq(hands, &empty_masks, hival, loval)
+            };
+        self.simulate_independent_game_qmc(pockets, dead, npockets, 7, niter, eval_wrapper)
     }
 
     pub fn simulate_razz_game(
@@ -1066,6 +1633,37 @@ impl EnumResult {
         self.simulate_independent_game(pockets, dead, npockets, 7, niter, eval_wrapper)
     }
 
+    pub fn exhaustive_razz_evaluation(
+        &mut self,
+        pockets: &[StdDeckCardMask],
+        dead: StdDeckCardMask,
+        npockets: usize,
+    ) -> Result<(), PokerError> {
+        use crate::enumerate::inner_loops::inner_loop_razz;
+        let eval_wrapper =
+            |hands: &[StdDeckCardMask], hival: &mut [HandVal], loval: &mut [LowHandVal]| {
+                let empty_masks = vec![StdDeckCardMask::new(); hands.len()];
+                inner_loop_razz(hands, &empty_masks, hival, loval)
+            };
+        self.exhaustive_independent_game(pockets, dead, npockets, 7, eval_wrapper)
+    }
+
+    pub fn simulate_razz_game_qmc(
+        &mut self,
+        pockets: &[StdDeckCardMask],
+        dead: StdDeckCardMask,
+        npockets: usize,
+        niter: usize,
+    ) -> Result<(), PokerError> {
+        use crate::enumerate::inner_loops::inner_loop_razz;
+        let eval_wrapper =
+            |hands: &[StdDeckCardMask], hival: &mut [HandVal], loval: &mut [LowHandVal]| {
+                let empty_masks = vec![StdDeckCardMask::new(); hands.len()];
+                inner_loop_razz(hands, &empty_masks, hival, loval)
+            };
+        self.simulate_independent_game_qmc(pockets, dead, npockets, 7, niter, eval_wrapper)
+    }
+
     pub fn simulate_lowball27_game(
         &mut self,
         pockets: &[StdDeckCardMask],
@@ -1080,6 +1678,37 @@ impl EnumResult {
                 inner_loop_lowball27(hands, &empty_masks, hival, loval)
             };
         self.simulate_independent_game(pockets, dead, npockets, 5, niter, eval_wrapper)
+    }
+
+    pub fn exhaustive_lowball27_evaluation(
+        &mut self,
+        pockets: &[StdDeckCardMask],
+        dead: StdDeckCardMask,
+        npockets: usize,
+    ) -> Result<(), PokerError> {
+        use crate::enumerate::inner_loops::inner_loop_lowball27;
+        let eval_wrapper =
+            |hands: &[StdDeckCardMask], hival: &mut [HandVal], loval: &mut [LowHandVal]| {
+                let empty_masks = vec![StdDeckCardMask::new(); hands.len()];
+                inner_loop_lowball27(hands, &empty_masks, hival, loval)
+            };
+        self.exhaustive_independent_game(pockets, dead, npockets, 5, eval_wrapper)
+    }
+
+    pub fn simulate_lowball27_game_qmc(
+        &mut self,
+        pockets: &[StdDeckCardMask],
+        dead: StdDeckCardMask,
+        npockets: usize,
+        niter: usize,
+    ) -> Result<(), PokerError> {
+        use crate::enumerate::inner_loops::inner_loop_lowball27;
+        let eval_wrapper =
+            |hands: &[StdDeckCardMask], hival: &mut [HandVal], loval: &mut [LowHandVal]| {
+                let empty_masks = vec![StdDeckCardMask::new(); hands.len()];
+                inner_loop_lowball27(hands, &empty_masks, hival, loval)
+            };
+        self.simulate_independent_game_qmc(pockets, dead, npockets, 5, niter, eval_wrapper)
     }
 
     /// Simulates a game with Joker support (Draw, Lowball A-5).
@@ -1250,6 +1879,228 @@ impl EnumResult {
         Ok(())
     }
 
+    /// QMC variant of `simulate_independent_game_joker`.
+    fn simulate_independent_game_joker_qmc<F>(
+        &mut self,
+        pockets: &[StdDeckCardMask],
+        dead: StdDeckCardMask,
+        npockets: usize,
+        target_hand_size: usize,
+        niter: usize,
+        eval_func: F,
+    ) -> Result<(), PokerError>
+    where
+        F: Fn(
+                &[crate::tables::t_jokercardmasks::JokerDeckCardMask],
+                &mut [HandVal],
+                &mut [LowHandVal],
+            ) -> Result<(), PokerError>
+            + Sync
+            + Send
+            + Copy,
+    {
+        use crate::tables::t_jokercardmasks::{JokerDeckCardMask, JOKER_DECK_CARD_MASKS_TABLE};
+
+        if npockets > ENUM_MAXPLAYERS {
+            return Err(PokerError::TooManyPlayers);
+        }
+
+        let mut exclusion_mask = dead;
+        let mut cards_needed_per_player = [0; ENUM_MAXPLAYERS];
+        let mut total_draw_needed = 0;
+        let mut joker_pockets = Vec::with_capacity(npockets);
+
+        for i in 0..npockets {
+            exclusion_mask = exclusion_mask | pockets[i];
+            let current_len = pockets[i].num_cards();
+            if current_len < target_hand_size {
+                let needed = target_hand_size - current_len;
+                cards_needed_per_player[i] = needed;
+                total_draw_needed += needed;
+            }
+            joker_pockets.push(JokerDeckCardMask {
+                cards_n: pockets[i].as_raw(),
+            });
+        }
+
+        let joker_exclusion = JokerDeckCardMask {
+            cards_n: exclusion_mask.as_raw(),
+        };
+
+        let deck_mask = JOKER_DECK_CARD_MASKS_TABLE
+            .iter()
+            .filter(|card| (card.cards_n & joker_exclusion.cards_n) == 0)
+            .copied()
+            .collect::<Vec<JokerDeckCardMask>>();
+
+        if deck_mask.len() < total_draw_needed {
+            return Err(PokerError::InvalidCardConfiguration(format!(
+                "Not enough cards in deck. Needed {}, available {}",
+                total_draw_needed,
+                deck_mask.len()
+            )));
+        }
+
+        let no_dead_cards = JokerDeckCardMask { cards_n: 0 };
+        let mut local_res = EnumResult::new(self.game);
+        local_res.nplayers = npockets as u32;
+        let mut hival = vec![HandVal::new(0, 0, 0, 0, 0, 0); npockets];
+        let mut loval = vec![LowHandVal::new(0, 0, 0, 0, 0, 0); npockets];
+        let mut player_hands = vec![JokerDeckCardMask { cards_n: 0 }; npockets];
+
+        deck_qmc_n_cards_joker(
+            &deck_mask,
+            no_dead_cards,
+            total_draw_needed,
+            niter,
+            |combo| {
+                let mut card_idx = 0;
+                for i in 0..npockets {
+                    let mut hand = joker_pockets[i];
+                    let needed = cards_needed_per_player[i];
+                    for _ in 0..needed {
+                        hand = JokerDeckCardMask {
+                            cards_n: hand.cards_n | combo[card_idx].cards_n,
+                        };
+                        card_idx += 1;
+                    }
+                    player_hands[i] = hand;
+                }
+
+                if let Ok(()) = eval_func(&player_hands, &mut hival, &mut loval) {
+                    match local_res.game {
+                        Game::Razz | Game::Lowball | Game::Lowball27 => {
+                            local_res.update_statistics_batched_lo(&loval, npockets);
+                        }
+                        Game::Stud78
+                        | Game::Stud7nsq
+                        | Game::Omaha8
+                        | Game::Omaha85
+                        | Game::Draw58
+                        | Game::Draw5nsq => {
+                            local_res.update_statistics_batched_hilo(&hival, &loval, npockets);
+                        }
+                        _ => {
+                            local_res.update_statistics_batched(&hival, npockets);
+                        }
+                    }
+                    local_res.nsamples += 1;
+                }
+            },
+        );
+        self.merge(&local_res);
+        Ok(())
+    }
+
+    /// Exhaustive variant for games with Joker deck and independent player cards
+    /// (e.g. Draw and A-5 Lowball with joker).
+    fn exhaustive_independent_game_joker<F>(
+        &mut self,
+        pockets: &[StdDeckCardMask],
+        dead: StdDeckCardMask,
+        npockets: usize,
+        target_hand_size: usize,
+        eval_func: F,
+    ) -> Result<(), PokerError>
+    where
+        F: Fn(
+                &[crate::tables::t_jokercardmasks::JokerDeckCardMask],
+                &mut [HandVal],
+                &mut [LowHandVal],
+            ) -> Result<(), PokerError>
+            + Copy,
+    {
+        use crate::tables::t_jokercardmasks::{JokerDeckCardMask, JOKER_DECK_CARD_MASKS_TABLE};
+
+        if npockets > ENUM_MAXPLAYERS {
+            return Err(PokerError::TooManyPlayers);
+        }
+
+        self.nplayers = npockets as u32;
+
+        let mut exclusion_mask = dead;
+        let mut cards_needed_per_player = [0; ENUM_MAXPLAYERS];
+        let mut total_draw_needed = 0;
+        let mut joker_pockets = Vec::with_capacity(npockets);
+
+        for i in 0..npockets {
+            exclusion_mask = exclusion_mask | pockets[i];
+            let current_len = pockets[i].num_cards();
+            if current_len < target_hand_size {
+                let needed = target_hand_size - current_len;
+                cards_needed_per_player[i] = needed;
+                total_draw_needed += needed;
+            }
+            joker_pockets.push(JokerDeckCardMask {
+                cards_n: pockets[i].as_raw(),
+            });
+        }
+
+        let joker_exclusion = JokerDeckCardMask {
+            cards_n: exclusion_mask.as_raw(),
+        };
+
+        let deck_mask = JOKER_DECK_CARD_MASKS_TABLE
+            .iter()
+            .filter(|card| (card.cards_n & joker_exclusion.cards_n) == 0)
+            .copied()
+            .collect::<Vec<JokerDeckCardMask>>();
+
+        if deck_mask.len() < total_draw_needed {
+            return Err(PokerError::InvalidCardConfiguration(format!(
+                "Not enough cards in deck. Needed {}, available {}",
+                total_draw_needed,
+                deck_mask.len()
+            )));
+        }
+
+        let mut hival = vec![HandVal::new(0, 0, 0, 0, 0, 0); npockets];
+        let mut loval = vec![LowHandVal::new(0, 0, 0, 0, 0, 0); npockets];
+        let mut player_hands = vec![JokerDeckCardMask { cards_n: 0 }; npockets];
+
+        enumerate_n_cards_d(
+            &deck_mask,
+            JokerDeckCardMask { cards_n: 0 },
+            total_draw_needed,
+            |combo| {
+                let mut card_idx = 0;
+                for i in 0..npockets {
+                    let mut hand = joker_pockets[i];
+                    let needed = cards_needed_per_player[i];
+                    for _ in 0..needed {
+                        hand = JokerDeckCardMask {
+                            cards_n: hand.cards_n | combo[card_idx].cards_n,
+                        };
+                        card_idx += 1;
+                    }
+                    player_hands[i] = hand;
+                }
+
+                if eval_func(&player_hands, &mut hival, &mut loval).is_ok() {
+                    match self.game {
+                        Game::Razz | Game::Lowball | Game::Lowball27 => {
+                            self.update_statistics_batched_lo(&loval, npockets);
+                        }
+                        Game::Stud78
+                        | Game::Stud7nsq
+                        | Game::Omaha8
+                        | Game::Omaha85
+                        | Game::Draw58
+                        | Game::Draw5nsq => {
+                            self.update_statistics_batched_hilo(&hival, &loval, npockets);
+                        }
+                        _ => {
+                            self.update_statistics_batched(&hival, npockets);
+                        }
+                    }
+                    self.nsamples += 1;
+                }
+            },
+        );
+
+        Ok(())
+    }
+
     pub fn simulate_draw_game(
         &mut self,
         pockets: &[StdDeckCardMask],
@@ -1266,6 +2117,41 @@ impl EnumResult {
                 inner_loop_5draw(hands, &empty_masks, hival, loval)
             };
         self.simulate_independent_game_joker(pockets, dead, npockets, 5, niter, eval_wrapper)
+    }
+
+    pub fn exhaustive_draw_evaluation(
+        &mut self,
+        pockets: &[StdDeckCardMask],
+        dead: StdDeckCardMask,
+        npockets: usize,
+    ) -> Result<(), PokerError> {
+        use crate::enumerate::inner_loops::inner_loop_5draw;
+        use crate::tables::t_jokercardmasks::JokerDeckCardMask;
+
+        let eval_wrapper =
+            |hands: &[JokerDeckCardMask], hival: &mut [HandVal], loval: &mut [LowHandVal]| {
+                let empty_masks = vec![JokerDeckCardMask { cards_n: 0 }; hands.len()];
+                inner_loop_5draw(hands, &empty_masks, hival, loval)
+            };
+        self.exhaustive_independent_game_joker(pockets, dead, npockets, 5, eval_wrapper)
+    }
+
+    pub fn simulate_draw_game_qmc(
+        &mut self,
+        pockets: &[StdDeckCardMask],
+        dead: StdDeckCardMask,
+        npockets: usize,
+        niter: usize,
+    ) -> Result<(), PokerError> {
+        use crate::enumerate::inner_loops::inner_loop_5draw;
+        use crate::tables::t_jokercardmasks::JokerDeckCardMask;
+
+        let eval_wrapper =
+            |hands: &[JokerDeckCardMask], hival: &mut [HandVal], loval: &mut [LowHandVal]| {
+                let empty_masks = vec![JokerDeckCardMask { cards_n: 0 }; hands.len()];
+                inner_loop_5draw(hands, &empty_masks, hival, loval)
+            };
+        self.simulate_independent_game_joker_qmc(pockets, dead, npockets, 5, niter, eval_wrapper)
     }
 
     pub fn simulate_draw8_game(
@@ -1286,6 +2172,41 @@ impl EnumResult {
         self.simulate_independent_game_joker(pockets, dead, npockets, 5, niter, eval_wrapper)
     }
 
+    pub fn exhaustive_draw8_evaluation(
+        &mut self,
+        pockets: &[StdDeckCardMask],
+        dead: StdDeckCardMask,
+        npockets: usize,
+    ) -> Result<(), PokerError> {
+        use crate::enumerate::inner_loops::inner_loop_5draw8;
+        use crate::tables::t_jokercardmasks::JokerDeckCardMask;
+
+        let eval_wrapper =
+            |hands: &[JokerDeckCardMask], hival: &mut [HandVal], loval: &mut [LowHandVal]| {
+                let empty_masks = vec![JokerDeckCardMask { cards_n: 0 }; hands.len()];
+                inner_loop_5draw8(hands, &empty_masks, hival, loval)
+            };
+        self.exhaustive_independent_game_joker(pockets, dead, npockets, 5, eval_wrapper)
+    }
+
+    pub fn simulate_draw8_game_qmc(
+        &mut self,
+        pockets: &[StdDeckCardMask],
+        dead: StdDeckCardMask,
+        npockets: usize,
+        niter: usize,
+    ) -> Result<(), PokerError> {
+        use crate::enumerate::inner_loops::inner_loop_5draw8;
+        use crate::tables::t_jokercardmasks::JokerDeckCardMask;
+
+        let eval_wrapper =
+            |hands: &[JokerDeckCardMask], hival: &mut [HandVal], loval: &mut [LowHandVal]| {
+                let empty_masks = vec![JokerDeckCardMask { cards_n: 0 }; hands.len()];
+                inner_loop_5draw8(hands, &empty_masks, hival, loval)
+            };
+        self.simulate_independent_game_joker_qmc(pockets, dead, npockets, 5, niter, eval_wrapper)
+    }
+
     pub fn simulate_drawnsq_game(
         &mut self,
         pockets: &[StdDeckCardMask],
@@ -1304,6 +2225,41 @@ impl EnumResult {
         self.simulate_independent_game_joker(pockets, dead, npockets, 5, niter, eval_wrapper)
     }
 
+    pub fn exhaustive_drawnsq_evaluation(
+        &mut self,
+        pockets: &[StdDeckCardMask],
+        dead: StdDeckCardMask,
+        npockets: usize,
+    ) -> Result<(), PokerError> {
+        use crate::enumerate::inner_loops::inner_loop_5drawnsq;
+        use crate::tables::t_jokercardmasks::JokerDeckCardMask;
+
+        let eval_wrapper =
+            |hands: &[JokerDeckCardMask], hival: &mut [HandVal], loval: &mut [LowHandVal]| {
+                let empty_masks = vec![JokerDeckCardMask { cards_n: 0 }; hands.len()];
+                inner_loop_5drawnsq(hands, &empty_masks, hival, loval)
+            };
+        self.exhaustive_independent_game_joker(pockets, dead, npockets, 5, eval_wrapper)
+    }
+
+    pub fn simulate_drawnsq_game_qmc(
+        &mut self,
+        pockets: &[StdDeckCardMask],
+        dead: StdDeckCardMask,
+        npockets: usize,
+        niter: usize,
+    ) -> Result<(), PokerError> {
+        use crate::enumerate::inner_loops::inner_loop_5drawnsq;
+        use crate::tables::t_jokercardmasks::JokerDeckCardMask;
+
+        let eval_wrapper =
+            |hands: &[JokerDeckCardMask], hival: &mut [HandVal], loval: &mut [LowHandVal]| {
+                let empty_masks = vec![JokerDeckCardMask { cards_n: 0 }; hands.len()];
+                inner_loop_5drawnsq(hands, &empty_masks, hival, loval)
+            };
+        self.simulate_independent_game_joker_qmc(pockets, dead, npockets, 5, niter, eval_wrapper)
+    }
+
     pub fn simulate_lowball_game(
         &mut self,
         pockets: &[StdDeckCardMask],
@@ -1320,6 +2276,41 @@ impl EnumResult {
                 inner_loop_lowball(hands, &empty_masks, hival, loval)
             };
         self.simulate_independent_game_joker(pockets, dead, npockets, 5, niter, eval_wrapper)
+    }
+
+    pub fn exhaustive_lowball_evaluation(
+        &mut self,
+        pockets: &[StdDeckCardMask],
+        dead: StdDeckCardMask,
+        npockets: usize,
+    ) -> Result<(), PokerError> {
+        use crate::enumerate::inner_loops::inner_loop_lowball;
+        use crate::tables::t_jokercardmasks::JokerDeckCardMask;
+
+        let eval_wrapper =
+            |hands: &[JokerDeckCardMask], hival: &mut [HandVal], loval: &mut [LowHandVal]| {
+                let empty_masks = vec![JokerDeckCardMask { cards_n: 0 }; hands.len()];
+                inner_loop_lowball(hands, &empty_masks, hival, loval)
+            };
+        self.exhaustive_independent_game_joker(pockets, dead, npockets, 5, eval_wrapper)
+    }
+
+    pub fn simulate_lowball_game_qmc(
+        &mut self,
+        pockets: &[StdDeckCardMask],
+        dead: StdDeckCardMask,
+        npockets: usize,
+        niter: usize,
+    ) -> Result<(), PokerError> {
+        use crate::enumerate::inner_loops::inner_loop_lowball;
+        use crate::tables::t_jokercardmasks::JokerDeckCardMask;
+
+        let eval_wrapper =
+            |hands: &[JokerDeckCardMask], hival: &mut [HandVal], loval: &mut [LowHandVal]| {
+                let empty_masks = vec![JokerDeckCardMask { cards_n: 0 }; hands.len()];
+                inner_loop_lowball(hands, &empty_masks, hival, loval)
+            };
+        self.simulate_independent_game_joker_qmc(pockets, dead, npockets, 5, niter, eval_wrapper)
     }
 
     pub fn exhaustive_holdem_evaluation(
@@ -2107,6 +3098,183 @@ impl EnumResult {
         Ok(())
     }
 
+    /// Performs exhaustive Omaha Hi/Lo (8-or-better) evaluation over all possible board completions.
+    pub fn exhaustive_omaha8_evaluation(
+        &mut self,
+        pockets: &[StdDeckCardMask],
+        board: StdDeckCardMask,
+        dead: StdDeckCardMask,
+        npockets: usize,
+        nboard: usize,
+    ) -> Result<(), PokerError> {
+        self.nplayers = npockets as u32;
+        let mut exclusion_mask = dead | board;
+        for pocket in pockets {
+            exclusion_mask = exclusion_mask | *pocket;
+        }
+
+        let mut deck_buf = [StdDeckCardMask::default(); STD_DECK_N_CARDS];
+        let mut deck_len = 0;
+        for &card in STD_DECK_CARD_MASKS_TABLE.iter() {
+            if StdDeck::mask_to_index(&card).map_or(true, |idx| !exclusion_mask.card_is_set(idx)) {
+                deck_buf[deck_len] = card;
+                deck_len += 1;
+            }
+        }
+        let deck = &deck_buf[..deck_len];
+        let no_dead = StdDeckCardMask::new();
+
+        match nboard {
+            0 => {
+                #[cfg(feature = "parallel")]
+                {
+                    let total_res = deck
+                        .par_iter()
+                        .enumerate()
+                        .map(|(i1, c1)| {
+                            let mut local_res = EnumResult::new(self.game);
+                            local_res.nplayers = npockets as u32;
+                            enumerate_4_cards_d(&deck[..i1], no_dead, |c2, c3, c4, c5| {
+                                let new_board = board | *c1 | *c2 | *c3 | *c4 | *c5;
+                                if local_res
+                                    .evaluate_omaha8_hands(pockets, &new_board, npockets)
+                                    .is_ok()
+                                {
+                                    local_res.nsamples += 1;
+                                }
+                            });
+                            local_res
+                        })
+                        .reduce(
+                            || EnumResult::new(self.game),
+                            |mut a, b| {
+                                a.merge(&b);
+                                a
+                            },
+                        );
+                    self.merge(&total_res);
+                }
+                #[cfg(not(feature = "parallel"))]
+                {
+                    let mut local_res = EnumResult::new(self.game);
+                    local_res.nplayers = npockets as u32;
+                    for (i1, c1) in deck.iter().enumerate() {
+                        enumerate_4_cards_d(&deck[..i1], no_dead, |c2, c3, c4, c5| {
+                            let new_board = board | *c1 | *c2 | *c3 | *c4 | *c5;
+                            if local_res
+                                .evaluate_omaha8_hands(pockets, &new_board, npockets)
+                                .is_ok()
+                            {
+                                local_res.nsamples += 1;
+                            }
+                        });
+                    }
+                    self.merge(&local_res);
+                }
+            }
+            3 => {
+                #[cfg(feature = "parallel")]
+                {
+                    let total_res = deck
+                        .par_iter()
+                        .enumerate()
+                        .map(|(i1, c1)| {
+                            let mut local_res = EnumResult::new(self.game);
+                            local_res.nplayers = npockets as u32;
+                            enumerate_1_cards_d(&deck[..i1], no_dead, |c2| {
+                                let new_board = board | *c1 | *c2;
+                                if local_res
+                                    .evaluate_omaha8_hands(pockets, &new_board, npockets)
+                                    .is_ok()
+                                {
+                                    local_res.nsamples += 1;
+                                }
+                            });
+                            local_res
+                        })
+                        .reduce(
+                            || EnumResult::new(self.game),
+                            |mut a, b| {
+                                a.merge(&b);
+                                a
+                            },
+                        );
+                    self.merge(&total_res);
+                }
+                #[cfg(not(feature = "parallel"))]
+                {
+                    let mut local_res = EnumResult::new(self.game);
+                    local_res.nplayers = npockets as u32;
+                    for (i1, c1) in deck.iter().enumerate() {
+                        enumerate_1_cards_d(&deck[..i1], no_dead, |c2| {
+                            let new_board = board | *c1 | *c2;
+                            if local_res
+                                .evaluate_omaha8_hands(pockets, &new_board, npockets)
+                                .is_ok()
+                            {
+                                local_res.nsamples += 1;
+                            }
+                        });
+                    }
+                    self.merge(&local_res);
+                }
+            }
+            4 => {
+                #[cfg(feature = "parallel")]
+                {
+                    let total_res = deck
+                        .par_iter()
+                        .map(|c| {
+                            let mut local_res = EnumResult::new(self.game);
+                            local_res.nplayers = npockets as u32;
+                            let new_board = board | *c;
+                            if local_res
+                                .evaluate_omaha8_hands(pockets, &new_board, npockets)
+                                .is_ok()
+                            {
+                                local_res.nsamples += 1;
+                            }
+                            local_res
+                        })
+                        .reduce(
+                            || EnumResult::new(self.game),
+                            |mut a, b| {
+                                a.merge(&b);
+                                a
+                            },
+                        );
+                    self.merge(&total_res);
+                }
+                #[cfg(not(feature = "parallel"))]
+                {
+                    let mut local_res = EnumResult::new(self.game);
+                    local_res.nplayers = npockets as u32;
+                    for c in deck.iter() {
+                        let new_board = board | *c;
+                        if local_res
+                            .evaluate_omaha8_hands(pockets, &new_board, npockets)
+                            .is_ok()
+                        {
+                            local_res.nsamples += 1;
+                        }
+                    }
+                    self.merge(&local_res);
+                }
+            }
+            5 => {
+                if self
+                    .evaluate_omaha8_hands(pockets, &board, npockets)
+                    .is_ok()
+                {
+                    self.nsamples += 1;
+                }
+            }
+            _ => return Err(PokerError::UnsupportedBoardConfiguration),
+        }
+
+        Ok(())
+    }
+
     /// Evaluates Omaha hands for all players against a given board.
     ///
     /// Optimized to evaluate each hand once, then compare (N evals + N*(N-1)/2 comparisons).
@@ -2119,7 +3287,6 @@ impl EnumResult {
         if pockets.len() != npockets {
             return Err(PokerError::TooManyPlayers);
         }
-        self.game = Game::Omaha;
 
         // 1. Evaluate all hands once (O(N))
         // We use a fixed-size array on stack would be ideal, but HandVal is small.
@@ -2141,6 +3308,36 @@ impl EnumResult {
         // 2. Compare using efficient batched update (O(N^2) cheap comparisons)
         self.update_statistics_batched(&hand_values, npockets);
 
+        Ok(())
+    }
+
+    /// Evaluates Omaha Hi/Lo (8-or-better) hands for all players against a given board.
+    pub fn evaluate_omaha8_hands(
+        &mut self,
+        pockets: &[StdDeckCardMask],
+        board: &StdDeckCardMask,
+        npockets: usize,
+    ) -> Result<(), PokerError> {
+        if pockets.len() != npockets {
+            return Err(PokerError::TooManyPlayers);
+        }
+
+        let mut hival = Vec::with_capacity(npockets);
+        let mut loval = Vec::with_capacity(npockets);
+
+        for pocket in pockets.iter().take(npockets) {
+            let mut hi: Option<HandVal> = None;
+            let mut lo: Option<LowHandVal> = None;
+            crate::evaluators::omaha::std_deck_omaha_hi_low8_eval(
+                *pocket, *board, &mut hi, &mut lo,
+            )?;
+            hival.push(hi.unwrap_or(HandVal { value: 0 }));
+            loval.push(lo.unwrap_or(LowHandVal {
+                value: LOW_HAND_VAL_NOTHING,
+            }));
+        }
+
+        self.update_statistics_batched_hilo(&hival, &loval, npockets);
         Ok(())
     }
 

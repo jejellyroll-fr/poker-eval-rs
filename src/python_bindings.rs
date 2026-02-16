@@ -3,6 +3,9 @@
 use crate::board::{calculate_outs as calc_outs_rust, BoardTexture};
 use crate::deck::*;
 use crate::enumdefs::{EnumResult, Game, SampleType, ENUM_MAXPLAYERS};
+use crate::enumerate::evaluation::{
+    supports_enum_exhaustive, supports_enum_sample, validate_enum_configuration,
+};
 use crate::enumerate::{enum_exhaustive, enum_sample, CardMask};
 use crate::evaluators::range_equity::calculate_equity as calc_equity_rust;
 use crate::evaluators::{
@@ -446,6 +449,13 @@ pub fn calculate_equity(
 
     let nboard = board_mask.num_cards();
 
+    if let Err(e) = validate_enum_configuration(game_variant, board_mask, nboard, !monte_carlo) {
+        return Err(PyErr::new::<pyo3::exceptions::PyValueError, _>(format!(
+            "Invalid board configuration: {}",
+            e
+        )));
+    }
+
     // Initialize result
     let mut result = EnumResult::new(game_variant);
     result.sample_type = if monte_carlo {
@@ -454,6 +464,19 @@ pub fn calculate_equity(
         SampleType::Exhaustive
     };
     result.nplayers = npockets as u32;
+
+    if monte_carlo && !supports_enum_sample(game_variant) {
+        return Err(PyErr::new::<pyo3::exceptions::PyValueError, _>(format!(
+            "Monte Carlo mode is not supported for game variant: {}",
+            game
+        )));
+    }
+    if !monte_carlo && !supports_enum_exhaustive(game_variant) {
+        return Err(PyErr::new::<pyo3::exceptions::PyValueError, _>(format!(
+            "Exhaustive mode is not supported for game variant: {}",
+            game
+        )));
+    }
 
     // Run calculation
     let calc_result = if monte_carlo {
@@ -751,4 +774,45 @@ pub fn poker_eval_rs(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(eval_joker, m)?)?;
     m.add_function(wrap_pyfunction!(eval_lowball_joker, m)?)?;
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn py_calculate_equity_rejects_board_for_stud7() {
+        pyo3::prepare_freethreaded_python();
+        Python::with_gil(|py| {
+            let err = calculate_equity(
+                py,
+                vec!["AsKsQh".to_string(), "AdKdQc".to_string()],
+                "2c",
+                "",
+                "stud7",
+                true,
+                32,
+            )
+            .unwrap_err();
+            assert!(err.to_string().contains("Invalid board configuration"));
+        });
+    }
+
+    #[test]
+    fn py_calculate_equity_rejects_invalid_exhaustive_street_for_holdem() {
+        pyo3::prepare_freethreaded_python();
+        Python::with_gil(|py| {
+            let err = calculate_equity(
+                py,
+                vec!["AsKs".to_string(), "QhQd".to_string()],
+                "2c 7d",
+                "",
+                "holdem",
+                false,
+                32,
+            )
+            .unwrap_err();
+            assert!(err.to_string().contains("Invalid board configuration"));
+        });
+    }
 }

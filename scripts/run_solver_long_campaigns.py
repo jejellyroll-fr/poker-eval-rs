@@ -1,0 +1,240 @@
+#!/usr/bin/env python3
+import argparse
+import csv
+import datetime as dt
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+
+def run_cmd(cmd, env=None):
+    print("$", " ".join(cmd))
+    subprocess.run(cmd, check=True, env=env)
+
+
+def read_csv_rows(path):
+    with open(path, newline="", encoding="utf-8") as f:
+        return list(csv.DictReader(f))
+
+
+def write_csv(path, headers, rows):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "w", newline="", encoding="utf-8") as f:
+        w = csv.DictWriter(f, fieldnames=headers)
+        w.writeheader()
+        w.writerows(rows)
+
+
+def chunk_players(players):
+    # One player-count per run keeps commands bounded and easier to resume.
+    return [[p] for p in players]
+
+
+def run_convergence_batch(args, report_dir, cargo_env):
+    all_runs = []
+    all_agg = []
+    for chunk in chunk_players(args.players):
+        p_label = "_".join(str(p) for p in chunk)
+        runs_csv = report_dir / f"solver_batch_runs_p{p_label}.csv"
+        agg_csv = report_dir / f"solver_batch_agg_p{p_label}.csv"
+        md_out = report_dir / f"solver_batch_report_p{p_label}.md"
+        cmd = [
+            "cargo",
+            "run",
+            "--bin",
+            "solver_convergence_batch",
+            "--",
+            "--variants",
+            args.variants,
+            "--players",
+            ",".join(str(p) for p in chunk),
+            "--profiles",
+            args.profiles,
+            "--repeats",
+            str(args.repeats),
+            "--iterations",
+            str(args.iterations),
+            "--checkpoint-every",
+            str(args.checkpoint_every),
+            "--stack",
+            str(args.stack),
+            "--raise-cap",
+            str(args.raise_cap),
+            "--chance-scenarios",
+            str(args.chance_scenarios),
+            "--chance-stride",
+            str(args.chance_stride),
+            "--cache-opponent-strategies",
+            "true",
+            "--runs-csv",
+            str(runs_csv),
+            "--agg-csv",
+            str(agg_csv),
+            "--md-out",
+            str(md_out),
+        ]
+        run_cmd(cmd, env=cargo_env)
+        all_runs.extend(read_csv_rows(runs_csv))
+        all_agg.extend(read_csv_rows(agg_csv))
+
+    merged_runs = report_dir / "solver_batch_runs_final.csv"
+    merged_agg = report_dir / "solver_batch_agg_final.csv"
+    write_csv(
+        merged_runs,
+        [
+            "variant",
+            "players",
+            "profile",
+            "repeat",
+            "iteration",
+            "exploitability",
+            "time_sec",
+        ],
+        all_runs,
+    )
+    write_csv(
+        merged_agg,
+        [
+            "variant",
+            "players",
+            "profile",
+            "runs",
+            "exp_mean",
+            "exp_min",
+            "exp_max",
+            "time_mean",
+        ],
+        all_agg,
+    )
+    return merged_runs, merged_agg
+
+
+def run_traversal_cache(args, report_dir, cargo_env):
+    runs_csv = report_dir / "solver_traversal_cache_runs_final.csv"
+    md_out = report_dir / "solver_traversal_cache_report_final.md"
+    cmd = [
+        "cargo",
+        "run",
+        "--bin",
+        "solver_traversal_cache_report",
+        "--",
+        "--variants",
+        args.variants,
+        "--players",
+        ",".join(str(p) for p in args.players),
+        "--repeats",
+        str(args.cache_repeats),
+        "--iterations",
+        str(args.cache_iterations),
+        "--stack",
+        str(args.stack),
+        "--raise-cap",
+        str(args.raise_cap),
+        "--chance-scenarios",
+        str(args.chance_scenarios),
+        "--chance-stride",
+        str(args.chance_stride),
+        "--runs-csv",
+        str(runs_csv),
+        "--md-out",
+        str(md_out),
+    ]
+    run_cmd(cmd, env=cargo_env)
+    return runs_csv, md_out
+
+
+def write_final_report(report_dir, args, batch_runs, batch_agg, cache_runs, cache_md):
+    out = report_dir / "solver_final_report.md"
+    lines = []
+    lines.append("# Solver Final Campaign Report")
+    lines.append("")
+    lines.append(f"- Generated: `{dt.datetime.now(dt.timezone.utc).isoformat()}`")
+    lines.append(
+        f"- Variants: `{args.variants}` | Players: `{','.join(str(p) for p in args.players)}`"
+    )
+    lines.append(
+        f"- Batch iters/repeats: `{args.iterations}/{args.repeats}` | Cache iters/repeats: `{args.cache_iterations}/{args.cache_repeats}`"
+    )
+    lines.append("")
+    lines.append("## Frozen Artifacts")
+    lines.append("")
+    lines.append(f"- Batch runs CSV: `{batch_runs}`")
+    lines.append(f"- Batch aggregate CSV: `{batch_agg}`")
+    lines.append(f"- Traversal cache runs CSV: `{cache_runs}`")
+    lines.append(f"- Traversal cache Markdown: `{cache_md}`")
+    lines.append("")
+    lines.append("## Notes")
+    lines.append("")
+    lines.append(
+        "- This report is generated by `scripts/run_solver_long_campaigns.py`."
+    )
+    lines.append(
+        "- Re-run with higher iterations/repeats for long overnight campaigns."
+    )
+    out.write_text("\n".join(lines), encoding="utf-8")
+    return out
+
+
+def parse_players(s):
+    out = []
+    for tok in s.split(","):
+        tok = tok.strip()
+        if not tok:
+            continue
+        out.append(int(tok))
+    return sorted(set(out))
+
+
+def main():
+    p = argparse.ArgumentParser(
+        description="Run long solver campaigns and freeze final reports"
+    )
+    p.add_argument("--variants", default="holdem,omaha,shortdeck")
+    p.add_argument("--players", default="3,4,5,6")
+    p.add_argument("--profiles", default="tight,standard,wide")
+    p.add_argument("--iterations", type=int, default=30)
+    p.add_argument("--repeats", type=int, default=2)
+    p.add_argument("--checkpoint-every", type=int, default=10)
+    p.add_argument("--cache-iterations", type=int, default=20)
+    p.add_argument("--cache-repeats", type=int, default=2)
+    p.add_argument("--stack", type=int, default=8)
+    p.add_argument("--raise-cap", type=int, default=1)
+    p.add_argument("--chance-scenarios", type=int, default=2)
+    p.add_argument("--chance-stride", type=int, default=7)
+    p.add_argument("--report-dir", default="docs/reports")
+    p.add_argument("--cargo-target-dir", default="target_campaign")
+    p.add_argument("--skip-batch", action="store_true")
+    p.add_argument("--skip-cache", action="store_true")
+    args = p.parse_args()
+    args.players = parse_players(args.players)
+
+    if not args.players:
+        print("No players provided", file=sys.stderr)
+        return 2
+
+    report_dir = Path(args.report_dir)
+    report_dir.mkdir(parents=True, exist_ok=True)
+
+    cargo_env = os.environ.copy()
+    cargo_env["CARGO_TARGET_DIR"] = args.cargo_target_dir
+
+    batch_runs = report_dir / "solver_batch_runs_final.csv"
+    batch_agg = report_dir / "solver_batch_agg_final.csv"
+    if not args.skip_batch:
+        batch_runs, batch_agg = run_convergence_batch(args, report_dir, cargo_env)
+
+    cache_runs = report_dir / "solver_traversal_cache_runs_final.csv"
+    cache_md = report_dir / "solver_traversal_cache_report_final.md"
+    if not args.skip_cache:
+        cache_runs, cache_md = run_traversal_cache(args, report_dir, cargo_env)
+
+    final_md = write_final_report(
+        report_dir, args, batch_runs, batch_agg, cache_runs, cache_md
+    )
+    print(f"Wrote {final_md}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

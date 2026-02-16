@@ -102,7 +102,7 @@ fn enum_qmc_rejects_unsupported_game() {
     let mut result = EnumResult::new(Game::Holdem);
 
     let err = enum_qmc(
-        Game::Omaha,
+        Game::NumGames,
         &pockets,
         board,
         dead,
@@ -150,7 +150,7 @@ fn enum_exhaustive_rejects_unsupported_game_type() {
     let mut result = EnumResult::new(Game::Holdem);
 
     let err = enum_exhaustive(
-        Game::Lowball,
+        Game::NumGames,
         &pockets,
         board,
         dead,
@@ -162,7 +162,78 @@ fn enum_exhaustive_rejects_unsupported_game_type() {
     .unwrap_err();
 
     assert_eq!(err, PokerError::UnsupportedGameType);
-    assert!(result.ordering.is_some());
+    assert!(result.ordering.is_none());
+}
+
+#[test]
+fn enum_sample_rejects_board_for_stud() {
+    let pockets = vec![
+        StdDeck::string_to_mask("As Ks Qh").unwrap().0,
+        StdDeck::string_to_mask("Ad Kd Qc").unwrap().0,
+    ];
+    let board = StdDeck::string_to_mask("2c").unwrap().0;
+    let dead = StdDeck::string_to_mask("").unwrap().0;
+    let mut result = EnumResult::new(Game::Stud7);
+
+    let err = enum_sample(
+        Game::Stud7,
+        &pockets,
+        board,
+        dead,
+        2,
+        1,
+        16,
+        false,
+        &mut result,
+    )
+    .unwrap_err();
+
+    assert_eq!(err, PokerError::UnsupportedBoardConfiguration);
+}
+
+#[test]
+fn enum_qmc_rejects_board_count_mismatch() {
+    let pockets = holdem_heads_up_pockets();
+    let board = StdDeck::string_to_mask("2c 7d").unwrap().0;
+    let dead = StdDeck::string_to_mask("").unwrap().0;
+    let mut result = EnumResult::new(Game::Holdem);
+
+    let err = enum_qmc(
+        Game::Holdem,
+        &pockets,
+        board,
+        dead,
+        2,
+        1,
+        16,
+        false,
+        &mut result,
+    )
+    .unwrap_err();
+
+    assert_eq!(err, PokerError::UnsupportedBoardConfiguration);
+}
+
+#[test]
+fn enum_exhaustive_rejects_invalid_board_street() {
+    let pockets = holdem_heads_up_pockets();
+    let board = StdDeck::string_to_mask("2c 7d").unwrap().0;
+    let dead = StdDeck::string_to_mask("").unwrap().0;
+    let mut result = EnumResult::new(Game::Holdem);
+
+    let err = enum_exhaustive(
+        Game::Holdem,
+        &pockets,
+        board,
+        dead,
+        2,
+        2,
+        false,
+        &mut result,
+    )
+    .unwrap_err();
+
+    assert_eq!(err, PokerError::UnsupportedBoardConfiguration);
 }
 
 #[test]

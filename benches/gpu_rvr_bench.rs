@@ -1,7 +1,6 @@
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
 use poker_eval_rs::deck::StdDeck;
 use poker_eval_rs::gpu::GPUEvaluator;
-use pollster;
 
 fn bench_gpu_rvr(c: &mut Criterion) {
     let mut gpu = pollster::block_on(GPUEvaluator::new()).expect("GPU required for bench");

@@ -16,8 +16,8 @@ wasm = ["dep:wasm-bindgen", "dep:serde-wasm-bindgen", "compact-table"]
 serde-wasm-bindgen = ["dep:serde-wasm-bindgen"]
 
 # Backend options
-compact-table = [] # Current 32KB cache-friendly table
-large-table = []   # ~200KB+ high-throughput table (OMPEval style)
+compact-table = [] # Current ~200KB cache-friendly perfect-hash tables
+large-table = []   # ~9.6MB sparse high-throughput table (OMPEval style)
 simd = []          # AVX2/SSE4.1 batch evaluation
 
 [dependencies]
@@ -36,6 +36,9 @@ bincode = "1.3.3"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 getrandom = { version = "0.2", features = ["js"] }
+
+[target.'cfg(target_arch = "wasm32")'.dev-dependencies]
+wasm-bindgen-test = "0.3"
 
 [lib]
 name = "poker_eval_rs"
@@ -72,4 +75,12 @@ harness = false
 
 [[bench]]
 name = "gpu_rvr_bench"
+harness = false
+
+[[bench]]
+name = "solver_core_multiway"
+harness = false
+
+[[bench]]
+name = "solver_core_traversal_cache_bench"
 harness = false

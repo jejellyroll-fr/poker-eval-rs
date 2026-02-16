@@ -8,6 +8,9 @@ use crate::deck::{JokerDeck, StdDeck};
 use crate::deck::{JokerDeckCardMask, StdDeckCardMask};
 use crate::enumdefs::{EnumResult, Game, SampleType};
 use crate::enumerate::evaluation::{enum_exhaustive, enum_sample};
+use crate::enumerate::evaluation::{
+    supports_enum_exhaustive, supports_enum_sample, validate_enum_configuration,
+};
 use crate::evaluators::{
     EvalJoker, HandEvaluator, LowballEvaluator, OmahaHiEvaluator, ShortDeckEvaluator,
 };
@@ -177,6 +180,13 @@ pub fn calculate_equity(
     let npockets = pockets.len();
     let nboard = board_mask.num_cards();
 
+    if let Err(e) = validate_enum_configuration(game_variant, board_mask, nboard, !monte_carlo) {
+        return Err(JsValue::from_str(&format!(
+            "Invalid board configuration: {}",
+            e
+        )));
+    }
+
     let mut result = EnumResult::new(game_variant);
     result.sample_type = if monte_carlo {
         SampleType::Sample
@@ -184,6 +194,19 @@ pub fn calculate_equity(
         SampleType::Exhaustive
     };
     result.nplayers = npockets as u32;
+
+    if monte_carlo && !supports_enum_sample(game_variant) {
+        return Err(JsValue::from_str(&format!(
+            "Monte Carlo mode is not supported for game variant: {}",
+            game
+        )));
+    }
+    if !monte_carlo && !supports_enum_exhaustive(game_variant) {
+        return Err(JsValue::from_str(&format!(
+            "Exhaustive mode is not supported for game variant: {}",
+            game
+        )));
+    }
 
     let calc_result = if monte_carlo {
         enum_sample(

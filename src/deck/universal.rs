@@ -11,7 +11,9 @@ use super::traits::{CardMask, Deck};
 use serde::{Deserialize, Serialize};
 
 /// Supported deck variants.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, Default)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, Default,
+)]
 pub enum DeckVariant {
     #[default]
     Standard52,
