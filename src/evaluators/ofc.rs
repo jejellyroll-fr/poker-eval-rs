@@ -14,8 +14,10 @@ use crate::deck::std_deck::StdDeckCardMask;
 use crate::evaluators::Eval;
 use crate::handval::HandVal;
 
+use serde::{Deserialize, Serialize};
+
 /// Represents an OFC board for a single player.
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct OFCBoard {
     pub top: StdDeckCardMask,
     pub middle: StdDeckCardMask,
@@ -23,7 +25,7 @@ pub struct OFCBoard {
 }
 
 /// Results of an OFC evaluation.
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct OFCResult {
     pub is_foul: bool,
     pub top_val: HandVal,

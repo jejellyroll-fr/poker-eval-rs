@@ -48,6 +48,28 @@ impl Abstraction for IdentityAbstraction {
     }
 }
 
+/// A bucket-based abstraction that maps keys using a provided mapping or logic.
+pub struct BucketAbstraction {
+    pub mapper: Box<dyn Fn(&str) -> String + Send + Sync>,
+}
+
+impl BucketAbstraction {
+    pub fn new<F>(mapper: F) -> Self
+    where
+        F: Fn(&str) -> String + Send + Sync + 'static,
+    {
+        Self {
+            mapper: Box::new(mapper),
+        }
+    }
+}
+
+impl Abstraction for BucketAbstraction {
+    fn abstract_key(&self, key: &str) -> String {
+        (self.mapper)(key)
+    }
+}
+
 /// A node in the strategy tree storing regrets and cumulative strategy.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct CFRNode {
@@ -315,7 +337,7 @@ impl CFRSolver {
     /// Preference order:
     /// 1. Average strategy (if accumulated)
     /// 2. Current regret-matched strategy (if node exists)
-    /// 3. Uniform fallback over 2 actions (Kuhn default)
+    /// 3. Uniform fallback
     pub fn strategy_for_infoset(&self, info_set_key: &str) -> Vec<f64> {
         if let Some(avg) = self.average_strategy(info_set_key) {
             return avg;
@@ -323,7 +345,27 @@ impl CFRSolver {
         if let Some(node) = self.nodes.get(info_set_key) {
             return node.get_strategy(self.use_ecfr);
         }
+        // Fallback for unknown infosets: uniform over 2 actions (common in small games)
+        // or we could potentially try to deduce N actions from context if we had it.
         vec![0.5, 0.5]
+    }
+
+    /// Saves the solver state to a file using Bincode.
+    pub fn save(&self, path: &str) -> Result<(), Box<dyn std::error::Error>> {
+        let file = std::fs::File::create(path)?;
+        let writer = std::io::BufWriter::new(file);
+        bincode::serialize_into(writer, self)?;
+        Ok(())
+    }
+
+    /// Loads the solver state from a file using Bincode.
+    pub fn load(path: &str) -> Result<Self, Box<dyn std::error::Error>> {
+        let file = std::fs::File::open(path)?;
+        let reader = std::io::BufReader::new(file);
+        let mut solver: Self = bincode::deserialize_from(reader)?;
+        // Abstraction is not serialized, so we reset it to IdentityAbstraction
+        solver.abstraction = Box::new(IdentityAbstraction);
+        Ok(solver)
     }
 }
 
@@ -499,5 +541,24 @@ mod tests {
         let (a, b) = generate_random_showdown_masks(n);
         assert_eq!(a.len(), n);
         assert_eq!(b.len(), n);
+    }
+
+    #[test]
+    fn test_cfr_bincode_persistence() {
+        let mut solver = CFRSolver::new(2);
+        let initial_cards = vec![0, 1, 2];
+        let state = KuhnGameState::new(initial_cards);
+
+        solver.train(&state, 100);
+        let nodes_before = solver.nodes.len();
+
+        let path = "test_solver.bin";
+        solver.save(path).unwrap();
+
+        let solver_loaded = CFRSolver::load(path).unwrap();
+        assert_eq!(solver_loaded.nodes.len(), nodes_before);
+        assert_eq!(solver_loaded.iteration, 100);
+
+        std::fs::remove_file(path).unwrap();
     }
 }

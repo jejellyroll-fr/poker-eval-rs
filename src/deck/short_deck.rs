@@ -11,7 +11,7 @@ pub const SHORT_DECK_N_CARDS: usize = 36;
 /// Short Deck Card Mask (reuses u64 but representing 36 cards).
 /// Note: For simplicity and compatibility with existing evaluators,
 /// we often map short deck cards back to their standard deck indices.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Default, serde::Serialize, serde::Deserialize)]
 pub struct ShortDeckCardMask {
     pub mask: u64,
 }
@@ -19,6 +19,24 @@ pub struct ShortDeckCardMask {
 impl ShortDeckCardMask {
     pub fn new() -> Self {
         Self { mask: 0 }
+    }
+
+    pub fn from_raw(mask: u64) -> Self {
+        Self { mask }
+    }
+
+    pub fn as_raw(&self) -> u64 {
+        self.mask
+    }
+
+    pub fn to_std_mask(&self) -> super::std_deck::StdDeckCardMask {
+        let mut std_mask = super::std_deck::StdDeckCardMask::new();
+        for i in 0..SHORT_DECK_N_CARDS {
+            if self.card_is_set(i) {
+                std_mask.set(ShortDeck::to_std_index(i));
+            }
+        }
+        std_mask
     }
 }
 

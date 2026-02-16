@@ -18,8 +18,10 @@ pub struct GPUEvaluator {
     device: wgpu::Device,
     queue: wgpu::Queue,
     pipeline: wgpu::ComputePipeline,
+    rvr_pipeline: wgpu::ComputePipeline,
     tables_bind_group: wgpu::BindGroup,
     input_bind_group_layout: wgpu::BindGroupLayout,
+    range_bind_group_layout: wgpu::BindGroupLayout,
     buffer_capacity: usize,
     input_buf: Option<wgpu::Buffer>,
     output_buf: Option<wgpu::Buffer>,
@@ -188,12 +190,74 @@ impl GPUEvaluator {
             entry_point: "main",
         });
 
+        // 4. Range-vs-Range Pipeline Setup
+        let range_bgl = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+            label: Some("Range BGL"),
+            entries: &[
+                wgpu::BindGroupLayoutEntry {
+                    binding: 0,
+                    visibility: wgpu::ShaderStages::COMPUTE,
+                    ty: wgpu::BindingType::Buffer {
+                        ty: wgpu::BufferBindingType::Storage { read_only: true },
+                        has_dynamic_offset: false,
+                        min_binding_size: None,
+                    },
+                    count: None,
+                },
+                wgpu::BindGroupLayoutEntry {
+                    binding: 1,
+                    visibility: wgpu::ShaderStages::COMPUTE,
+                    ty: wgpu::BindingType::Buffer {
+                        ty: wgpu::BufferBindingType::Storage { read_only: true },
+                        has_dynamic_offset: false,
+                        min_binding_size: None,
+                    },
+                    count: None,
+                },
+                wgpu::BindGroupLayoutEntry {
+                    binding: 2,
+                    visibility: wgpu::ShaderStages::COMPUTE,
+                    ty: wgpu::BindingType::Buffer {
+                        ty: wgpu::BufferBindingType::Storage { read_only: false },
+                        has_dynamic_offset: false,
+                        min_binding_size: None,
+                    },
+                    count: None,
+                },
+                wgpu::BindGroupLayoutEntry {
+                    binding: 3,
+                    visibility: wgpu::ShaderStages::COMPUTE,
+                    ty: wgpu::BindingType::Buffer {
+                        ty: wgpu::BufferBindingType::Storage { read_only: true },
+                        has_dynamic_offset: false,
+                        min_binding_size: None,
+                    },
+                    count: None,
+                },
+            ],
+        });
+
+        let rvr_pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+            label: Some("RvR Pipeline Layout"),
+            bind_group_layouts: &[&tables_bgl, &input_bgl, &range_bgl],
+            push_constant_ranges: &[],
+        });
+
+        let rvr_pipeline = device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
+            label: Some("RvR Pipeline"),
+            layout: Some(&rvr_pipeline_layout),
+            module: &shader,
+            entry_point: "range_vs_range",
+        });
+
         Some(Self {
             device,
             queue,
             pipeline,
+            rvr_pipeline,
             tables_bind_group: tables_bg,
             input_bind_group_layout: input_bgl,
+            range_bind_group_layout: range_bgl,
             buffer_capacity: 0,
             input_buf: None,
             output_buf: None,
@@ -428,6 +492,132 @@ impl GPUEvaluator {
             checksum,
         }
     }
+
+    /// Evaluates all combinations of hands in two ranges.
+    /// Returns a flat matrix of outcomes (1: A wins, 2: B wins, 3: Tie).
+    pub fn evaluate_range_vs_range(&mut self, range_a: &[u64], range_b: &[u64]) -> Vec<u32> {
+        if range_a.is_empty() || range_b.is_empty() {
+            return Vec::new();
+        }
+
+        let len_a = range_a.len();
+        let len_b = range_b.len();
+        let total_outcomes = len_a * len_b;
+
+        // 1. Create Buffers
+        let buf_a = self
+            .device
+            .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: Some("Range A"),
+                contents: bytemuck::cast_slice(range_a),
+                usage: wgpu::BufferUsages::STORAGE,
+            });
+        let buf_b = self
+            .device
+            .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: Some("Range B"),
+                contents: bytemuck::cast_slice(range_b),
+                usage: wgpu::BufferUsages::STORAGE,
+            });
+        let buf_res = self.device.create_buffer(&wgpu::BufferDescriptor {
+            label: Some("Matrix Results"),
+            size: (total_outcomes * 4) as u64,
+            usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_SRC,
+            mapped_at_creation: false,
+        });
+        let params_data = [len_a as u32, len_b as u32];
+        let buf_params = self
+            .device
+            .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: Some("RvR Params"),
+                contents: bytemuck::cast_slice(&params_data),
+                usage: wgpu::BufferUsages::STORAGE,
+            });
+
+        let readback_buf = self.device.create_buffer(&wgpu::BufferDescriptor {
+            label: Some("RvR Readback"),
+            size: (total_outcomes * 4) as u64,
+            usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST,
+            mapped_at_creation: false,
+        });
+
+        // 2. Bind Group
+        let bg = self.device.create_bind_group(&wgpu::BindGroupDescriptor {
+            label: Some("RvR BG"),
+            layout: &self.range_bind_group_layout,
+            entries: &[
+                wgpu::BindGroupEntry {
+                    binding: 0,
+                    resource: buf_a.as_entire_binding(),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 1,
+                    resource: buf_b.as_entire_binding(),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 2,
+                    resource: buf_res.as_entire_binding(),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 3,
+                    resource: buf_params.as_entire_binding(),
+                },
+            ],
+        });
+
+        // Dummy input BG for Group 1 (required by pipeline layout)
+        let dummy_input_bg = self.device.create_bind_group(&wgpu::BindGroupDescriptor {
+            label: Some("Dummy Input BG"),
+            layout: &self.input_bind_group_layout,
+            entries: &[
+                wgpu::BindGroupEntry {
+                    binding: 0,
+                    resource: buf_a.as_entire_binding(), // Reusing buf_a as dummy
+                },
+                wgpu::BindGroupEntry {
+                    binding: 1,
+                    resource: buf_res.as_entire_binding(), // Reusing buf_res as dummy
+                },
+            ],
+        });
+
+        // 3. Dispatch
+        let mut encoder = self
+            .device
+            .create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
+        {
+            let mut cpass = encoder.begin_compute_pass(&wgpu::ComputePassDescriptor {
+                label: None,
+                timestamp_writes: None,
+            });
+            cpass.set_pipeline(&self.rvr_pipeline);
+            cpass.set_bind_group(0, &self.tables_bind_group, &[]);
+            cpass.set_bind_group(1, &dummy_input_bg, &[]);
+            cpass.set_bind_group(2, &bg, &[]);
+
+            let gx = (len_a as u32 + 15) / 16;
+            let gy = (len_b as u32 + 15) / 16;
+            cpass.dispatch_workgroups(gx, gy, 1);
+        }
+        encoder.copy_buffer_to_buffer(&buf_res, 0, &readback_buf, 0, (total_outcomes * 4) as u64);
+        self.queue.submit(Some(encoder.finish()));
+
+        // 4. Readback
+        let slice = readback_buf.slice(..);
+        let (tx, rx) = std::sync::mpsc::channel();
+        slice.map_async(wgpu::MapMode::Read, move |v| tx.send(v).unwrap());
+        self.device.poll(wgpu::Maintain::Wait);
+
+        if rx.recv().unwrap().is_ok() {
+            let data = slice.get_mapped_range();
+            let res = bytemuck::cast_slice(&data).to_vec();
+            drop(data);
+            readback_buf.unmap();
+            res
+        } else {
+            Vec::new()
+        }
+    }
 }
 
 #[cfg(test)]
@@ -538,6 +728,45 @@ mod tests {
             let resident = gpu.collect_resident_results().unwrap();
             assert_eq!(immediate, resident);
             assert!(!gpu.has_pending_resident_results());
+        });
+    }
+
+    #[test]
+    fn test_gpu_range_vs_range() {
+        pollster::block_on(async {
+            let mut gpu = match GPUEvaluator::new().await {
+                Some(g) => g,
+                None => return,
+            };
+
+            // Range A: AA, KK
+            let (aa, _) = StdDeck::string_to_mask("AsAd5h2d3c").unwrap();
+            let (kk, _) = StdDeck::string_to_mask("KsKd5h2d3c").unwrap();
+            let range_a = vec![aa.as_raw(), kk.as_raw()];
+
+            // Range B: QQ, 72o
+            let (qq, _) = StdDeck::string_to_mask("QsQd5h2d3c").unwrap();
+            let (low, _) = StdDeck::string_to_mask("7s2h5h2d3c").unwrap();
+            let range_b = vec![qq.as_raw(), low.as_raw()];
+
+            let results = gpu.evaluate_range_vs_range(&range_a, &range_b);
+
+            assert_eq!(results.len(), 4);
+            // AA vs QQ -> AA wins (1)
+            assert_eq!(results[0], 1);
+            // AA vs 72 -> AA wins (1)
+            assert_eq!(results[1], 1);
+            // KK vs QQ -> KK wins (1)
+            assert_eq!(results[2], 1);
+            // KK vs 72 -> KK wins (1)
+            assert_eq!(results[3], 1);
+
+            // Test with a tie
+            let results_tie = gpu.evaluate_range_vs_range(&range_a, &range_a);
+            assert_eq!(results_tie.len(), 4);
+            assert_eq!(results_tie[0], 3); // AA vs AA -> Tie (3)
+            assert_eq!(results_tie[3], 3); // KK vs KK -> Tie (3)
+            assert_eq!(results_tie[1], 1); // AA vs KK -> AA wins (1)
         });
     }
 }

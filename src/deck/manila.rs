@@ -9,7 +9,7 @@ use super::traits::{CardMask, Deck};
 pub const MANILA_DECK_N_CARDS: usize = 32;
 
 /// Manila Card Mask.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Default, serde::Serialize, serde::Deserialize)]
 pub struct ManilaCardMask {
     pub mask: u32,
 }
@@ -17,6 +17,14 @@ pub struct ManilaCardMask {
 impl ManilaCardMask {
     pub fn new() -> Self {
         Self { mask: 0 }
+    }
+
+    pub fn from_raw(mask: u64) -> Self {
+        Self { mask: mask as u32 }
+    }
+
+    pub fn as_raw(&self) -> u64 {
+        self.mask as u64
     }
 
     pub fn to_std_mask(&self) -> StdDeckCardMask {

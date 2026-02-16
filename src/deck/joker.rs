@@ -59,6 +59,14 @@ impl JokerDeckCardMask {
         JokerDeckCardMask { cards_n: 0 }
     }
 
+    pub fn from_raw(mask: u64) -> Self {
+        JokerDeckCardMask { cards_n: mask }
+    }
+
+    pub fn as_raw(&self) -> u64 {
+        self.cards_n
+    }
+
     pub fn spades(&self) -> u64 {
         (self.cards_n >> 39) & 0x1FFF
     }

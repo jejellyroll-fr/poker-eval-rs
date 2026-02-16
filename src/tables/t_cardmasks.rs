@@ -1,4 +1,6 @@
-#[derive(Clone, PartialEq, Copy, Debug, Hash, Eq)]
+use serde::{Deserialize, Serialize};
+
+#[derive(Clone, PartialEq, Copy, Debug, Hash, Eq, Serialize, Deserialize)]
 pub struct StdDeckCardMask {
     mask: u64,
 }

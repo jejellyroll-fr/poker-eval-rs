@@ -15,22 +15,41 @@ pub enum BadugiHandType {
     OneCard = 3,   // 1 unique card
 }
 
-/// Evaluates a 4-card hand for Badugi.
-/// Returns a LowHandVal representing the best valid subset.
+/// Evaluates a hand for Badugi.
+///
+/// Badugi is a 4-card lowball variant. The goal is to have the lowest cards
+/// with unique ranks and unique suits. If you have duplicates in rank or suit,
+/// you must discard cards until the remaining subset is valid (all unique ranks
+/// and all unique suits). The best hand is the one with the most cards,
+/// and then the lowest values (A-5 style, Ace is low).
+///
+/// # Arguments
+/// * `mask` - A card mask representing the hand to evaluate.
+///
+/// # Returns
+/// A `LowHandVal` representing the best valid Badugi subset.
+/// If the mask is empty, returns a worst-case `LowHandVal`.
 pub fn badugi_eval(mask: &StdDeckCardMask) -> LowHandVal {
-    let mut best_subset_size = 0;
-    let mut best_val = LowHandVal { value: 0xFFFFFFFF }; // Worst possible
+    if mask.is_empty() {
+        return LowHandVal { value: 0xFFFFFFFF };
+    }
 
     let cards = (0..52)
         .filter(|&i| mask.card_is_set(i))
         .collect::<Vec<usize>>();
 
     let n = cards.len();
-    // For Badugi, we usually have exactly 4 cards in hand, but the evaluator should be robust.
-    // Try all 2^n subsets
-    for i in 1..(1 << n) {
+    // Safety limit for subset search to avoid exponential explosion.
+    // Badugi is typically played with 4 cards.
+    let n_limit = n.min(13);
+
+    let mut best_subset_size = 0;
+    let mut best_val = LowHandVal { value: 0xFFFFFFFF };
+
+    // Try all 2^n subsets (where n <= 13)
+    for i in 1..(1 << n_limit) {
         let mut subset = Vec::new();
-        for (j, &card) in cards.iter().enumerate().take(n) {
+        for (j, &card) in cards.iter().enumerate().take(n_limit) {
             if (i & (1 << j)) != 0 {
                 subset.push(card);
             }
@@ -47,11 +66,6 @@ pub fn badugi_eval(mask: &StdDeckCardMask) -> LowHandVal {
                 best_val = val;
             }
         }
-    }
-
-    if best_subset_size == 0 {
-        // Should not happen if mask is non-empty
-        return LowHandVal { value: 0xFFFFFFFF };
     }
 
     best_val
@@ -77,7 +91,14 @@ fn calculate_badugi_val(size: usize, subset: &[usize]) -> LowHandVal {
     // Standard LowHandVal uses 1-13 for ranks (A=1, 2=2...).
     let mut ranks = subset
         .iter()
-        .map(|&c| (c % 13) as u8 + 1)
+        .map(|&c| {
+            let r = (c % 13) as u8;
+            if r == 12 {
+                1
+            } else {
+                r + 2
+            }
+        })
         .collect::<Vec<u8>>();
     ranks.sort_by(|a, b| b.cmp(a)); // Descending order for top-down comparison
 
@@ -129,5 +150,20 @@ mod tests {
             v2.value < v1.value,
             "Any 4-card hand should beat any 3-card hand"
         );
+    }
+
+    #[test]
+    fn test_badugi_eval_five_cards() {
+        let (m, _) = StdDeck::string_to_mask("As 2d 3c 4s 5h").unwrap();
+        let v = badugi_eval(&m);
+        assert_eq!(v.hand_type(), 0); // Badugi
+        assert_eq!(v.top_card(), 5);
+    }
+
+    #[test]
+    fn test_badugi_empty_mask() {
+        let m = StdDeckCardMask::new();
+        let v = badugi_eval(&m);
+        assert_eq!(v.value, 0xFFFFFFFF);
     }
 }
