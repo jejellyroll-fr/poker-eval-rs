@@ -298,20 +298,35 @@ impl Eval {
         }
     }
 
-    #[cfg(all(feature = "simd", target_arch = "x86_64"))]
-    /// Evaluates 8 hands in parallel using AVX2.
-    ///
     #[cfg(all(
         feature = "simd",
         target_arch = "x86_64",
         feature = "large-table",
         not(feature = "compact-table")
     ))]
-    /// Evaluates 8 hands in parallel using AVX2.
+    /// Evaluates 8 hands in parallel.
     ///
-    /// # Safety
-    /// This function requires AVX2 support.
-    pub unsafe fn eval_8_hands(masks: &[StdDeckCardMask; 8]) -> [HandVal; 8] {
+    /// Uses AVX2 if available at runtime, otherwise falls back to scalar evaluation.
+    pub fn eval_8_hands(masks: &[StdDeckCardMask; 8]) -> [HandVal; 8] {
+        if is_x86_feature_detected!("avx2") {
+            unsafe { Self::eval_8_hands_avx2(masks) }
+        } else {
+            let mut results = [HandVal { value: 0 }; 8];
+            for i in 0..8 {
+                results[i] = Self::eval_n(&masks[i], 0);
+            }
+            results
+        }
+    }
+
+    #[cfg(all(
+        feature = "simd",
+        target_arch = "x86_64",
+        feature = "large-table",
+        not(feature = "compact-table")
+    ))]
+    #[target_feature(enable = "avx2")]
+    unsafe fn eval_8_hands_avx2(masks: &[StdDeckCardMask; 8]) -> [HandVal; 8] {
         use crate::tables::rank_lookup::{NOFLUSH_LOOKUP, SUIT_HASH};
         use std::arch::x86_64::*;
 
@@ -543,7 +558,7 @@ mod tests {
         let (h8, _) = hand("AsKdQcJs9h"); // High Card
 
         let masks = [h1, h2, h3, h4, h5, h6, h7, h8];
-        let results = unsafe { Eval::eval_8_hands(&masks) };
+        let results = Eval::eval_8_hands(&masks);
 
         assert_eq!(results[0].hand_type(), HandType::StFlush as u8);
         assert_eq!(results[1].hand_type(), HandType::Quads as u8);

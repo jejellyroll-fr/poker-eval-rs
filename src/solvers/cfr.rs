@@ -3,12 +3,16 @@
 //! This module provides the infrastructure for building and solving poker
 //! games using CFR algorithms, specifically MCCFR (Monte Carlo CFR).
 
+#[cfg(feature = "gpu")]
 use crate::deck::StdDeckCardMask;
+#[cfg(feature = "gpu")]
 use crate::gpu::GPUEvaluator;
 use crate::solvers::core::{
     cfr_plus_traverse, run_cfr_plus_iteration, GameTree, InfosetValues, NodeKind, TraversalCaches,
 };
+#[cfg(feature = "gpu")]
 use crate::solvers::games::HoldemPushFoldState;
+#[cfg(feature = "gpu")]
 use rand::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -282,6 +286,7 @@ impl CFRSolver {
     /// This method is a first integration point between solver loops and GPU evaluation:
     /// it precomputes showdown strengths in GPU batches (resident dispatch + delayed readback),
     /// then runs CFR updates on compact game trees.
+    #[cfg(feature = "gpu")]
     pub fn train_push_fold_with_gpu(
         &mut self,
         iterations: usize,
@@ -451,6 +456,7 @@ impl CFRSolver {
     }
 }
 
+#[cfg(feature = "gpu")]
 fn generate_random_showdown_masks(n: usize) -> (Vec<u64>, Vec<u64>) {
     let mut rng = thread_rng();
     let mut p0_masks = Vec::with_capacity(n);
@@ -618,6 +624,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "gpu")]
     fn test_generate_random_showdown_masks_count() {
         let n = 16;
         let (a, b) = generate_random_showdown_masks(n);

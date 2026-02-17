@@ -71,11 +71,9 @@ pub fn std_deck_omaha_hi_low8_eval(
         false
     };
 
-    if !has_low_potential {
-        *loval = None;
-    } else {
-        *loval = allval;
-    }
+    // We start with None. Even if `has_low_potential` is true, the valid low
+    // must be formed by exactly 2 hole cards and 3 board cards, which we calculate below.
+    *loval = None;
 
     let mut hole_cards = [StdDeckCardMask::from_raw(0); 6];
     let mut hole_count = 0;

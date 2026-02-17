@@ -44,6 +44,7 @@ pub mod enumerate;
 pub(crate) mod enumord;
 pub mod errors;
 pub mod evaluators;
+#[cfg(feature = "gpu")]
 pub mod gpu;
 pub mod handval;
 pub mod handval_low;
